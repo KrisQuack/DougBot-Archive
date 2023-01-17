@@ -27,7 +27,7 @@ public static class ReactionFilter
                 {
                     //Loop reactions
                     var reactions = message.Reactions
-                        .Where(r => !emoteWhitelist.Contains(r.Key.Name) && r.Key.Name != null);
+                        .Where(r => !emoteWhitelist.Contains(r.Key.Name) && r.Key.ToString() != "<::735492897608040489>");
                     foreach (var reaction in reactions)
                     {
                         //Get reaction users

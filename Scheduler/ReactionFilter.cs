@@ -27,11 +27,12 @@ public static class ReactionFilter
                 {
                     //Loop reactions
                     var reactions = message.Reactions
-                        .Where(r => !emoteWhitelist.Contains(r.Key.Name) && r.Key.Name != null)
-                        .DistinctBy(r => r.Key.Name);
+                        .Where(r => !emoteWhitelist.Contains(r.Key.Name) && r.Key.Name != null);
                     foreach (var reaction in reactions)
                     {
                         //Get reaction users
+                        Console.WriteLine("Key: "+reaction.Key);
+                        Console.WriteLine("Name: "+ reaction.Key.Name);
                         var users = await message.GetReactionUsersAsync(reaction.Key, 500).FlattenAsync();
                         //Remove reaction
                         var reactDict = new Dictionary<string, string>

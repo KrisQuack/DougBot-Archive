@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
@@ -55,6 +56,16 @@ public class AIChatCmd : InteractionModuleBase
         {
             Input = aiText
         });
+        //Moderation result output string
+        var categories = moderationResult.Results[0].Categories;
+        var categoryscores = moderationResult.Results[0].CategoryScores;
+        var moderationString = $"Hate: {categories.Hate} {categoryscores.Hate}\n"+
+                               $"Hate Threatening: {categories.HateThreatening} {categoryscores.HateThreatening}\n"+
+                               $"Self Harm: {categories.Selfharm} {categoryscores.Selfharm}\n"+
+                               $"Sexual: {categories.Sexual} {categoryscores.Sexual}\n"+
+                               $"Sexual Minors: {categories.Sexualminors} {categoryscores.SexualMinors}\n"+
+                               $"Violence: {categories.Violence} {categoryscores.Violence}\n"+
+                               $"Violence Graphic: {categories.Violencegraphic} {categoryscores.Violencegraphic}\n";
         if (!moderationResult.Successful) throw new Exception("API Error: " + moderationResult.Error);
         await ModifyOriginalResponseAsync(r => r.Content += "\nModeration complete");
         //calculate cost
@@ -65,9 +76,11 @@ public class AIChatCmd : InteractionModuleBase
         {
             await ReplyAsync(aiText);
             await ModifyOriginalResponseAsync(m =>
-                m.Content += "\nMessage Sent: "+aiText+"\n" +
+                m.Content += "\nMessage Sent:\n" +
                              $"Tokens: Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
-                             $"Cost: ${cost}");
+                             $"Cost: ${cost}\n" +
+                             $"Response: {aiText}\n" +
+                             $"Moderation Result:\n"+moderationString);
         }
         else
         {
@@ -75,7 +88,8 @@ public class AIChatCmd : InteractionModuleBase
                 m.Content += "\nMessage failed to pass content moderation\n" +
                              $"Tokens: Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
                              $"Cost: ${cost}\n" +
-                             $"Response: {aiText}");
+                             $"Response: {aiText}\n"+
+                             $"Moderation Result:\n"+moderationString);
         }
     }
 }

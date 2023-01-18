@@ -59,13 +59,13 @@ public class AIChatCmd : InteractionModuleBase
         //Moderation result output string
         var categories = moderationResult.Results[0].Categories;
         var categoryscores = moderationResult.Results[0].CategoryScores;
-        var moderationString = $"Hate: {categories.Hate} {categoryscores.Hate}\n"+
-                               $"Hate Threatening: {categories.HateThreatening} {categoryscores.HateThreatening}\n"+
-                               $"Self Harm: {categories.Selfharm} {categoryscores.Selfharm}\n"+
-                               $"Sexual: {categories.Sexual} {categoryscores.Sexual}\n"+
-                               $"Sexual Minors: {categories.Sexualminors} {categoryscores.SexualMinors}\n"+
-                               $"Violence: {categories.Violence} {categoryscores.Violence}\n"+
-                               $"Violence Graphic: {categories.Violencegraphic} {categoryscores.Violencegraphic}\n";
+        var moderationString = $"Hate: {categories.Hate} {(decimal)categoryscores.Hate}\n"+
+                               $"Hate Threatening: {categories.HateThreatening} {(decimal)categoryscores.HateThreatening}\n"+
+                               $"Self Harm: {categories.Selfharm} {(decimal)categoryscores.Selfharm}\n"+
+                               $"Sexual: {categories.Sexual} {(decimal)categoryscores.Sexual}\n"+
+                               $"Sexual Minors: {categories.Sexualminors} {(decimal)categoryscores.SexualMinors}\n"+
+                               $"Violence: {categories.Violence} {(decimal)categoryscores.Violence}\n"+
+                               $"Violence Graphic: {categories.Violencegraphic} {(decimal)categoryscores.Violencegraphic}\n";
         if (!moderationResult.Successful) throw new Exception("API Error: " + moderationResult.Error);
         await ModifyOriginalResponseAsync(r => r.Content += "\nModeration complete");
         //calculate cost

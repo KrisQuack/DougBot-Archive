@@ -50,12 +50,14 @@ public class AIChatCmd : InteractionModuleBase
         }, OpenAI.GPT3.ObjectModels.Models.Curie);
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
         var aiText = completionResult.Choices.FirstOrDefault().Text;
+        var cost = (decimal)(completionResult.Usage.TotalTokens * 0.000002);
         await ModifyOriginalResponseAsync(r => r.Content = "Response received, moderating content");
         //check the response is not offensive using the OpenAI moderation API
         var moderationResult = await openAiService.Moderation.CreateModeration(new CreateModerationRequest
         {
             Input = aiText
         });
+        if (!moderationResult.Successful) throw new Exception("API Error: " + moderationResult.Error);
         //Moderation result output string
         var categories = moderationResult.Results[0].Categories;
         var categoryscores = moderationResult.Results[0].CategoryScores;
@@ -66,30 +68,25 @@ public class AIChatCmd : InteractionModuleBase
                                $"**Sexual Minors:** {categories.Sexualminors} {(decimal)categoryscores.SexualMinors}\n"+
                                $"**Violence:** {categories.Violence} {(decimal)categoryscores.Violence}\n"+
                                $"**Violence Graphic:** {categories.Violencegraphic} {(decimal)categoryscores.Violencegraphic}\n";
-        if (!moderationResult.Successful) throw new Exception("API Error: " + moderationResult.Error);
-        await ModifyOriginalResponseAsync(r => r.Content = "Moderation complete");
-        //calculate cost
-        var cost = (decimal)(completionResult.Usage.TotalTokens * 0.000002);
+        var moderationFlagged = ((decimal)categoryscores.Hate > (decimal)0.001 ||
+                                  (decimal)categoryscores.HateThreatening > (decimal)0.001 ||
+                                  (decimal)categoryscores.Selfharm > (decimal)0.001 ||
+                                  (decimal)categoryscores.Sexual > (decimal)0.001 ||
+                                  (decimal)categoryscores.SexualMinors > (decimal)0.001 ||
+                                  (decimal)categoryscores.Violence > (decimal)0.001 ||
+                                  (decimal)categoryscores.Violencegraphic > (decimal)0.001);
+        var blacklistFlagged = settings.OpenAiWordBlacklist.Split(",").Any(s=>aiText.Contains(s));
+        await ModifyOriginalResponseAsync(m =>
+            m.Content = "***Message Processed***\n" +
+                        $"**Tokens:** Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
+                        $"**Cost:** ${cost}\n" +
+                        $"**Response:** {aiText}\n" +
+                        $"**Blacklist Flagged:** {blacklistFlagged}\n"+ 
+                        $"**Moderation Flagged:** {moderationFlagged}\n"+moderationString);
         //Respond
-        var blacklist = settings.OpenAiWordBlacklist.Split(",");
-        if (moderationResult.Results.Any(r => !r.Flagged) && aiText != "" && !blacklist.Any(s=>aiText.Contains(s)))
+        if (!moderationFlagged && aiText != "" && !blacklistFlagged)
         {
             await ReplyAsync(aiText);
-            await ModifyOriginalResponseAsync(m =>
-                m.Content = "***Message Sent***\n" +
-                             $"**Tokens:** Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
-                             $"**Cost:** ${cost}\n" +
-                             $"**Response:** {aiText}\n" +
-                             $"**Moderation Result:** Pass\n"+moderationString);
-        }
-        else
-        {
-            await ModifyOriginalResponseAsync(m =>
-                m.Content = "***Message failed to pass content moderation***\n" +
-                             $"**Tokens:** Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
-                             $"**Cost:** ${cost}\n" +
-                             $"**Response:** {aiText}\n"+
-                             $"**Moderation Result:** Fail\n"+moderationString);
         }
     }
 }

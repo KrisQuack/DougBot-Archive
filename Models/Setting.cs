@@ -13,6 +13,7 @@ public class Setting
     public DateTime YoutubeLastCheck { get; set; }
     public string OpenAiToken { get; set; }
     public string dmReceiptChannel { get; set; }
+    public string OpenAiWordBlacklist { get; set; }
 
     public static Setting GetSettings()
     {
@@ -48,12 +49,13 @@ public class Setting
         await db.SaveChangesAsync();
     }
 
-    public static async Task UpdateAdmin(string modalOpenAiToken, string modalDmReceiptChannel)
+    public static async Task UpdateAdmin(string modalOpenAiToken, string modalDmReceiptChannel, string modalOpenAiWordBlacklist)
     {
         await using var db = new Database.DougBotContext();
         var settings = db.Settings.FirstOrDefault();
         settings.OpenAiToken = modalOpenAiToken;
         settings.dmReceiptChannel = modalDmReceiptChannel;
+        settings.OpenAiWordBlacklist = modalOpenAiWordBlacklist;
         await db.SaveChangesAsync();
     }
 }

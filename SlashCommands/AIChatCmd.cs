@@ -60,11 +60,12 @@ public class AIChatCmd : InteractionModuleBase
         //calculate cost
         var cost = completionResult.Usage.TotalTokens * 0.000002;
         //Respond
-        if (moderationResult.Results.Any(r => !r.Flagged) && aiText != "")
+        var blacklist = settings.OpenAiWordBlacklist.Split(",");
+        if (moderationResult.Results.Any(r => !r.Flagged) && aiText != "" && !blacklist.Any(s=>aiText.Contains(s)))
         {
-            //await ReplyAsync(aiText);
+            await ReplyAsync(aiText);
             await ModifyOriginalResponseAsync(m =>
-                m.Content += "\nChat disabled: "+aiText+"\n" +
+                m.Content += "\nMessage Sent: "+aiText+"\n" +
                              $"Tokens: Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
                              $"Cost: ${cost}");
         }

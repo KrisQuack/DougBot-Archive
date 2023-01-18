@@ -46,7 +46,9 @@ public class SettingsCmd : InteractionModuleBase
                 {
                     await Context.Interaction.RespondWithModalAsync<AdminModal>("settingsAdmin", null, x => x
                             .UpdateTextInput("dmReceiptChannel", x => x.Value = settings.dmReceiptChannel)
-                            .UpdateTextInput("OpenAiToken", x => x.Value = settings.OpenAiToken))
+                            .UpdateTextInput("OpenAiToken", x => x.Value = settings.OpenAiToken)
+                            .UpdateTextInput("OpenAiWordBlacklist", x => x.Value = settings.OpenAiWordBlacklist))
+                        
                         .ConfigureAwait(false);
                     break;
                 }

@@ -12,7 +12,7 @@ public class AdminModal : IModal
     [ModalTextInput("OpenAiToken")]
     public string OpenAiToken { get; set; }
     
-    [InputLabel("OpenAI Token")]
+    [InputLabel("OpenAI Word Blacklist")]
     [ModalTextInput("OpenAiWordBlacklist")]
     public string OpenAiWordBlacklist { get; set; }
 

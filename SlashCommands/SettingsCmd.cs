@@ -48,7 +48,6 @@ public class SettingsCmd : InteractionModuleBase
                             .UpdateTextInput("dmReceiptChannel", x => x.Value = settings.dmReceiptChannel)
                             .UpdateTextInput("OpenAiToken", x => x.Value = settings.OpenAiToken)
                             .UpdateTextInput("OpenAiWordBlacklist", x => x.Value = settings.OpenAiWordBlacklist))
-                        
                         .ConfigureAwait(false);
                     break;
                 }

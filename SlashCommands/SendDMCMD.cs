@@ -1,7 +1,7 @@
+using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
-using System.Text.Json;
 
 namespace DougBot.SlashCommands;
 

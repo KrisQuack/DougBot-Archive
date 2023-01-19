@@ -1,8 +1,9 @@
+using System.Text.Json;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 using DougBot.Models;
-using System.Text.Json;
+using DougBot.Systems;
 
 namespace DougBot.Scheduler;
 
@@ -27,12 +28,11 @@ public static class ReactionFilter
                 {
                     //Loop reactions
                     var reactions = message.Reactions
-                        .Where(r => !emoteWhitelist.Contains(r.Key.Name) && r.Key.ToString() != "<::735492897608040489>");
+                        .Where(r => !emoteWhitelist.Contains(r.Key.Name) &&
+                                    r.Key.ToString() != "<::735492897608040489>");
                     foreach (var reaction in reactions)
                     {
                         //Get reaction users
-                        Console.WriteLine("Key: "+reaction.Key);
-                        Console.WriteLine("Name: "+ reaction.Key.Name);
                         var users = await message.GetReactionUsersAsync(reaction.Key, 500).FlattenAsync();
                         //Remove reaction
                         var reactDict = new Dictionary<string, string>
@@ -64,7 +64,8 @@ public static class ReactionFilter
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}\n{ex}",
+                false);
         }
     }
 }

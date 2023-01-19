@@ -1,6 +1,7 @@
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
+using DougBot.Systems;
 using YoutubeExplode;
 using YoutubeExplode.Common;
 
@@ -44,7 +45,7 @@ public static class Youtube
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}\n{ex}", false);
         }
     }
 }

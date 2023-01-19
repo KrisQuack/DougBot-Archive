@@ -1,14 +1,15 @@
+using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
 using Fernandezja.ColorHashSharp;
-using System.Text.Json;
 
 namespace DougBot.Systems;
 
 public class Events
 {
-    private DiscordSocketClient _Client;
+    private readonly DiscordSocketClient _Client;
+
     public Events(DiscordSocketClient client)
     {
         _Client = client;
@@ -31,7 +32,8 @@ public class Events
     private async Task MessageReceivedHandler(SocketMessage message)
     {
         var settings = Setting.GetSettings();
-        if (message.Channel is SocketDMChannel && message.Author.MutualGuilds.Any() && message.Author.Id != _Client.CurrentUser.Id)
+        if (message.Channel is SocketDMChannel && message.Author.MutualGuilds.Any() &&
+            message.Author.Id != _Client.CurrentUser.Id)
         {
             var embeds = new List<EmbedBuilder>();
             //Main embed
@@ -45,7 +47,9 @@ public class Events
                     .WithIconUrl(message.Author.GetAvatarUrl()))
                 .WithCurrentTimestamp());
             //Attachment embeds
-            embeds.AddRange(message.Attachments.Select(attachment => new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url).WithUrl(attachment.Url)));
+            embeds.AddRange(message.Attachments.Select(attachment =>
+                new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
+                    .WithUrl(attachment.Url)));
             var dict = new Dictionary<string, string>
             {
                 { "guildId", settings.guildID },

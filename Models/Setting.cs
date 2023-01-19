@@ -14,6 +14,7 @@ public class Setting
     public string OpenAiToken { get; set; }
     public string dmReceiptChannel { get; set; }
     public string OpenAiWordBlacklist { get; set; }
+    public string logChannel { get; set; }
 
     public static Setting GetSettings()
     {
@@ -49,7 +50,8 @@ public class Setting
         await db.SaveChangesAsync();
     }
 
-    public static async Task UpdateAdmin(string modalOpenAiToken, string modalDmReceiptChannel, string modalOpenAiWordBlacklist)
+    public static async Task UpdateAdmin(string modalOpenAiToken, string modalDmReceiptChannel,
+        string modalOpenAiWordBlacklist)
     {
         await using var db = new Database.DougBotContext();
         var settings = db.Settings.FirstOrDefault();

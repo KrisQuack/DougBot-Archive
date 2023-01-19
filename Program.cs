@@ -63,11 +63,16 @@ public class Program
                 await _Service.ExecuteCommandAsync(ctx, _ServiceProvider);
                 //Log command ran
                 var cmd = (SocketSlashCommand)interaction;
-                await Log(new LogMessage(LogSeverity.Info, "Command",
-                    $"Command {cmd.Data.Name} ran by {cmd.User.Username}#{cmd.User.Discriminator} in {cmd.Channel.Name}"));
             };
             _Service.SlashCommandExecuted += async (command, context, result) =>
             {
+                var data = context.Interaction.Data as SocketSlashCommandData;
+                AuditLog.LogEvent(_Client,
+                    $"Command {command.Name} ran by {context.User.Username} in {context.Channel.Name}\n" +
+                    $"Parameters: {string.Join(",", data.Options.Select(x => $"{x.Name}: {x.Value}"))}\n" +
+                    $"{result.ErrorReason}",
+                    result.IsSuccess);
+
                 if (!result.IsSuccess)
                 {
                     if (result.ErrorReason.Contains("was not present in the dictionary.") &&
@@ -93,17 +98,18 @@ public class Program
         await _Client.SetStatusAsync(UserStatus.DoNotDisturb);
     }
 
-    private Task Log(LogMessage msg)
+    private static Task Log(LogMessage msg)
     {
         if (msg.Exception is CommandException cmdException)
         {
-            Console.WriteLine($"[Command/{msg.Severity}] {cmdException.Command.Name}"
-                              + $" failed to execute in {cmdException.Context.Channel} by user {cmdException.Context.User.Username}.");
-            Console.WriteLine(cmdException);
+            AuditLog.LogEvent(_Client,
+                $"{cmdException.Command.Name} failed to execute in {cmdException.Context.Channel} by user {cmdException.Context.User.Username}.",
+                false);
+            AuditLog.LogEvent(_Client, cmdException.ToString(), false);
         }
         else if (msg.Source == "Command")
         {
-            Console.WriteLine($"[Command/{msg.Severity}] {DateTime.UtcNow:h:mm:ss} {msg.Message}");
+            AuditLog.LogEvent(_Client, msg.Message, true);
         }
         else
         {

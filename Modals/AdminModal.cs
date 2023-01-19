@@ -11,7 +11,7 @@ public class AdminModal : IModal
     [InputLabel("OpenAI Token")]
     [ModalTextInput("OpenAiToken")]
     public string OpenAiToken { get; set; }
-    
+
     [InputLabel("OpenAI Word Blacklist")]
     [ModalTextInput("OpenAiWordBlacklist")]
     public string OpenAiWordBlacklist { get; set; }

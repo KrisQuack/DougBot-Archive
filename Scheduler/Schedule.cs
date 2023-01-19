@@ -1,6 +1,7 @@
+using System.Text.Json;
 using Discord.WebSocket;
 using DougBot.Models;
-using System.Text.Json;
+using DougBot.Systems;
 
 namespace DougBot.Scheduler;
 
@@ -19,7 +20,6 @@ public class Schedule
     private async Task Long()
     {
         while (true)
-        {
             try
             {
                 await Task.Delay(900000);
@@ -29,15 +29,14 @@ public class Schedule
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}\n{ex}",
+                    false);
             }
-        }
     }
 
     private async Task MainQueue()
     {
         while (true)
-        {
             try
             {
                 await Task.Delay(1000);
@@ -47,7 +46,6 @@ public class Schedule
                 var pendingQueues = Queue.GetDue();
                 //Run items 
                 foreach (var queue in pendingQueues)
-                {
                     try
                     {
                         await Task.Delay(100);
@@ -104,19 +102,17 @@ public class Schedule
                                 await _Client.SetGameAsync(queue.Data);
                                 break;
                         }
+
                         await Queue.Remove(queue);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
-                        throw;
+                        AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}\n{ex}", false);
                     }
-                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}\n{ex}", false);
             }
-        }
     }
 }

@@ -61,8 +61,6 @@ public class Program
             {
                 var ctx = new SocketInteractionContext(_Client, interaction);
                 await _Service.ExecuteCommandAsync(ctx, _ServiceProvider);
-                //Log command ran
-                var cmd = (SocketSlashCommand)interaction;
             };
             _Service.SlashCommandExecuted += async (command, context, result) =>
             {

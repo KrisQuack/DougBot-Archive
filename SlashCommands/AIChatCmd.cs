@@ -19,7 +19,7 @@ public class AIChatCmd : InteractionModuleBase
         int procCount = 15,
         [Summary(description: "Pretext given to the bot")]
         string pretext =
-            "The following is a conversation with an AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.")
+            "The following is a conversation with an english speaking AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.")
     {
         await RespondAsync("Command received", ephemeral: true);
         var typingObj = Context.Channel.EnterTypingState();
@@ -30,16 +30,35 @@ public class AIChatCmd : InteractionModuleBase
         //Ignore embeds and media
         messages = messages.Where(m =>
             m.Embeds.Count == 0 &&
-            m.Attachments.Count == 0 &&
-            !m.Content.StartsWith("<") && !m.Content.EndsWith(">")
+            m.Attachments.Count == 0
         ).OrderBy(m => m.Timestamp);
         //Process all messages
+        var botUser = Context.Client.CurrentUser;
         foreach (var message in messages)
-            if (message.Author.Id == Context.Client.CurrentUser.Id)
-                queryString += $"Wah: {message.Content}\n";
+        {
+            var messageClean = message.CleanContent.Replace(":","");
+            if (message.Author.Id == botUser.Id)
+            {
+                queryString += $"Wah: {messageClean}\n";
+            }
             else
-                queryString += $"{message.Author.Username}: {message.Content}\n";
+            {
+                //If message is a reply check if it was directed to Wah, if not then discard
+                if (message.Reference != null)
+                {
+                    var replyID = message.Reference.MessageId;
+                    var replyMessage = await Context.Channel.GetMessageAsync((ulong)replyID);
+                    if (replyMessage.Author.Id == botUser.Id)
+                        queryString += $"{message.Author.Username}: Wah, {messageClean}\n";
+                }
+                else
+                {
+                    queryString += $"{message.Author.Username}: {messageClean}\n";
+                }
 
+            }
+        }
+        queryString = queryString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah");
         queryString += "Wah: ";
         await ModifyOriginalResponseAsync(r => r.Content += "Messages loaded, Querying APi");
         //Query API for chat response
@@ -77,15 +96,25 @@ public class AIChatCmd : InteractionModuleBase
                                $"**Sexual Minors:** {categories.Sexualminors} {(decimal)categoryscores.SexualMinors}\n" +
                                $"**Violence:** {categories.Violence} {(decimal)categoryscores.Violence}\n" +
                                $"**Violence Graphic:** {categories.Violencegraphic} {(decimal)categoryscores.Violencegraphic}\n";
-        var moderationFlagged = (decimal)categoryscores.Hate > (decimal)0.001 ||
-                                (decimal)categoryscores.HateThreatening > (decimal)0.001 ||
-                                (decimal)categoryscores.Selfharm > (decimal)0.001 ||
-                                (decimal)categoryscores.Sexual > (decimal)0.001 ||
-                                (decimal)categoryscores.SexualMinors > (decimal)0.001 ||
-                                (decimal)categoryscores.Violence > (decimal)0.001 ||
-                                (decimal)categoryscores.Violencegraphic > (decimal)0.001;
+        var moderationFlagged = (decimal)categoryscores.Hate > (decimal)0.005 ||
+                                (decimal)categoryscores.HateThreatening > (decimal)0.005 ||
+                                (decimal)categoryscores.Selfharm > (decimal)0.005 ||
+                                (decimal)categoryscores.Sexual > (decimal)0.005 ||
+                                (decimal)categoryscores.SexualMinors > (decimal)0.005 ||
+                                (decimal)categoryscores.Violence > (decimal)0.01 ||
+                                (decimal)categoryscores.Violencegraphic > (decimal)0.005;
         var blacklistFlagged = settings.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
         //Respond
+        if (!moderationFlagged && aiText != "" && !blacklistFlagged)
+            //Send message
+            await ReplyAsync(aiText);
+        else
+        {
+            var builder = new ComponentBuilder()
+                .WithButton("Override Filter", "aiChatApprove", ButtonStyle.Success);
+            await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
+        }
+        //Log
         var resultEmbed = await AuditLog.LogEvent(Context.Client as DiscordSocketClient,
             "***Message Processed***\n" +
             $"**Tokens:** Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
@@ -96,10 +125,6 @@ public class AIChatCmd : InteractionModuleBase
             !(moderationFlagged || blacklistFlagged));
         await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
         await ModifyOriginalResponseAsync(m => m.Embed = resultEmbed.Build());
-        if (!moderationFlagged && aiText != "" && !blacklistFlagged)
-            //Send message
-            await ReplyAsync(aiText);
-
         typingObj.Dispose();
     }
 }

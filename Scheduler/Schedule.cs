@@ -36,11 +36,12 @@ public class Schedule
                     var channel =
                         guild.Channels.FirstOrDefault(x => x.Id.ToString() == settings.logChannel) as SocketTextChannel;
                     channel.ModifyAsync(c => c.Topic =
-                        $"Average Queue Time: {_MainQueueTimeTracker.Values.Average()}ms\n" +
+                        $"Average Queue Time: {(int)_MainQueueTimeTracker.Values.Average()}ms\n" +
                         $"Minimum Queue Time: {_MainQueueTimeTracker.Values.Min()}ms\n" +
                         $"Maximum Queue Time: {_MainQueueTimeTracker.Values.Max()}ms\n" +
                         $"Total Queues: {_MainQueueTimeTracker.Count}"
                     );
+                    _MainQueueTimeTracker.Clear();
                 }
             }
             catch (Exception ex)

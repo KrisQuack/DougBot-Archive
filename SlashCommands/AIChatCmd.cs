@@ -26,7 +26,7 @@ public class AIChatCmd : InteractionModuleBase
         var typingObj = Context.Channel.EnterTypingState();
         var settings = Setting.GetSettings();
         //Get chat to send
-        var messages = await Context.Channel.GetMessagesAsync(procCount, CacheMode.CacheOnly).FlattenAsync();
+        var messages = await Context.Channel.GetMessagesAsync(procCount).FlattenAsync();
         var queryString = pretext + "\n\n";
         //Ignore embeds and media
         messages = messages.Where(m =>

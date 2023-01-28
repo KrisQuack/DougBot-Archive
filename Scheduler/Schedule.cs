@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Discord.WebSocket;
 using DougBot.Models;
@@ -8,6 +9,7 @@ namespace DougBot.Scheduler;
 public class Schedule
 {
     private readonly DiscordSocketClient _Client;
+    private readonly Dictionary<DateTime, int> _MainQueueTimeTracker = new();
 
     public Schedule(DiscordSocketClient client)
     {
@@ -26,10 +28,24 @@ public class Schedule
                 ReactionFilter.Filter(_Client, 100);
                 Queue.Create("Youtube", null, null, DateTime.UtcNow);
                 Queue.Create("Forum", null, null, DateTime.UtcNow);
+                //If MainQueueTimeTracker is empty not empty, log values and clear tracker
+                if (_MainQueueTimeTracker.Count > 0)
+                {
+                    var settings = Setting.GetSettings();
+                    var guild = _Client.Guilds.FirstOrDefault(x => x.Id.ToString() == settings.guildID);
+                    var channel =
+                        guild.Channels.FirstOrDefault(x => x.Id.ToString() == settings.logChannel) as SocketTextChannel;
+                    channel.ModifyAsync(c => c.Topic =
+                        $"Average Queue Time: {_MainQueueTimeTracker.Values.Average()}ms\n" +
+                        $"Minimum Queue Time: {_MainQueueTimeTracker.Values.Min()}ms\n" +
+                        $"Maximum Queue Time: {_MainQueueTimeTracker.Values.Max()}ms\n" +
+                        $"Total Queues: {_MainQueueTimeTracker.Count}"
+                    );
+                }
             }
             catch (Exception ex)
             {
-                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}\n{ex}",
+                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}",
                     false);
             }
     }
@@ -40,6 +56,7 @@ public class Schedule
             try
             {
                 await Task.Delay(1000);
+                var stopwatch = Stopwatch.StartNew();
                 //Scheduled jobs
                 await ReactionFilter.Filter(_Client, 5);
                 //Load Queue
@@ -107,12 +124,18 @@ public class Schedule
                     }
                     catch (Exception ex)
                     {
-                        AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}\n{ex}", false);
+                        AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}",
+                            false);
                     }
+
+                //log time taken
+                stopwatch.Stop();
+                _MainQueueTimeTracker.Add(DateTime.UtcNow, (int)stopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
-                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}\n{ex}", false);
+                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}",
+                    false);
             }
     }
 }

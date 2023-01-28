@@ -45,7 +45,8 @@ public static class Youtube
         }
         catch (Exception ex)
         {
-            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}\n{ex}", false);
+            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}",
+                false);
         }
     }
 }

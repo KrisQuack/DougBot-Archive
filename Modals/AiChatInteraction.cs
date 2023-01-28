@@ -1,6 +1,5 @@
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Models;
 
 namespace DougBot.Modals;
 

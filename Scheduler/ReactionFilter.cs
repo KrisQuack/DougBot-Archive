@@ -64,7 +64,7 @@ public static class ReactionFilter
         }
         catch (Exception ex)
         {
-            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}\n{ex}",
+            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}",
                 false);
         }
     }

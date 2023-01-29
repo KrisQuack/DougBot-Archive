@@ -65,11 +65,48 @@ public class Program
             _Service.SlashCommandExecuted += async (command, context, result) =>
             {
                 var data = context.Interaction.Data as SocketSlashCommandData;
+                var auditFields = new List<EmbedFieldBuilder>
+                {
+                    new()
+                    {
+                        Name = "Command",
+                        Value = command.Name,
+                        IsInline = true
+                    },
+                    new()
+                    {
+                        Name = "User",
+                        Value = context.User.Username,
+                        IsInline = true
+                    },
+                    new()
+                    {
+                        Name = "Channel",
+                        Value = context.Channel.Name,
+                        IsInline = true
+                    },
+                    new()
+                    {
+                        Name = "Parameters",
+                        Value = string.Join("\n", data.Options.Select(x => $"{x.Name}: {x.Value}")),
+                        IsInline = true
+                    },
+                    result.ErrorReason != null ? new EmbedFieldBuilder
+                        {
+                            Name = "Error",
+                            Value = result.ErrorReason,
+                            IsInline = true
+                        }
+                        : new EmbedFieldBuilder
+                        {
+                            Name = "null",
+                            Value = "null",
+                            IsInline = true
+                        },
+                };
                 AuditLog.LogEvent(_Client,
-                    $"Command {command.Name} ran by {context.User.Username} in {context.Channel.Name}\n" +
-                    $"Parameters: {string.Join(",", data.Options.Select(x => $"{x.Name}: {x.Value}"))}\n" +
-                    $"{result.ErrorReason}",
-                    result.IsSuccess);
+                    $"Command Ran",
+                    result.IsSuccess, auditFields);
 
                 if (!result.IsSuccess)
                 {

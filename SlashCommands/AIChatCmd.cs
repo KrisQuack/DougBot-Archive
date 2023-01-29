@@ -23,7 +23,6 @@ public class AIChatCmd : InteractionModuleBase
             "The following is a conversation with an english speaking AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.")
     {
         await RespondAsync("Command received", ephemeral: true);
-        var typingObj = Context.Channel.EnterTypingState();
         var settings = Setting.GetSettings();
         //Get chat to send
         var messages = await Context.Channel.GetMessagesAsync(procCount).FlattenAsync();
@@ -88,15 +87,7 @@ public class AIChatCmd : InteractionModuleBase
         });
         if (!moderationResult.Successful) throw new Exception("API Error: " + moderationResult.Error);
         //Moderation result output string
-        var categories = moderationResult.Results[0].Categories;
         var categoryscores = moderationResult.Results[0].CategoryScores;
-        var moderationString = $"**Hate:** {categories.Hate} {(decimal)categoryscores.Hate}\n" +
-                               $"**Hate Threatening:** {categories.HateThreatening} {(decimal)categoryscores.HateThreatening}\n" +
-                               $"**Self Harm:** {categories.Selfharm} {(decimal)categoryscores.Selfharm}\n" +
-                               $"**Sexual:** {categories.Sexual} {(decimal)categoryscores.Sexual}\n" +
-                               $"**Sexual Minors:** {categories.Sexualminors} {(decimal)categoryscores.SexualMinors}\n" +
-                               $"**Violence:** {categories.Violence} {(decimal)categoryscores.Violence}\n" +
-                               $"**Violence Graphic:** {categories.Violencegraphic} {(decimal)categoryscores.Violencegraphic}\n";
         var moderationFlagged = (decimal)categoryscores.Hate > (decimal)0.005 ||
                                 (decimal)categoryscores.HateThreatening > (decimal)0.005 ||
                                 (decimal)categoryscores.Selfharm > (decimal)0.005 ||
@@ -106,30 +97,120 @@ public class AIChatCmd : InteractionModuleBase
                                 (decimal)categoryscores.Violencegraphic > (decimal)0.005;
         var blacklistFlagged = settings.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
         //Respond
+        await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
         if (!moderationFlagged && aiText != "" && !blacklistFlagged)
             //Send message
         {
+            Context.Channel.TriggerTypingAsync();
+            await Task.Delay(5000);
             await ReplyAsync(aiText);
+            await ModifyOriginalResponseAsync(r => r.Content = "Moderation success, message sent");
         }
         else
         {
             var builder = new ComponentBuilder()
-                .WithButton("Override Filter", "aiChatApprove", ButtonStyle.Success);
+                .WithButton("Override Filter", "aiChatApprove", ButtonStyle.Danger);
+            await ModifyOriginalResponseAsync(r => r.Content = "Moderation fail, please confirm you want to send this message\n"+
+                                                               "Response: " + aiText);
             await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
         }
-
         //Log
-        var resultEmbed = await AuditLog.LogEvent(Context.Client as DiscordSocketClient,
-            "***Message Processed***\n" +
-            $"**Tokens:** Input {completionResult.Usage.PromptTokens} + Output {completionResult.Usage.CompletionTokens} = {completionResult.Usage.TotalTokens}\n" +
-            $"**Cost:** ${cost}\n" +
-            $"**Response:** {aiText}\n" +
-            $"**Blacklist Flagged:** {blacklistFlagged}\n" +
-            $"**Moderation Flagged:** {moderationFlagged}\n" + moderationString,
-            !(moderationFlagged || blacklistFlagged));
-        await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
-        await ModifyOriginalResponseAsync(m => m.Embed = resultEmbed.Build());
-        typingObj.Dispose();
+        var auditFields = new List<EmbedFieldBuilder>
+        {
+            new()
+            {
+                Name = "Tokens",
+                Value = completionResult.Usage.TotalTokens,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Cost",
+                Value = cost,
+                IsInline = true
+            },
+            aiText != null ? new EmbedFieldBuilder
+                {
+                    Name = "Response",
+                    Value = aiText,
+                    IsInline = true
+                }
+                : new EmbedFieldBuilder
+                {
+                    Name = "Response",
+                    Value = "No response",
+                    IsInline = true
+                },
+            new()
+            {
+                Name = "Filter Result",
+                Value = "If either of the filters were triggered",
+                IsInline = false
+            },
+            new()
+            {
+                Name = "Blacklist Flagged",
+                Value = blacklistFlagged,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Moderation Flagged",
+                Value = moderationFlagged,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Filter Values",
+                Value = "The values of all the categories as rated by the AI",
+                IsInline = false
+            },
+            new()
+            {
+                Name = "Hate",
+                Value = (decimal)categoryscores.Hate,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Hate Threatening",
+                Value = (decimal)categoryscores.HateThreatening,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Self Harm",
+                Value = (decimal)categoryscores.Selfharm,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Sexual",
+                Value = (decimal)categoryscores.Sexual,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Sexual Minors",
+                Value = (decimal)categoryscores.SexualMinors,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Violence",
+                Value = (decimal)categoryscores.Violence,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Violence Graphic",
+                Value = (decimal)categoryscores.Violencegraphic,
+                IsInline = true
+            }
+        };
+        AuditLog.LogEvent(Context.Client as DiscordSocketClient,
+            "***Message Processed***",
+            !(moderationFlagged || blacklistFlagged),auditFields);
     }
 
     private static string SanitizeString(string str)

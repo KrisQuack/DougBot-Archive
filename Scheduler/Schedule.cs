@@ -26,8 +26,8 @@ public class Schedule
             {
                 await Task.Delay(900000);
                 ReactionFilter.Filter(_Client, 100);
-                Queue.Create("Youtube", null, null, DateTime.UtcNow);
-                Queue.Create("Forum", null, null, DateTime.UtcNow);
+                await Youtube.CheckYoutube(_Client);
+                await Forums.Clean(_Client);
                 //If MainQueueTimeTracker is empty not empty, log values and clear tracker
                 if (_MainQueueTimeTracker.Count > 0)
                 {
@@ -73,12 +73,6 @@ public class Schedule
 
                         switch (queue.Type)
                         {
-                            case "Forum":
-                                await Forums.Clean(_Client);
-                                break;
-                            case "Youtube":
-                                await Youtube.CheckYoutube(_Client);
-                                break;
                             case "RemoveRole":
                                 await Role.Remove(_Client,
                                     ulong.Parse(param["guildId"]),

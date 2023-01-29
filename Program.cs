@@ -85,12 +85,18 @@ public class Program
                         Value = context.Channel.Name,
                         IsInline = true
                     },
-                    new()
-                    {
-                        Name = "Parameters",
-                        Value = string.Join("\n", data.Options.Select(x => $"{x.Name}: {x.Value}")),
-                        IsInline = true
-                    },
+                    data.Options.Count > 0 ? new EmbedFieldBuilder
+                        {
+                            Name = "Parameters",
+                            Value = string.Join("\n", data.Options.Select(x => $"{x.Name}: {x.Value}")),
+                            IsInline = true
+                        }
+                        : new EmbedFieldBuilder
+                        {
+                            Name = "null",
+                            Value = "null",
+                            IsInline = true
+                        },
                     result.ErrorReason != null ? new EmbedFieldBuilder
                         {
                             Name = "Error",

@@ -46,8 +46,7 @@ public class Schedule
             }
             catch (Exception ex)
             {
-                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}",
-                    false);
+                AuditLog.LogEvent($"Error Occured: {ex.Message}", false);
             }
     }
 
@@ -97,7 +96,8 @@ public class Schedule
                                     ulong.Parse(param["guildId"]),
                                     ulong.Parse(param["channelId"]),
                                     param["message"],
-                                    param["embedBuilders"]);
+                                    param["embedBuilders"],
+                                    bool.Parse(param["ping"]));
                                 break;
                             case "SendDM":
                                 await Message.SendDM(_Client,
@@ -119,8 +119,7 @@ public class Schedule
                     }
                     catch (Exception ex)
                     {
-                        AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}",
-                            false);
+                        AuditLog.LogEvent($"Error Occured: {ex.Message}", false);
                     }
 
                 //log time taken
@@ -129,8 +128,7 @@ public class Schedule
             }
             catch (Exception ex)
             {
-                AuditLog.LogEvent(_Client, $"Error Occured: {ex.Message}",
-                    false);
+                AuditLog.LogEvent($"Error Occured: {ex.Message}", false);
             }
     }
 }

@@ -15,22 +15,21 @@ public class SendDMCMD : InteractionModuleBase
         string message)
     {
         var settings = Setting.GetSettings();
-        var embeds = new List<EmbedBuilder>
-        {
-            new EmbedBuilder()
-                .WithDescription(message)
-                .WithColor(Color.Orange)
-                .WithAuthor(new EmbedAuthorBuilder()
-                    .WithName(Context.Guild.Name + " Mods")
-                    .WithIconUrl(Context.Guild.IconUrl))
-                .WithCurrentTimestamp()
-                .WithFooter(new EmbedFooterBuilder()
-                    .WithText("Any replies to this DM will be sent to the mod team"))
-        };
+        var embed = new EmbedBuilder()
+            .WithDescription(message)
+            .WithColor(Color.Orange)
+            .WithAuthor(new EmbedAuthorBuilder()
+                .WithName(Context.Guild.Name + " Mods")
+                .WithIconUrl(Context.Guild.IconUrl))
+            .WithCurrentTimestamp()
+            .WithFooter(new EmbedFooterBuilder()
+                .WithText("Any replies to this DM will be sent to the mod team"));
+        var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
+            new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         var dict = new Dictionary<string, string>
         {
             { "userId", user.Id.ToString() },
-            { "embedBuilders", JsonSerializer.Serialize(embeds) },
+            { "embedBuilders", embedJson },
             { "SenderId", Context.User.Id.ToString() }
         };
         var json = JsonSerializer.Serialize(dict);

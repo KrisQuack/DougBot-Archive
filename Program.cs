@@ -85,7 +85,8 @@ public class Program
                         Value = (context.Channel as SocketTextChannel).Mention,
                         IsInline = true
                     },
-                    data.Options.Count > 0 ? new EmbedFieldBuilder
+                    data.Options.Count > 0
+                        ? new EmbedFieldBuilder
                         {
                             Name = "Parameters",
                             Value = string.Join("\n", data.Options.Select(x => $"{x.Name}: {x.Value}")),
@@ -97,7 +98,8 @@ public class Program
                             Value = "null",
                             IsInline = true
                         },
-                    result.ErrorReason != null ? new EmbedFieldBuilder
+                    result.ErrorReason != null
+                        ? new EmbedFieldBuilder
                         {
                             Name = "Error",
                             Value = result.ErrorReason,
@@ -108,11 +110,9 @@ public class Program
                             Name = "null",
                             Value = "null",
                             IsInline = true
-                        },
+                        }
                 };
-                AuditLog.LogEvent(_Client,
-                    $"Command Ran",
-                    result.IsSuccess, auditFields);
+                AuditLog.LogEvent("Command Ran", result.IsSuccess, auditFields);
 
                 if (!result.IsSuccess)
                 {
@@ -143,14 +143,14 @@ public class Program
     {
         if (msg.Exception is CommandException cmdException)
         {
-            AuditLog.LogEvent(_Client,
+            AuditLog.LogEvent(
                 $"{cmdException.Command.Name} failed to execute in {cmdException.Context.Channel} by user {cmdException.Context.User.Username}.",
                 false);
-            AuditLog.LogEvent(_Client, cmdException.ToString(), false);
+            AuditLog.LogEvent(cmdException.ToString(), false);
         }
         else if (msg.Source == "Command")
         {
-            AuditLog.LogEvent(_Client, msg.Message, true);
+            AuditLog.LogEvent(msg.Message, true);
         }
         else
         {

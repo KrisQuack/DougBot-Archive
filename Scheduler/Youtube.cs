@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
@@ -16,7 +17,7 @@ public static class Youtube
             var settings = Setting.GetSettings();
             var channels = settings.YoutubeChannels.Split(Environment.NewLine);
             var youtube = new YoutubeClient();
-            var pinged = false;
+
             foreach (var channel in channels)
             {
                 var channelMention = channel.Split(';')[0];
@@ -31,22 +32,27 @@ public static class Youtube
                         .WithAuthor(ytChannel.Title, ytChannel.Thumbnails[0].Url, ytChannel.Url)
                         .WithTitle(video.Title)
                         .WithImageUrl(video.Thumbnails.OrderBy(t => t.Resolution.Area).Last().Url)
-                        .WithUrl(video.Url)
-                        .Build();
-                    var guild = client.GetGuild(Convert.ToUInt64(settings.guildID));
-                    var discChannel = guild.GetTextChannel(Convert.ToUInt64(settings.YoutubePostChannel));
-                    await discChannel.SendMessageAsync($"<@&{pingRole}>", embeds: new[] { embed },
-                        allowedMentions: AllowedMentions.All);
-                    pinged = true;
+                        .WithUrl(video.Url);
+                    var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
+                        new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+                    var dict = new Dictionary<string, string>
+                    {
+                        { "guildId", settings.guildID },
+                        { "channelId", settings.YoutubePostChannel },
+                        { "message", $"<@&{pingRole}>" },
+                        { "embedBuilders", embedJson },
+                        { "ping", "true" }
+                    };
+                    var json = JsonSerializer.Serialize(dict);
+                    Queue.Create("SendMessage", null, json, DateTime.UtcNow);
                 }
             }
 
-            if (pinged) Setting.UpdateLastChecked(DateTime.UtcNow);
+            Setting.UpdateLastChecked(DateTime.UtcNow);
         }
         catch (Exception ex)
         {
-            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}",
-                false);
+            AuditLog.LogEvent($"Error Occured: {ex.Message}", false);
         }
     }
 }

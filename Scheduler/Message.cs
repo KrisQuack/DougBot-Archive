@@ -2,20 +2,21 @@ using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
+using Exception = System.Exception;
 
 namespace DougBot.Scheduler;
 
 public static class Message
 {
     public static async Task Send(DiscordSocketClient client, ulong guidID, ulong channelId, string message,
-        string embedBuilders)
+        string embedBuilders, bool ping = false)
     {
         var guild = client.GetGuild(guidID);
         var channel = guild.Channels.FirstOrDefault(x => x.Id == channelId) as SocketTextChannel;
-        var embeds = new List<Embed>();
-        foreach (var embed in JsonSerializer.Deserialize<List<EmbedBuilder>>(embedBuilders))
-            embeds.Add(embed.Build());
-        await channel.SendMessageAsync(message, embeds: embeds.ToArray());
+        var embedBuildersList = JsonSerializer.Deserialize<List<EmbedBuilder>>(embedBuilders,
+            new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+        await channel.SendMessageAsync(message, embeds: embedBuildersList.Select(embed => embed.Build()).ToArray(),
+            allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
     }
 
     public static async Task SendDM(DiscordSocketClient client, ulong userId, ulong senderId, string embedBuilders)
@@ -27,7 +28,9 @@ public static class Message
         var user = await client.GetUserAsync(userId);
         var sender = await client.GetUserAsync(senderId);
         //Send user DM
-        var embeds = JsonSerializer.Deserialize<List<EmbedBuilder>>(embedBuilders).Select(embed => embed.Build())
+        var embeds = JsonSerializer
+            .Deserialize<List<EmbedBuilder>>(embedBuilders,
+                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } }).Select(embed => embed.Build())
             .ToList();
         var Status = "";
         var color = (Color)embeds[0].Color;
@@ -47,7 +50,8 @@ public static class Message
         }
 
         //Send status to mod channel
-        embeds = JsonSerializer.Deserialize<List<EmbedBuilder>>(embedBuilders).Select(embed =>
+        embeds = JsonSerializer.Deserialize<List<EmbedBuilder>>(embedBuilders,
+            new JsonSerializerOptions { Converters = { new ColorJsonConverter() } }).Select(embed =>
             embed.WithTitle(Status)
                 .WithColor(color)
                 .WithAuthor($"DM to {user.Username}#{user.Discriminator} ({user.Id}) from {sender.Username}",

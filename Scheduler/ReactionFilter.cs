@@ -20,6 +20,7 @@ public static class ReactionFilter
             emoteWhitelist.AddRange(settings.reactionFilterEmotes.Split(','));
             var channels = guild.Channels.Where(c => settings.reactionFilterChannels.Contains(c.Id.ToString()))
                 .ToList();
+            var reactsRemoved = new Dictionary<string, string>();
             foreach (SocketTextChannel channel in channels)
             {
                 //Get messages
@@ -64,8 +65,7 @@ public static class ReactionFilter
         }
         catch (Exception ex)
         {
-            AuditLog.LogEvent(client, $"Error Occured: {ex.Message}",
-                false);
+            AuditLog.LogEvent($"Error Occured: {ex.Message}", false);
         }
     }
 }

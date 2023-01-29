@@ -50,12 +50,15 @@ public class Events
             embeds.AddRange(message.Attachments.Select(attachment =>
                 new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
                     .WithUrl(attachment.Url)));
+            var embedJson = JsonSerializer.Serialize(embeds,
+                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
             var dict = new Dictionary<string, string>
             {
                 { "guildId", settings.guildID },
                 { "channelId", settings.dmReceiptChannel },
                 { "message", "" },
-                { "embedBuilders", JsonSerializer.Serialize(embeds) }
+                { "embedBuilders", embedJson },
+                { "ping", "false" }
             };
             var json = JsonSerializer.Serialize(dict);
             Queue.Create("SendMessage", null, json, DateTime.UtcNow);

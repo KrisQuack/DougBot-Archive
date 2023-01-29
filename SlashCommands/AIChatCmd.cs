@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Systems;
 using OpenAI.GPT3;
@@ -99,7 +98,6 @@ public class AIChatCmd : InteractionModuleBase
         //Respond
         await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
         if (!moderationFlagged && string.IsNullOrWhiteSpace(aiText) && !blacklistFlagged)
-            //Send message
         {
             Context.Channel.TriggerTypingAsync();
             await Task.Delay(5000);
@@ -110,10 +108,12 @@ public class AIChatCmd : InteractionModuleBase
         {
             var builder = new ComponentBuilder()
                 .WithButton("Override Filter", "aiChatApprove", ButtonStyle.Danger);
-            await ModifyOriginalResponseAsync(r => r.Content = "Moderation fail, please confirm you want to send this message\n"+
-                                                               "Response: " + aiText);
+            await ModifyOriginalResponseAsync(r => r.Content =
+                "Moderation fail, please confirm you want to send this message\n" +
+                "Response: " + aiText);
             await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
         }
+
         //Log
         var auditFields = new List<EmbedFieldBuilder>
         {
@@ -129,7 +129,8 @@ public class AIChatCmd : InteractionModuleBase
                 Value = cost,
                 IsInline = true
             },
-            string.IsNullOrEmpty(aiText) ? new EmbedFieldBuilder
+            string.IsNullOrEmpty(aiText)
+                ? new EmbedFieldBuilder
                 {
                     Name = "Response",
                     Value = aiText,
@@ -208,9 +209,8 @@ public class AIChatCmd : InteractionModuleBase
                 IsInline = true
             }
         };
-        AuditLog.LogEvent(Context.Client as DiscordSocketClient,
-            "***Message Processed***",
-            !(moderationFlagged || blacklistFlagged),auditFields);
+        AuditLog.LogEvent("***Message Processed***",
+            !(moderationFlagged || blacklistFlagged), auditFields);
     }
 
     private static string SanitizeString(string str)

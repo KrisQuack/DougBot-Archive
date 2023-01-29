@@ -9,7 +9,7 @@ public class AiChatInteraction : InteractionModuleBase
     public async Task ComponentResponse()
     {
         var interaction = Context.Interaction as SocketMessageComponent;
-        var message = interaction.Message.Embeds.First().Description.Split("\n")[3].Replace("**Response:** ", "");
+        var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
         await ReplyAsync(message);
         await RespondAsync("Override sent!", ephemeral: true);
     }

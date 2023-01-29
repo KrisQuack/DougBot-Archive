@@ -129,7 +129,7 @@ public class AIChatCmd : InteractionModuleBase
                 Value = cost,
                 IsInline = true
             },
-            string.IsNullOrEmpty(aiText)
+            !string.IsNullOrEmpty(aiText)
                 ? new EmbedFieldBuilder
                 {
                     Name = "Response",

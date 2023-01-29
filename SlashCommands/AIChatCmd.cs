@@ -98,7 +98,7 @@ public class AIChatCmd : InteractionModuleBase
         var blacklistFlagged = settings.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
         //Respond
         await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
-        if (!moderationFlagged && aiText != "" && !blacklistFlagged)
+        if (!moderationFlagged && string.IsNullOrWhiteSpace(aiText) && !blacklistFlagged)
             //Send message
         {
             Context.Channel.TriggerTypingAsync();
@@ -129,7 +129,7 @@ public class AIChatCmd : InteractionModuleBase
                 Value = cost,
                 IsInline = true
             },
-            aiText != null ? new EmbedFieldBuilder
+            string.IsNullOrEmpty(aiText) ? new EmbedFieldBuilder
                 {
                     Name = "Response",
                     Value = aiText,

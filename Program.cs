@@ -76,13 +76,13 @@ public class Program
                     new()
                     {
                         Name = "User",
-                        Value = context.User.Username,
+                        Value = context.User.Mention,
                         IsInline = true
                     },
                     new()
                     {
                         Name = "Channel",
-                        Value = context.Channel.Name,
+                        Value = (context.Channel as SocketTextChannel).Mention,
                         IsInline = true
                     },
                     data.Options.Count > 0 ? new EmbedFieldBuilder

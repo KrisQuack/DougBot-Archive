@@ -97,7 +97,7 @@ public class AIChatCmd : InteractionModuleBase
         var blacklistFlagged = settings.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
         //Respond
         await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
-        if (!moderationFlagged && string.IsNullOrWhiteSpace(aiText) && !blacklistFlagged)
+        if (!moderationFlagged && !string.IsNullOrWhiteSpace(aiText) && !blacklistFlagged)
         {
             Context.Channel.TriggerTypingAsync();
             await Task.Delay(5000);

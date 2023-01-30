@@ -17,6 +17,7 @@ public static class Youtube
             var settings = Setting.GetSettings();
             var channels = settings.YoutubeChannels.Split(Environment.NewLine);
             var youtube = new YoutubeClient();
+            var pinged = false;
 
             foreach (var channel in channels)
             {
@@ -45,10 +46,14 @@ public static class Youtube
                     };
                     var json = JsonSerializer.Serialize(dict);
                     Queue.Create("SendMessage", null, json, DateTime.UtcNow);
+                    pinged = true;
                 }
             }
-
-            Setting.UpdateLastChecked(DateTime.UtcNow);
+            //Log if a ping happened
+            if (pinged)
+            {
+                Setting.UpdateLastChecked(DateTime.UtcNow);
+            }
         }
         catch (Exception ex)
         {

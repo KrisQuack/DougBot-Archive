@@ -51,7 +51,6 @@ public class Program
             //Register Plugins
             Scheduler.Scheduler.Schedule(_Client);
             Events.Monitor(_Client);
-            ReactionFilter.Filter(_Client);
             CleanForums.Clean(_Client);
             Youtube.CheckYoutube();
             //Register Commands

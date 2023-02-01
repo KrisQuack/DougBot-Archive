@@ -104,12 +104,6 @@ public static class ReactionFilter
                                         Name = "Channel",
                                         Value = channel.Mention,
                                         IsInline = true
-                                    },
-                                    new()
-                                    {
-                                        Name = "Message",
-                                        Value = message.Source,
-                                        IsInline = true
                                     }
                                 };
                                 auditFields.AddRange(removedReactions.Select(reaction => new EmbedFieldBuilder() { Name = reaction.Key, Value = reaction.Value }));

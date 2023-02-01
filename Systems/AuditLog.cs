@@ -6,10 +6,12 @@ namespace DougBot.Systems;
 
 public static class AuditLog
 {
-    public static async Task LogEvent(string content, bool status,
+    public static async Task LogEvent(string content, string guildId, bool status,
         List<EmbedFieldBuilder> fields = null)
     {
-        var settings = Setting.GetSettings();
+        await using var db = new Database.DougBotContext();
+        var dbGuild = await db.Guilds.FindAsync(guildId);
+
         var color = status ? Color.Green : Color.Red;
         var embed = new EmbedBuilder()
             .WithDescription(content)
@@ -23,13 +25,20 @@ public static class AuditLog
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         var dict = new Dictionary<string, string>
         {
-            { "guildId", settings.guildID },
-            { "channelId", settings.logChannel },
+            { "guildId", guildId },
+            { "channelId", dbGuild.LogChannel },
             { "message", "" },
             { "embedBuilders", embedJson },
             { "ping", "true" }
         };
         var json = JsonSerializer.Serialize(dict);
-        Queue.Create("SendMessage", null, json, DateTime.UtcNow);
+        var queue = new Queue()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = "SendMessage",
+            Keys = json
+        };
+        await db.Queues.AddAsync(queue);
+        await db.SaveChangesAsync();
     }
 }

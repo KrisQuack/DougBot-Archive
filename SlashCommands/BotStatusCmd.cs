@@ -14,15 +14,15 @@ public class BotStatusCmd : InteractionModuleBase
     {
         if (Context.Guild != null)
         {
+            await using var db = new Database.DougBotContext();
             var uptime = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
-            var QueueCount = Queue.GetAll().Count;
-            var DueCount = Queue.GetDue().Count;
+            var QueueCount = db.Queues.Count();
+            var DueCount = db.Queues.Count(q => q.DueAt < DateTime.UtcNow);
             var embed = new EmbedBuilder()
                 .WithTitle("Bot Status")
                 .AddField("Uptime", uptime.ToString("hh\\:mm\\:ss"))
-                .AddField("Threads", Process.GetCurrentProcess().Threads.Count)
-                .AddField("Pending Jobs", QueueCount)
-                .AddField("Due Jobs", DueCount)
+                .AddField("Pending Jobs", QueueCount, true)
+                .AddField("Due Jobs", DueCount, true)
                 .Build();
             await RespondAsync(embeds: new[] { embed });
         }

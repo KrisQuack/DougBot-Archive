@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Scheduler;
 using DougBot.Systems;
+using Microsoft.EntityFrameworkCore;
 
 namespace DougBot;
 
@@ -25,8 +26,6 @@ public class Program
 
     private async Task MainAsync()
     {
-        //Load Settings
-        var settings = Setting.GetSettings();
         //Start discord bot
         var config = new DiscordSocketConfig
         {
@@ -38,7 +37,7 @@ public class Program
         _Client = new DiscordSocketClient(config);
         _Client.Log += Log;
         _Client.Ready += Ready;
-        await _Client.LoginAsync(TokenType.Bot, settings.Token);
+        await _Client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN"));
         await _Client.StartAsync();
         //Block Task
         await Task.Delay(-1);
@@ -50,8 +49,11 @@ public class Program
         {
             _FirstStart = false;
             //Register Plugins
-            var scheduler = new Schedule(_Client);
-            var handler = new Events(_Client);
+            Scheduler.Scheduler.Schedule(_Client);
+            Events.Monitor(_Client);
+            ReactionFilter.Filter(_Client);
+            CleanForums.Clean(_Client);
+            Youtube.CheckYoutube();
             //Register Commands
             _Service = new InteractionService(_Client.Rest);
             _Service.Log += Log;
@@ -112,7 +114,7 @@ public class Program
                             IsInline = true
                         }
                 };
-                AuditLog.LogEvent("Command Ran", result.IsSuccess, auditFields);
+                AuditLog.LogEvent("Command Ran",context.Guild.Id.ToString(), result.IsSuccess, auditFields);
 
                 if (!result.IsSuccess)
                 {
@@ -145,12 +147,9 @@ public class Program
         {
             AuditLog.LogEvent(
                 $"{cmdException.Command.Name} failed to execute in {cmdException.Context.Channel} by user {cmdException.Context.User.Username}.",
+                cmdException.Context.Guild.Id.ToString(),
                 false);
-            AuditLog.LogEvent(cmdException.ToString(), false);
-        }
-        else if (msg.Source == "Command")
-        {
-            AuditLog.LogEvent(msg.Message, true);
+            AuditLog.LogEvent(cmdException.ToString(), cmdException.Context.Guild.Id.ToString(), false);
         }
         else
         {

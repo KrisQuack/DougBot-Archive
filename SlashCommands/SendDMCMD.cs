@@ -14,7 +14,6 @@ public class SendDMCMD : InteractionModuleBase
         [Summary(description: "Message to send")]
         string message)
     {
-        var settings = Setting.GetSettings();
         var embed = new EmbedBuilder()
             .WithDescription(message)
             .WithColor(Color.Orange)
@@ -28,12 +27,22 @@ public class SendDMCMD : InteractionModuleBase
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         var dict = new Dictionary<string, string>
         {
+            { "guildId", Context.Guild.Id.ToString() },
             { "userId", user.Id.ToString() },
             { "embedBuilders", embedJson },
             { "SenderId", Context.User.Id.ToString() }
         };
         var json = JsonSerializer.Serialize(dict);
-        Queue.Create("SendDM", null, json, DateTime.UtcNow);
-        await RespondAsync($"DM queued, check <#{settings.dmReceiptChannel}>", ephemeral: true);
+        var queue = new Queue()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = "SendDM",
+            Keys = json
+        };
+        await using var db = new Database.DougBotContext();
+        var dbGuild = await db.Guilds.FindAsync(Context.Guild.Id.ToString());
+        await db.Queues.AddAsync(queue);
+        await db.SaveChangesAsync();
+        await RespondAsync($"DM queued, check <#{dbGuild.DmReceiptChannel}>", ephemeral: true);
     }
 }

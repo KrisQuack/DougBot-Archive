@@ -22,7 +22,8 @@ public class AIChatCmd : InteractionModuleBase
             "The following is a conversation with an english speaking AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.")
     {
         await RespondAsync("Command received", ephemeral: true);
-        var settings = Setting.GetSettings();
+        await using var db = new Database.DougBotContext();
+        var dbGuild = await db.Guilds.FindAsync(Context.Guild.Id.ToString());
         //Get chat to send
         var messages = await Context.Channel.GetMessagesAsync(procCount).FlattenAsync();
         var queryString = pretext + "\n\n";
@@ -63,7 +64,7 @@ public class AIChatCmd : InteractionModuleBase
         //Query API for chat response
         var openAiService = new OpenAIService(new OpenAiOptions
         {
-            ApiKey = settings.OpenAiToken
+            ApiKey = dbGuild.OpenAiToken
         });
         var completionResult = await openAiService.Completions.CreateCompletion(new CompletionCreateRequest
         {
@@ -94,7 +95,7 @@ public class AIChatCmd : InteractionModuleBase
                                 (decimal)categoryscores.SexualMinors > (decimal)0.005 ||
                                 (decimal)categoryscores.Violence > (decimal)0.01 ||
                                 (decimal)categoryscores.Violencegraphic > (decimal)0.005;
-        var blacklistFlagged = settings.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
+        var blacklistFlagged = dbGuild.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
         //Respond
         await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
         if (!moderationFlagged && !string.IsNullOrWhiteSpace(aiText) && !blacklistFlagged)
@@ -209,7 +210,7 @@ public class AIChatCmd : InteractionModuleBase
                 IsInline = true
             }
         };
-        AuditLog.LogEvent("***Message Processed***",
+        AuditLog.LogEvent("***Message Processed***", Context.Guild.Id.ToString(),
             !(moderationFlagged || blacklistFlagged), auditFields);
     }
 

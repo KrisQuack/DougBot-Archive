@@ -8,9 +8,9 @@ namespace DougBot.Systems;
 
 public class Events
 {
-    private readonly DiscordSocketClient _Client;
+    private static DiscordSocketClient _Client;
 
-    public Events(DiscordSocketClient client)
+    public static async Task Monitor(DiscordSocketClient client)
     {
         _Client = client;
         client.MessageReceived += MessageReceivedHandler;
@@ -18,23 +18,35 @@ public class Events
         Console.WriteLine("EventHandler Initialized");
     }
 
-    private async Task UserJoinedHandler(SocketGuildUser user)
+    private static async Task UserJoinedHandler(SocketGuildUser user)
     {
         var dict = new Dictionary<string, string>
         {
             { "guildId", user.Guild.Id.ToString() },
             { "userId", user.Id.ToString() }
         };
-        var roleJson = JsonSerializer.Serialize(dict);
-        Queue.Create("FreshCheck", null, roleJson, DateTime.UtcNow.AddMinutes(11));
+        var json = JsonSerializer.Serialize(dict);
+        var queue = new Queue()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = "FreshCheck",
+            Keys = json,
+            DueAt = DateTime.UtcNow.AddMinutes(10)
+        };
+        await using var db = new Database.DougBotContext();
+        await db.Queues.AddAsync(queue);
+        await db.SaveChangesAsync();
     }
 
-    private async Task MessageReceivedHandler(SocketMessage message)
+    private static async Task MessageReceivedHandler(SocketMessage message)
     {
-        var settings = Setting.GetSettings();
         if (message.Channel is SocketDMChannel && message.Author.MutualGuilds.Any() &&
             message.Author.Id != _Client.CurrentUser.Id)
         {
+            //Get guilds
+            await using var db = new Database.DougBotContext();
+            var mutualGuilds = message.Author.MutualGuilds.Select(g => g.Id.ToString());
+            var dbGuilds = db.Guilds.Where(g => mutualGuilds.Contains(g.Id));
             var embeds = new List<EmbedBuilder>();
             //Main embed
             var colorHash = new ColorHash();
@@ -52,16 +64,27 @@ public class Events
                     .WithUrl(attachment.Url)));
             var embedJson = JsonSerializer.Serialize(embeds,
                 new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-            var dict = new Dictionary<string, string>
+            //Send message to each guild the user is in
+            foreach (var dbGuild in dbGuilds)
             {
-                { "guildId", settings.guildID },
-                { "channelId", settings.dmReceiptChannel },
-                { "message", "" },
-                { "embedBuilders", embedJson },
-                { "ping", "false" }
-            };
-            var json = JsonSerializer.Serialize(dict);
-            Queue.Create("SendMessage", null, json, DateTime.UtcNow);
+                var dict = new Dictionary<string, string>
+                {
+                    { "guildId", dbGuild.Id },
+                    { "channelId", dbGuild.DmReceiptChannel },
+                    { "message", "" },
+                    { "embedBuilders", embedJson },
+                    { "ping", "false" }
+                };
+                var json = JsonSerializer.Serialize(dict);
+                var queue = new Queue()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Type = "SendMessage",
+                    Keys = json
+                };
+                await db.Queues.AddAsync(queue);
+            }
+            await db.SaveChangesAsync();
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
@@ -12,7 +13,20 @@ public class SetStatusCmd : InteractionModuleBase
     public async Task SetStatus([Summary(description: "What should the status be")] string status)
     {
         //Set the bots status
-        Queue.Create("SetStatus", status, null, DateTime.UtcNow);
+        var dict = new Dictionary<string, string>
+        {
+            { "status", status },
+        };
+        var json = JsonSerializer.Serialize(dict);
+        var queue = new Queue()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = "SetStatus",
+            Keys = json
+        };
+        await using var db = new Database.DougBotContext();
+        await db.Queues.AddAsync(queue);
+        await db.SaveChangesAsync();
         await RespondAsync($"Status set to `{status}` and will update shortly");
     }
 }

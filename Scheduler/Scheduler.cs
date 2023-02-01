@@ -14,14 +14,14 @@ public class Scheduler
             try
             {
                 await Task.Delay(1000);
+                //Run reaction filter
+                await ReactionFilter.Filter(Client);
                 //Load Queue
                 await using var db = new Database.DougBotContext();
                 //Run items 
                 foreach (var queue in db.Queues.Where(q => q.DueAt < DateTime.UtcNow).OrderBy(q => q.Priority))
                     try
                     {
-                        //Run reaction filter
-                        await ReactionFilter.Filter(Client);
                         //Run queue
                         var param = new Dictionary<string, string>();
                         if (queue.Keys != null)

@@ -33,6 +33,12 @@ public static class Youtube
                         //Check if video was pinged before or if the bot was just started
                         if (video.Id.ToString() != dbYoutube.LastVideoId)
                         {
+                            //Set mention role, special block to allow VOD filtering for DougDogDougDog
+                            var mentionRole = dbYoutube.MentionRole;
+                            if (dbYoutube.ChannelId == "UCzL0SBEypNk4slpzSbxo01g" && !video.Title.Contains("VOD"))
+                            {
+                                mentionRole = "812501073289805884";
+                            }
                             //Build the ping embed
                             var embed = new EmbedBuilder()
                                 .WithAuthor(ytChannel.Title, ytChannel.Thumbnails[0].Url, ytChannel.Url)
@@ -46,7 +52,7 @@ public static class Youtube
                             {
                                 { "guildId", dbGuild.Id },
                                 { "channelId", dbYoutube.PostChannel },
-                                { "message", $"<@&{dbYoutube.MentionRole}>" },
+                                { "message", $"<@&{mentionRole}>" },
                                 { "embedBuilders", embedJson },
                                 { "ping", "true" }
                             };

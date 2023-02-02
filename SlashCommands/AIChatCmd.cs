@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Systems;
 using OpenAI.GPT3;
@@ -217,5 +218,17 @@ public class AIChatCmd : InteractionModuleBase
     private static string SanitizeString(string str)
     {
         return Regex.Replace(str, "[^a-zA-Z0-9 ,?'`.\"]", "", RegexOptions.Compiled);
+    }
+}
+
+public class AiChatInteraction : InteractionModuleBase
+{
+    [ComponentInteraction("aiChatApprove")]
+    public async Task ComponentResponse()
+    {
+        var interaction = Context.Interaction as SocketMessageComponent;
+        var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
+        await ReplyAsync(message);
+        await RespondAsync("Override sent!", ephemeral: true);
     }
 }

@@ -8,7 +8,6 @@ namespace DougBot.Scheduler;
 
 public static class Youtube
 {
-    private static bool FirstRun = true;
     public static async Task CheckYoutube()
     {
         Console.WriteLine("Youtube Initialized");
@@ -32,7 +31,7 @@ public static class Youtube
                         var lastUpload = uploads.FirstOrDefault();
                         var video = await youtube.Videos.GetAsync(lastUpload.Id);
                         //Check if video was pinged before or if the bot was just started
-                        if (video.Id.ToString() != dbYoutube.LastVideoId && !FirstRun)
+                        if (video.Id.ToString() != dbYoutube.LastVideoId)
                         {
                             //Build the ping embed
                             var embed = new EmbedBuilder()
@@ -64,7 +63,6 @@ public static class Youtube
                         db.SaveChangesAsync();
                     }
                 }
-                FirstRun = false;
             }
             catch (Exception ex)
             {

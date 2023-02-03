@@ -45,9 +45,9 @@ public static class CleanForums
                                     },
                                     new()
                                     {
-                                        Name = "Thread",
-                                        Value = thread.Mention,
-                                        IsInline = true
+                                        Name = "Title",
+                                        Value = thread.Name,
+                                        IsInline = false
                                     }
                                 });
                             } 

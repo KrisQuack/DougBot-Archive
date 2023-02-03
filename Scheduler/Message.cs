@@ -26,8 +26,7 @@ public static class Message
     public static async Task SendDM(DiscordSocketClient client,ulong GuildId, ulong UserId, ulong SenderId, string EmbedBuilders)
     {
         //Get the guild settings
-        await using var db = new Database.DougBotContext();
-        var dbGuild = await db.Guilds.FindAsync(GuildId.ToString());
+        var dbGuild = await Guild.GetGuild(GuildId.ToString());
         //Get the guild, channel, user and sender
         var guild = client.Guilds.FirstOrDefault(g => g.Id == GuildId);
         var channel =

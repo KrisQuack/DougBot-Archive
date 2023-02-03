@@ -14,8 +14,7 @@ public static class CleanForums
             await Task.Delay(3600000);
             try
             {
-                await using var db = new Database.DougBotContext();
-                var dbGuilds = db.Guilds.ToList();
+                var dbGuilds = await Guild.GetGuilds();
                 foreach (var dbGuild in dbGuilds)
                 {
                     //Get forums from client

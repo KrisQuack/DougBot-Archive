@@ -23,8 +23,7 @@ public class AIChatCmd : InteractionModuleBase
             "The following is a conversation with an english speaking AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.")
     {
         await RespondAsync("Command received", ephemeral: true);
-        await using var db = new Database.DougBotContext();
-        var dbGuild = await db.Guilds.FindAsync(Context.Guild.Id.ToString());
+        var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         //Get chat to send
         var messages = await Context.Channel.GetMessagesAsync(procCount).FlattenAsync();
         var queryString = pretext + "\n\n";

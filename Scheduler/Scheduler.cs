@@ -13,76 +13,68 @@ public class Scheduler
         while (true)
             try
             {
-                await Task.Delay(1000);
-                //Run reaction filter
-                await ReactionFilter.Filter(Client);
-                //Load Queue
-                await using var db = new Database.DougBotContext();
+                await Task.Delay(500);
                 //Run items 
-                foreach (var queue in db.Queues.Where(q => q.DueAt < DateTime.UtcNow).OrderBy(q => q.Priority))
+                var queueItems = await Queue.GetQueuesDue(10);
+                foreach (var queue in queueItems)
                     try
                     {
                         //Run queue
-                        var param = new Dictionary<string, string>();
-                        if (queue.Keys != null)
-                            param = JsonSerializer.Deserialize<Dictionary<string, string>>(queue.Keys);
-
                         switch (queue.Type)
                         {
                             case "RemoveRole":
                                 await Role.Remove(Client,
-                                    ulong.Parse(param["guildId"]),
-                                    ulong.Parse(param["userId"]),
-                                    ulong.Parse(param["roleId"]));
+                                    ulong.Parse(queue.Keys["guildId"]),
+                                    ulong.Parse(queue.Keys["userId"]),
+                                    ulong.Parse(queue.Keys["roleId"]));
                                 break;
                             case "AddRole":
                                 await Role.Add(Client,
-                                    ulong.Parse(param["guildId"]),
-                                    ulong.Parse(param["userId"]),
-                                    ulong.Parse(param["roleId"]));
+                                    ulong.Parse(queue.Keys["guildId"]),
+                                    ulong.Parse(queue.Keys["userId"]),
+                                    ulong.Parse(queue.Keys["roleId"]));
                                 break;
                             case "RemoveReaction":
                                 await Reaction.Remove(Client,
-                                    ulong.Parse(param["guildId"]),
-                                    ulong.Parse(param["channelId"]),
-                                    ulong.Parse(param["messageId"]),
-                                    param["emoteName"]);
+                                    ulong.Parse(queue.Keys["guildId"]),
+                                    ulong.Parse(queue.Keys["channelId"]),
+                                    ulong.Parse(queue.Keys["messageId"]),
+                                    queue.Keys["emoteName"]);
                                 break;
                             case "SendMessage":
                                 await Message.Send(Client,
-                                    ulong.Parse(param["guildId"]),
-                                    ulong.Parse(param["channelId"]),
-                                    param["message"],
-                                    param["embedBuilders"],
-                                    bool.Parse(param["ping"]));
+                                    ulong.Parse(queue.Keys["guildId"]),
+                                    ulong.Parse(queue.Keys["channelId"]),
+                                    queue.Keys["message"],
+                                    queue.Keys["embedBuilders"],
+                                    bool.Parse(queue.Keys["ping"]));
                                 break;
                             case "SendDM":
                                 await Message.SendDM(Client,
-                                    ulong.Parse(param["guildId"]),
-                                    ulong.Parse(param["userId"]),
-                                    ulong.Parse(param["SenderId"]),
-                                    param["embedBuilders"]);
+                                    ulong.Parse(queue.Keys["guildId"]),
+                                    ulong.Parse(queue.Keys["userId"]),
+                                    ulong.Parse(queue.Keys["SenderId"]),
+                                    queue.Keys["embedBuilders"]);
                                 break;
                             case "FreshCheck":
                                 await Onboarding.FreshmanCheck(Client,
-                                    ulong.Parse(param["guildId"]),
-                                    ulong.Parse(param["userId"]));
+                                    ulong.Parse(queue.Keys["guildId"]),
+                                    ulong.Parse(queue.Keys["userId"]));
                                 break;
                             case "SetStatus":
-                                await Client.SetGameAsync(param["status"]);
+                                await Client.SetGameAsync(queue.Keys["status"]);
                                 break;
                         }
-                        db.Queues.Remove(queue);
+                        await queue.Remove();
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex);
                     }
-                await db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex);
             }
     }
 }

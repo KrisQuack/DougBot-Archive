@@ -17,16 +17,7 @@ public class SetStatusCmd : InteractionModuleBase
         {
             { "status", status },
         };
-        var json = JsonSerializer.Serialize(dict);
-        var queue = new Queue()
-        {
-            Id = Guid.NewGuid().ToString(),
-            Type = "SetStatus",
-            Keys = json
-        };
-        await using var db = new Database.DougBotContext();
-        await db.Queues.AddAsync(queue);
-        await db.SaveChangesAsync();
+        await new Queue("SetStatus", null, dict, null).Insert();
         await RespondAsync($"Status set to `{status}` and will update shortly");
     }
 }

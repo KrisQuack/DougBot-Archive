@@ -25,17 +25,7 @@ public class Events
             { "guildId", user.Guild.Id.ToString() },
             { "userId", user.Id.ToString() }
         };
-        var json = JsonSerializer.Serialize(dict);
-        var queue = new Queue()
-        {
-            Id = Guid.NewGuid().ToString(),
-            Type = "FreshCheck",
-            Keys = json,
-            DueAt = DateTime.UtcNow.AddMinutes(10)
-        };
-        await using var db = new Database.DougBotContext();
-        await db.Queues.AddAsync(queue);
-        await db.SaveChangesAsync();
+        await new Queue("FreshCheck", null, dict, DateTime.UtcNow.AddMinutes(10)).Insert();
     }
 
     private static async Task MessageReceivedHandler(SocketMessage message)
@@ -44,9 +34,9 @@ public class Events
             message.Author.Id != _Client.CurrentUser.Id)
         {
             //Get guilds
-            await using var db = new Database.DougBotContext();
             var mutualGuilds = message.Author.MutualGuilds.Select(g => g.Id.ToString());
-            var dbGuilds = db.Guilds.Where(g => mutualGuilds.Contains(g.Id));
+            var dbGuilds = await Guild.GetGuilds();
+            dbGuilds = dbGuilds.Where(g => mutualGuilds.Contains(g.Id)).ToList();
             var embeds = new List<EmbedBuilder>();
             //Main embed
             var colorHash = new ColorHash();
@@ -75,16 +65,8 @@ public class Events
                     { "embedBuilders", embedJson },
                     { "ping", "false" }
                 };
-                var json = JsonSerializer.Serialize(dict);
-                var queue = new Queue()
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Type = "SendMessage",
-                    Keys = json
-                };
-                await db.Queues.AddAsync(queue);
+                await new Queue("SendMessage", null, dict, null).Insert();
             }
-            await db.SaveChangesAsync();
         }
     }
 }

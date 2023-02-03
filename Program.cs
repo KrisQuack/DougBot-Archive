@@ -53,6 +53,7 @@ public class Program
             Events.Monitor(_Client);
             CleanForums.Clean(_Client);
             Youtube.CheckYoutube();
+            ReactionFilter.Monitor(_Client);
             //Register Commands
             _Service = new InteractionService(_Client.Rest);
             _Service.Log += Log;

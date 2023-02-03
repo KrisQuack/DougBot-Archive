@@ -14,10 +14,10 @@ public class BotStatusCmd : InteractionModuleBase
     {
         if (Context.Guild != null)
         {
-            await using var db = new Database.DougBotContext();
             var uptime = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
-            var QueueCount = db.Queues.Count();
-            var DueCount = db.Queues.Count(q => q.DueAt < DateTime.UtcNow);
+            var queue = await Queue.GetQueues();
+            var QueueCount = queue.Count;
+            var DueCount = queue.Count(q => q.DueAt < DateTime.UtcNow);
             var embed = new EmbedBuilder()
                 .WithTitle("Bot Status")
                 .AddField("Uptime", uptime.ToString("hh\\:mm\\:ss"))

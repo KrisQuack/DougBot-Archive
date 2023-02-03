@@ -32,17 +32,7 @@ public class SendDMCMD : InteractionModuleBase
             { "embedBuilders", embedJson },
             { "SenderId", Context.User.Id.ToString() }
         };
-        var json = JsonSerializer.Serialize(dict);
-        var queue = new Queue()
-        {
-            Id = Guid.NewGuid().ToString(),
-            Type = "SendDM",
-            Keys = json
-        };
-        await using var db = new Database.DougBotContext();
-        var dbGuild = await db.Guilds.FindAsync(Context.Guild.Id.ToString());
-        await db.Queues.AddAsync(queue);
-        await db.SaveChangesAsync();
-        await RespondAsync($"DM queued, check <#{dbGuild.DmReceiptChannel}>", ephemeral: true);
+        await new Queue("SendDM", 0, dict, null).Insert();
+        await RespondAsync("DM Queued", ephemeral: true);
     }
 }

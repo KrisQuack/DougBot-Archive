@@ -19,8 +19,7 @@ public static class Youtube
                 //Set up youtube client
                 var youtube = new YoutubeClient();
                 //Get all guilds and loop them
-                await using var db = new Database.DougBotContext();
-                var dbGuilds = db.Guilds;
+                var dbGuilds = await Guild.GetGuilds();
                 foreach (var dbGuild in dbGuilds)
                 {
                     foreach (var dbYoutube in dbGuild.YoutubeSettings)
@@ -56,17 +55,10 @@ public static class Youtube
                                 { "embedBuilders", embedJson },
                                 { "ping", "true" }
                             };
-                            var json = JsonSerializer.Serialize(dict);
-                            var queue = new Queue()
-                            {
-                                Id = Guid.NewGuid().ToString(),
-                                Type = "SendMessage",
-                                Keys = json
-                            };
-                            await db.Queues.AddAsync(queue);
+                            await new Queue("SendMessage", null, dict, null).Insert();
                         }
                         dbYoutube.LastVideoId = video.Id;
-                        db.SaveChangesAsync();
+                        await dbGuild.Update();
                     }
                 }
             }

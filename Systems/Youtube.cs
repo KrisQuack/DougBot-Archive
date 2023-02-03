@@ -25,8 +25,8 @@ public static class Youtube
                     foreach (var dbYoutube in dbGuild.YoutubeSettings)
                     {
                         //Get youtube details
-                        var ytChannel = await youtube.Channels.GetAsync(dbYoutube.ChannelId);
-                        var uploads = await youtube.Channels.GetUploadsAsync(dbYoutube.ChannelId);
+                        var ytChannel = await youtube.Channels.GetAsync(dbYoutube.Id);
+                        var uploads = await youtube.Channels.GetUploadsAsync(dbYoutube.Id);
                         var lastUpload = uploads.FirstOrDefault();
                         var video = await youtube.Videos.GetAsync(lastUpload.Id);
                         //Check if video was pinged before or if the bot was just started
@@ -34,7 +34,7 @@ public static class Youtube
                         {
                             //Set mention role, special block to allow VOD filtering for DougDogDougDog
                             var mentionRole = dbYoutube.MentionRole;
-                            if (dbYoutube.ChannelId == "UCzL0SBEypNk4slpzSbxo01g" && !video.Title.Contains("VOD"))
+                            if (dbYoutube.Id == "UCzL0SBEypNk4slpzSbxo01g" && !video.Title.Contains("VOD"))
                             {
                                 mentionRole = "812501073289805884";
                             }
@@ -56,15 +56,15 @@ public static class Youtube
                                 { "ping", "true" }
                             };
                             await new Queue("SendMessage", null, dict, null).Insert();
+                            dbYoutube.LastVideoId = video.Id;
+                            await dbGuild.Update();
                         }
-                        dbYoutube.LastVideoId = video.Id;
-                        await dbGuild.Update();
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex);
             }
         }
     }

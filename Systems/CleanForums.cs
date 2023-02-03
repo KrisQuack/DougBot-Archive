@@ -31,17 +31,34 @@ public static class CleanForums
                         {
                             //Check if the most recent message is older than 2 days and close if so
                             var message = await thread.GetMessagesAsync(1).FlattenAsync();
-                            if (message.First().Timestamp.UtcDateTime < DateTime.UtcNow.AddDays(-2))
+                            if (message.First().Timestamp.UtcDateTime < DateTime.UtcNow.AddDays(-2) ||
+                                (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2)))
+                            {
                                 await thread.ModifyAsync(t => t.Archived = true);
-                            else if (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2))
-                                await thread.ModifyAsync(t => t.Archived = true);
+                                await AuditLog.LogEvent("**Thread Closed**",dbGuild.Id, true, new List<EmbedFieldBuilder>
+                                {
+                                    new()
+                                    {
+                                        Name = "Forum",
+                                        Value = forum.Mention,
+                                        IsInline = true
+                                    },
+                                    new()
+                                    {
+                                        Name = "Thread",
+                                        Value = thread.Mention,
+                                        IsInline = true
+                                    }
+                                });
+                            } 
+                                
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex);
             }
         }
     }

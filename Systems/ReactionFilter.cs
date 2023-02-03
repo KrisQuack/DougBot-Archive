@@ -9,8 +9,8 @@ namespace DougBot.Systems;
 
 public static class ReactionFilter
 {
-    static Dictionary<ulong, List<string>> emoteWhitelists = new Dictionary<ulong, List<string>>();
-    static List<Guild> dbGuilds = new List<Guild>();
+    static Dictionary<ulong, List<string>> emoteWhitelists = new();
+    static List<Guild> dbGuilds = new();
 
     public static async Task Monitor(DiscordSocketClient client)
     {
@@ -46,7 +46,7 @@ public static class ReactionFilter
     {
         try
         {
-            if (Channel.HasValue)
+            if (Channel.HasValue && dbGuilds.Any())
             {
                 var channel = Channel.Value as SocketTextChannel;
                 var guild = channel.Guild;
@@ -77,14 +77,14 @@ public static class ReactionFilter
                         };
                         new Queue("AddRole", null, roleDict, null).Insert();
                         var randomOffset = new Random().Next(1, 31);
-                        new Queue("RemoveRole", null, roleDict, DateTime.UtcNow.AddDays(1).AddMinutes(randomOffset)).Insert();
+                        new Queue("RemoveRole", null, roleDict, DateTime.UtcNow.AddHours(1).AddMinutes(randomOffset)).Insert();
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.ToString());
         }
     }
 }

@@ -35,7 +35,7 @@ public static class CleanForums
                                 (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2)))
                             {
                                 await thread.ModifyAsync(t => t.Archived = true);
-                                await AuditLog.LogEvent("**Thread Closed**",dbGuild.Id, true, new List<EmbedFieldBuilder>
+                                await AuditLog.LogEvent("**Thread Auto Closed**",dbGuild.Id, true, new List<EmbedFieldBuilder>
                                 {
                                     new()
                                     {
@@ -45,10 +45,22 @@ public static class CleanForums
                                     },
                                     new()
                                     {
+                                        Name = "Age",
+                                        Value = (DateTime.UtcNow - thread.CreatedAt.UtcDateTime).Days + " days",
+                                        IsInline = true
+                                    },
+                                    new()
+                                    {
+                                        Name = "Messages",
+                                        Value = thread.MessageCount.ToString(),
+                                        IsInline = true
+                                    },
+                                    new()
+                                    {
                                         Name = "Title",
-                                        Value = thread.Name,
+                                        Value = $"[{thread.Name}]j(https://discord.com/channels/{thread.GuildId}/{thread.ParentChannelId}/threads/{thread.Id})",
                                         IsInline = false
-                                    }
+                                    },
                                 });
                             } 
                                 

@@ -58,7 +58,7 @@ public static class CleanForums
                                     new()
                                     {
                                         Name = "Title",
-                                        Value = $"[{thread.Name}]j(https://discord.com/channels/{thread.GuildId}/{thread.ParentChannelId}/threads/{thread.Id})",
+                                        Value = $"[{thread.Name}](https://discord.com/channels/{thread.GuildId}/{thread.ParentChannelId}/threads/{thread.Id})",
                                         IsInline = false
                                     },
                                 });

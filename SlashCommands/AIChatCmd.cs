@@ -108,7 +108,7 @@ public class AIChatCmd : InteractionModuleBase
         var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
         await RespondAsync("Approved, Typing and sending", ephemeral: true);
         await Context.Channel.TriggerTypingAsync();
-        await Task.Delay(10000);
+        await Task.Delay(3000);
         var response = await ReplyAsync(message);
         var auditFields = new List<EmbedFieldBuilder>
         {

@@ -60,7 +60,7 @@ public static class CleanForums
                                         Name = "Title",
                                         Value = $"[{thread.Name}](https://discord.com/channels/{thread.GuildId}/{thread.Id})",
                                         IsInline = false
-                                    },
+                                    }
                                 });
                             } 
                                 

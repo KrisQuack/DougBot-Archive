@@ -36,16 +36,13 @@ public class Queue
 
     public async Task Insert()
     {
-        if (Type == "RemoveReaction")
-        {
-            //Check if any exist with same keys
-            var queues = await GetQueues();
-            if(queues.Where(q => q.Type == "RemoveReaction").Any(q => q.Keys["messageId"] == Keys["messageId"] && q.Keys["emoteName"] == Keys["emoteName"]))
-                return;
-        }
         await using var db = new Database.DougBotContext();
-        db.Queues.Add(this);
-        await db.SaveChangesAsync();
+        var similarItem = await db.Queues.Where(q => q.Keys == Keys && q.Type == Type).ToListAsync();
+        if(!similarItem.Any())
+        {
+            db.Queues.Add(this);
+            await db.SaveChangesAsync();
+        }
     }
 
     public async Task Remove()

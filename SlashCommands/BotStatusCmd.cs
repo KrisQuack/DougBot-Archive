@@ -24,7 +24,7 @@ public class BotStatusCmd : InteractionModuleBase
                 .AddField("Pending Jobs", QueueCount, true)
                 .AddField("Due Jobs", DueCount, true)
                 .Build();
-            await RespondAsync(embeds: new[] { embed });
+            await RespondAsync(embeds: new[] { embed }, ephemeral: true);
         }
     }
 }

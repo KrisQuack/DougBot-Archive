@@ -114,7 +114,7 @@ public class Program
                             IsInline = true
                         }
                 };
-                AuditLog.LogEvent("Command Ran",context.Guild.Id.ToString(), result.IsSuccess, auditFields);
+                AuditLog.LogEvent("***Command Ran***",context.Guild.Id.ToString(), result.IsSuccess, auditFields);
 
                 if (!result.IsSuccess)
                 {

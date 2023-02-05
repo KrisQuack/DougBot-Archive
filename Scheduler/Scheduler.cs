@@ -17,6 +17,7 @@ public class Scheduler
                 //Run items 
                 var queueItems = await Queue.GetQueuesDue(10);
                 foreach (var queue in queueItems)
+                {
                     try
                     {
                         //Run queue
@@ -65,12 +66,14 @@ public class Scheduler
                                 await Client.SetGameAsync(queue.Keys["status"]);
                                 break;
                         }
-                        await queue.Remove();
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex);
                     }
+
+                    await queue.Remove();
+                }
             }
             catch (Exception ex)
             {

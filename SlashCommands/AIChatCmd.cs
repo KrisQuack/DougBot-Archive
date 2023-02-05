@@ -69,7 +69,7 @@ public class AIChatCmd : InteractionModuleBase
         var completionResult = await openAiService.Completions.CreateCompletion(new CompletionCreateRequest
         {
             Prompt = queryString,
-            MaxTokens = 200,
+            MaxTokens = 500,
             Temperature = (float)0.9,
             TopP = 1,
             PresencePenalty = (float)0.3,
@@ -77,157 +77,84 @@ public class AIChatCmd : InteractionModuleBase
             Stop = "\n"
         }, OpenAI.GPT3.ObjectModels.Models.Davinci);
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
-        var aiText = SanitizeString(completionResult.Choices.FirstOrDefault().Text);
-        var cost = (decimal)(completionResult.Usage.TotalTokens * 0.000002);
-        await ModifyOriginalResponseAsync(r => r.Content = "Response received, moderating content");
-        //check the response is not offensive using the OpenAI moderation API
-        var moderationResult = await openAiService.Moderation.CreateModeration(new CreateModerationRequest
-        {
-            Input = aiText
-        });
-        if (!moderationResult.Successful) throw new Exception("API Error: " + moderationResult.Error);
-        //Moderation result output string
-        var categoryscores = moderationResult.Results[0].CategoryScores;
-        var moderationFlagged = (decimal)categoryscores.Hate > (decimal)0.005 ||
-                                (decimal)categoryscores.HateThreatening > (decimal)0.005 ||
-                                (decimal)categoryscores.Selfharm > (decimal)0.005 ||
-                                (decimal)categoryscores.Sexual > (decimal)0.005 ||
-                                (decimal)categoryscores.SexualMinors > (decimal)0.005 ||
-                                (decimal)categoryscores.Violence > (decimal)0.01 ||
-                                (decimal)categoryscores.Violencegraphic > (decimal)0.005;
-        var blacklistFlagged = dbGuild.OpenAiWordBlacklist.ToLower().Split(",").Any(s => aiText.ToLower().Contains(s));
-        //Respond
-        await ModifyOriginalResponseAsync(r => r.Content = "Content moderated, processing response");
-        if (!moderationFlagged && !string.IsNullOrWhiteSpace(aiText) && !blacklistFlagged)
-        {
-            Context.Channel.TriggerTypingAsync();
-            await Task.Delay(5000);
-            await ReplyAsync(aiText);
-            await ModifyOriginalResponseAsync(r => r.Content = "Moderation success, message sent");
-        }
-        else
+        var aiText = completionResult.Choices.FirstOrDefault().Text;
+        if (!string.IsNullOrWhiteSpace(aiText))
         {
             var builder = new ComponentBuilder()
-                .WithButton("Override Filter", "aiChatApprove", ButtonStyle.Danger);
+                .WithButton("Approve", "aiChatApprove", ButtonStyle.Success)
+                .WithButton("Decline", "aiChatDecline", ButtonStyle.Danger);
             await ModifyOriginalResponseAsync(r => r.Content =
-                "Moderation fail, please confirm you want to send this message\n" +
+                "Message ready, Please approve\n" +
                 "Response: " + aiText);
             await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
         }
-
-        //Log
-        var auditFields = new List<EmbedFieldBuilder>
+        else
         {
-            new()
-            {
-                Name = "Tokens",
-                Value = completionResult.Usage.TotalTokens,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Cost",
-                Value = cost,
-                IsInline = true
-            },
-            !string.IsNullOrEmpty(aiText)
-                ? new EmbedFieldBuilder
-                {
-                    Name = "Response",
-                    Value = aiText,
-                    IsInline = true
-                }
-                : new EmbedFieldBuilder
-                {
-                    Name = "Response",
-                    Value = "No response",
-                    IsInline = true
-                },
-            new()
-            {
-                Name = "Filter Result",
-                Value = "If either of the filters were triggered",
-                IsInline = false
-            },
-            new()
-            {
-                Name = "Blacklist Flagged",
-                Value = blacklistFlagged,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Moderation Flagged",
-                Value = moderationFlagged,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Filter Values",
-                Value = "The values of all the categories as rated by the AI",
-                IsInline = false
-            },
-            new()
-            {
-                Name = "Hate",
-                Value = (decimal)categoryscores.Hate,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Hate Threatening",
-                Value = (decimal)categoryscores.HateThreatening,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Self Harm",
-                Value = (decimal)categoryscores.Selfharm,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Sexual",
-                Value = (decimal)categoryscores.Sexual,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Sexual Minors",
-                Value = (decimal)categoryscores.SexualMinors,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Violence",
-                Value = (decimal)categoryscores.Violence,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Violence Graphic",
-                Value = (decimal)categoryscores.Violencegraphic,
-                IsInline = true
-            }
-        };
-        AuditLog.LogEvent("***Message Processed***", Context.Guild.Id.ToString(),
-            !(moderationFlagged || blacklistFlagged), auditFields);
+            await ModifyOriginalResponseAsync(r => r.Content = "No response from API");
+        }
+
+        await Task.Delay(10000);
     }
 
     private static string SanitizeString(string str)
     {
         return Regex.Replace(str, "[^a-zA-Z0-9 ,?'`.\"]", "", RegexOptions.Compiled);
     }
-}
 
-public class AiChatInteraction : InteractionModuleBase
-{
     [ComponentInteraction("aiChatApprove")]
-    public async Task ComponentResponse()
+    public async Task ApproveResponse()
     {
         var interaction = Context.Interaction as SocketMessageComponent;
         var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
-        await ReplyAsync(message);
-        await RespondAsync("Override sent!", ephemeral: true);
+        await RespondAsync("Approved, Typing and sending", ephemeral: true);
+        await Context.Channel.TriggerTypingAsync();
+        await Task.Delay(10000);
+        var response = await ReplyAsync(message);
+        var auditFields = new List<EmbedFieldBuilder>
+        {
+            new()
+            {
+                Name = "Approved By",
+                Value = Context.User.Mention,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Channel",
+                Value = (Context.Channel as SocketTextChannel).Mention,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Message",
+                Value = $"[{message}]({response.GetJumpUrl()})",
+                IsInline = false
+            }
+        };
+        AuditLog.LogEvent("***AI Message Approved***", Context.Guild.Id.ToString(), true, auditFields);
+    }
+
+    [ComponentInteraction("aiChatDecline")]
+    public async Task DeclineResponse()
+    {
+        var interaction = Context.Interaction as SocketMessageComponent;
+        var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
+        await RespondAsync("Declined", ephemeral: true);
+        var auditFields = new List<EmbedFieldBuilder>
+        {
+            new()
+            {
+                Name = "Declined By",
+                Value = Context.User.Mention,
+                IsInline = true
+            },
+            new()
+            {
+                Name = "Message",
+                Value = message,
+                IsInline = true
+            }
+        };
+        AuditLog.LogEvent("***AI Message Declined***", Context.Guild.Id.ToString(), false, auditFields);
     }
 }

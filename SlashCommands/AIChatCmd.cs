@@ -57,7 +57,6 @@ public class AIChatCmd : InteractionModuleBase
                 }
             }
         }
-
         queryString = queryString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah");
         queryString += "Wah: ";
         await ModifyOriginalResponseAsync(r => r.Content += "Messages loaded, Querying APi");
@@ -92,8 +91,6 @@ public class AIChatCmd : InteractionModuleBase
         {
             await ModifyOriginalResponseAsync(r => r.Content = "No response from API");
         }
-
-        await Task.Delay(10000);
     }
 
     private static string SanitizeString(string str)

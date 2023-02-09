@@ -93,14 +93,14 @@ public class SticketVoteCmd : InteractionModuleBase
     }
 
     [ComponentInteraction("keepSticker:*")]
-    public async Task keepSticker(InteractionContext ctx, string[] selected)
+    public async Task keepSticker()
     {
-        await RespondAsync($"{ctx.User.Username} voted to keep: {string.Join(", ", selected)}", ephemeral: true);
+        //await RespondAsync($"{Context.User.Username} voted to keep: {string.Join(", ", Context.Interaction.Data)}", ephemeral: true);
     }
 
     [ComponentInteraction("removeSticker:*")]
-    public async Task removeSticker(InteractionContext ctx, string[] selected)
+    public async Task removeSticker()
     {
-        await RespondAsync($"{ctx.User.Username} voted to remove: {string.Join(", ", selected)}", ephemeral: true);
+        //await RespondAsync($"{Context.User.Username} voted to remove: {string.Join(", ", selected)}", ephemeral: true);
     }
 }

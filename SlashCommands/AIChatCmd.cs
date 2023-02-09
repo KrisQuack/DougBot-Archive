@@ -73,7 +73,8 @@ public class AIChatCmd : InteractionModuleBase
             TopP = 1,
             PresencePenalty = (float)0.3,
             FrequencyPenalty = (float)0.3,
-            Stop = "\n"
+            Stop = "\n",
+            BestOf = 3,
         }, OpenAI.GPT3.ObjectModels.Models.Davinci);
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
         var aiText = completionResult.Choices.FirstOrDefault().Text;

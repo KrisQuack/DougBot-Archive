@@ -18,8 +18,21 @@ public class Program
     private static DiscordSocketClient _Client;
     private bool _FirstStart = true;
 
+    public static List<string> Faces = new()
+    {
+        "ʕ•ᴥ•ʔ",
+        "༼ つ ◕_◕ ༽つ",
+        "ᕙ(⇀‸↼‶)ᕗ",
+        "ᕦ(ò_óˇ)ᕤ",
+        "ಠ_ಠ",
+        "ಠ‿↼",
+        "(ᵔᴥᵔ)",
+        "༼ つ ಥ_ಥ ༽つ",
+        "༼ つ  ͡° ͜ʖ ͡° ༽つ",
+        "ʘ‿ʘ"
+    };
 
-    private static Task Main()
+        private static Task Main()
     {
         return new Program().MainAsync();
     }
@@ -54,6 +67,8 @@ public class Program
             CleanForums.Clean(_Client);
             Youtube.CheckYoutube();
             ReactionFilter.Monitor(_Client);
+            //Set status
+            await _Client.SetGameAsync(Faces[new Random().Next(0, Faces.Count)]);
             //Register Commands
             _Service = new InteractionService(_Client.Rest);
             _Service.Log += Log;

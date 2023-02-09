@@ -20,45 +20,56 @@ public class AIChatCmd : InteractionModuleBase
         int procCount = 15,
         [Summary(description: "Pretext given to the bot")]
         string pretext =
-            "The following is a conversation with an english speaking AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.")
+            "The following is a conversation with an english speaking AI assistant named Wah. The assistant is helpful, creative, clever, and very friendly.",
+        [Summary(description: "Completely override any inputs and only send whats typed here")]
+        string fulloverride = null)
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
-        //Get chat to send
-        var messages = await Context.Channel.GetMessagesAsync(procCount).FlattenAsync();
-        var queryString = pretext + "\n\n";
-        //Ignore embeds and media
-        messages = messages.Where(m =>
-            m.Embeds.Count == 0 &&
-            m.Attachments.Count == 0
-        ).OrderBy(m => m.Timestamp);
-        //Process all messages
-        var botUser = Context.Client.CurrentUser;
-        foreach (var message in messages)
+        //if full override is set then just send that, else get chat
+        var queryString = "";
+        if (fulloverride != null)
         {
-            var messageClean = SanitizeString(message.CleanContent);
-            if (message.Author.Id == botUser.Id)
+            queryString = fulloverride;
+        }
+        else
+        {
+            //Get chat to send
+            var messages = await Context.Channel.GetMessagesAsync(procCount).FlattenAsync();
+            queryString = pretext + "\n\n";
+            //Ignore embeds and media
+            messages = messages.Where(m =>
+                m.Embeds.Count == 0 &&
+                m.Attachments.Count == 0
+            ).OrderBy(m => m.Timestamp);
+            //Process all messages
+            var botUser = Context.Client.CurrentUser;
+            foreach (var message in messages)
             {
-                queryString += $"Wah: {messageClean}\n";
-            }
-            else
-            {
-                //If message is a reply check if it was directed to Wah, if not then discard
-                if (message.Reference != null)
+                var messageClean = SanitizeString(message.CleanContent);
+                if (message.Author.Id == botUser.Id)
                 {
-                    var replyID = message.Reference.MessageId;
-                    var replyMessage = await Context.Channel.GetMessageAsync((ulong)replyID);
-                    if (replyMessage != null && replyMessage.Author.Id == botUser.Id)
-                        queryString += $"{SanitizeString(message.Author.Username)}: Wah, {messageClean}\n";
+                    queryString += $"Wah: {messageClean}\n";
                 }
                 else
                 {
-                    queryString += $"{SanitizeString(message.Author.Username)}: {messageClean}\n";
+                    //If message is a reply check if it was directed to Wah, if not then discard
+                    if (message.Reference != null)
+                    {
+                        var replyID = message.Reference.MessageId;
+                        var replyMessage = await Context.Channel.GetMessageAsync((ulong)replyID);
+                        if (replyMessage != null && replyMessage.Author.Id == botUser.Id)
+                            queryString += $"{SanitizeString(message.Author.Username)}: Wah, {messageClean}\n";
+                    }
+                    else
+                    {
+                        queryString += $"{SanitizeString(message.Author.Username)}: {messageClean}\n";
+                    }
                 }
             }
+            queryString = queryString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah");
+            queryString += "Wah: ";
         }
-        queryString = queryString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah");
-        queryString += "Wah: ";
         await ModifyOriginalResponseAsync(r => r.Content += "Messages loaded, Querying APi");
         //Query API for chat response
         var openAiService = new OpenAIService(new OpenAiOptions

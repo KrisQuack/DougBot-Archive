@@ -32,7 +32,7 @@ public static class AuditLog
             IconUrl = user.GetAvatarUrl()
         };
         //Log event
-        await LogEvent($"User Joined", guild.Id.ToString(), Color.Red, null, author);
+        await LogEvent($"User Left", guild.Id.ToString(), Color.Red, null, author);
     }
     
     private static async Task UserBannedHandler(SocketUser user, SocketGuild guild)
@@ -150,8 +150,15 @@ public static class AuditLog
         //Set fields
         var fields = new List<EmbedFieldBuilder>
         {
-            new () { Name = "Content", Value = !string.IsNullOrEmpty(message.Value.Content) ? message.Value.Content : "None" }
+            new()
+            {
+                Name = "Content",
+                Value = !string.IsNullOrEmpty(message.Value.Content) ? message.Value.Content : "(Sticker/Embed/Media)"
+            }
         };
+        //if message has attachments add field
+        if (message.Value.Attachments.Count > 0)
+            fields.Add(new () { Name = "Attachments", Value = string.Join("\n", message.Value.Attachments.Select(a => a.Filename)) });
         //Set author
         var author = new EmbedAuthorBuilder
         {

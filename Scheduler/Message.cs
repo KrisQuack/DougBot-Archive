@@ -10,7 +10,7 @@ namespace DougBot.Scheduler;
 public static class Message
 {
     public static async Task Send(DiscordSocketClient client, ulong GuildId, ulong ChannelId, string Message,
-        string EmbedBuilders, bool Ping = false)
+        string EmbedBuilders, bool Ping = false, string attachmenst = null)
     {
         //Get the guild and channel
         var guild = client.GetGuild(GuildId);
@@ -21,6 +21,17 @@ public static class Message
         //Send the message
         await channel.SendMessageAsync(Message, embeds: embedBuildersList.Select(embed => embed.Build()).ToArray(),
             allowedMentions: Ping ? AllowedMentions.All : AllowedMentions.None);
+        //Send the attachments
+        if (attachmenst != null)
+        {
+            var attachments = JsonSerializer.Deserialize<List<string>>(attachmenst);
+            foreach (var attachment in attachments)
+            {
+                await channel.SendFileAsync(attachment,"");
+                //delete file
+                File.Delete(attachment);
+            }
+        }
     }
 
     public static async Task SendDM(DiscordSocketClient client,ulong GuildId, ulong UserId, ulong SenderId, string EmbedBuilders)

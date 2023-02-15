@@ -48,7 +48,8 @@ public class Scheduler
                                     ulong.Parse(queue.Keys["channelId"]),
                                     queue.Keys["message"],
                                     queue.Keys["embedBuilders"],
-                                    bool.Parse(queue.Keys["ping"]));
+                                    bool.Parse(queue.Keys["ping"]),
+                                        queue.Keys["attachments"]);
                                 break;
                             case "SendDM":
                                 await Message.SendDM(Client,

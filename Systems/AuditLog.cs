@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
@@ -134,13 +135,22 @@ public static class AuditLog
 
     private static async Task MessageDeletedHandler(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
     {
-        //Download message attachments
-        var attachments = message.Value.Attachments;
+        //Download message attachments from url via httpclient
+        var attachments = new List<string>();
+        using var httpClient = new HttpClient();
+        //get root path
+        var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        foreach(var attachment in message.Value.Attachments)
+        {
+            var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
+            var path = Path.Combine(rootPath, attachment.Filename);
+            await File.WriteAllBytesAsync(path, attachmentBytes);
+            attachments.Add(path);
+        }
         //Set fields
         var fields = new List<EmbedFieldBuilder>
         {
-            new () { Name = "Content", Value = !string.IsNullOrEmpty(message.Value.Content) ? message.Value.Content : "None" },
-            new () { Name = "Attachments", Value = attachments.Count > 0 ? string.Join("\n", attachments.Select(a => a.Url)) : "None" }
+            new () { Name = "Content", Value = !string.IsNullOrEmpty(message.Value.Content) ? message.Value.Content : "None" }
         };
         //Set author
         var author = new EmbedAuthorBuilder
@@ -149,7 +159,7 @@ public static class AuditLog
             IconUrl = message.Value.Author.GetAvatarUrl()
         };
         //Log event
-        await LogEvent($"Message Deleted", (channel.Value as SocketTextChannel).Guild.Id.ToString(), Color.Red, fields, author);
+        await LogEvent($"Message Deleted", (channel.Value as SocketTextChannel).Guild.Id.ToString(), Color.Red, fields, author, attachments);
     }
 
     private static async Task MessageUpdatedHandler(Cacheable<IMessage, ulong> before, SocketMessage after, IChannel channel)
@@ -173,7 +183,7 @@ public static class AuditLog
     }
 
     public static async Task LogEvent(string Content, string GuildId, Color EmbedColor,
-        List<EmbedFieldBuilder> Fields = null, EmbedAuthorBuilder Author = null)
+        List<EmbedFieldBuilder> Fields = null, EmbedAuthorBuilder Author = null, List<string> attachments = null)
     {
         var dbGuild = await Guild.GetGuild(GuildId);
         var embed = new EmbedBuilder()
@@ -194,7 +204,8 @@ public static class AuditLog
             { "channelId", dbGuild.LogChannel },
             { "message", "" },
             { "embedBuilders", embedJson },
-            { "ping", "true" }
+            { "ping", "true" },
+            { "attachments", attachments != null ? JsonSerializer.Serialize(attachments) : null }
         };
         await new Queue("SendMessage", 2, dict, null).Insert();
     }

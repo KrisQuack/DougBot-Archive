@@ -83,17 +83,6 @@ public static class AuditLog
         //If avatar changed add field
         //if (before.GetAvatarUrl() != after.GetAvatarUrl())
         //    fields.Add(new () { Name = "Avatar", Value = $"{before.GetAvatarUrl()} -> {after.GetAvatarUrl()}" });
-        //If mutual guilds changed add field
-        if (before.MutualGuilds.Count != after.MutualGuilds.Count)
-        {
-            var beforeGuilds = before.MutualGuilds.Select(g => g.Name);
-            var afterGuilds = after.MutualGuilds.Select(g => g.Name);
-            var addedGuilds = afterGuilds.Except(beforeGuilds);
-            var removedGuilds = beforeGuilds.Except(afterGuilds);
-            var addedGuildsString = string.Join(", ", addedGuilds);
-            var removedGuildsString = string.Join(", ", removedGuilds);
-            fields.Add(new () { Name = "Mutual Guilds", Value = $"Added: {addedGuildsString} Removed: {removedGuildsString}" });
-        }
         //Set author
         var author = new EmbedAuthorBuilder
         {
@@ -119,8 +108,10 @@ public static class AuditLog
             var afterRoles = after.Roles.Select(r => r.Name);
             var addedRoles = afterRoles.Except(beforeRoles);
             var removedRoles = beforeRoles.Except(afterRoles);
-            fields.Add(new () { Name = "Roles Added", Value = addedRoles.Count() > 0 ? string.Join("\n", addedRoles) : "None" });
-            fields.Add(new () { Name = "Roles Removed", Value = removedRoles.Count() > 0 ? string.Join("\n", removedRoles) : "None" });
+            if(addedRoles.Any())
+                fields.Add(new () { Name = "Roles Added", Value =  string.Join("\n", addedRoles)});
+            if(removedRoles.Any())
+                fields.Add(new () { Name = "Roles Removed", Value = string.Join("\n", removedRoles)});
         }
         //Set author
         var author = new EmbedAuthorBuilder

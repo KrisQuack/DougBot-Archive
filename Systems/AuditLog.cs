@@ -159,7 +159,7 @@ public static class AuditLog
             IconUrl = message.Value.Author.GetAvatarUrl()
         };
         //Log event
-        await LogEvent($"Message Deleted", (channel.Value as SocketTextChannel).Guild.Id.ToString(), Color.Red, fields, author, attachments);
+        await LogEvent($"Message Deleted in {(channel.Value as SocketTextChannel).Mention}", (channel.Value as SocketTextChannel).Guild.Id.ToString(), Color.Red, fields, author, attachments);
     }
 
     private static async Task MessageUpdatedHandler(Cacheable<IMessage, ulong> before, SocketMessage after, IChannel channel)

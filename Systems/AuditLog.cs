@@ -77,12 +77,26 @@ public static class AuditLog
         //If username changed add field
         if (before.Username != after.Username)
             fields.Add(new () { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
-        //If status changed add field
-        if (before.Status != after.Status)
-            fields.Add(new () { Name = "Status", Value = $"{before.Status} -> {after.Status}" });
-        //If avatar changed add field
-        //if (before.GetAvatarUrl() != after.GetAvatarUrl())
-        //    fields.Add(new () { Name = "Avatar", Value = $"{before.GetAvatarUrl()} -> {after.GetAvatarUrl()}" });
+        //If guild avatar changed add field
+        var attachments = new List<string>();
+        if (before.AvatarId != after.AvatarId)
+        {
+            using var httpClient = new HttpClient();
+            //get root path
+            var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            //old avatar
+            var attachmentBytes = await httpClient.GetByteArrayAsync(before.GetAvatarUrl());
+            var path = Path.Combine(rootPath, $"{before.AvatarId}_before.png");
+            await File.WriteAllBytesAsync(path, attachmentBytes);
+            attachments.Add(path);
+            //new avatar
+            attachmentBytes = await httpClient.GetByteArrayAsync(after.GetAvatarUrl());
+            path = Path.Combine(rootPath, $"{after.AvatarId}_after.png");
+            await File.WriteAllBytesAsync(path, attachmentBytes);
+            attachments.Add(path);
+            //add field 
+            fields.Add(new () { Name = "Avatar updated", Value = "See attachments below" });
+        }
         //Set author
         var author = new EmbedAuthorBuilder
         {
@@ -92,7 +106,7 @@ public static class AuditLog
         //Log event for each mutual guild
         if(fields.Count > 0)
             foreach (var guild in after.MutualGuilds)
-                await LogEvent($"User Updated", guild.Id.ToString(), Color.LightOrange, fields, author);
+                await LogEvent($"User Updated", guild.Id.ToString(), Color.LightOrange, fields, author, attachments);
     }
 
     private static async Task GuildMemberUpdatedHandler(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after)
@@ -104,14 +118,34 @@ public static class AuditLog
         //If roles changed add field
         if (before.Value.Roles.Count != after.Roles.Count)
         {
-            var beforeRoles = before.Value.Roles.Select(r => r.Name);
-            var afterRoles = after.Roles.Select(r => r.Name);
+            var beforeRoles = before.Value.Roles.Select(r => r.Mention);
+            var afterRoles = after.Roles.Select(r => r.Mention);
             var addedRoles = afterRoles.Except(beforeRoles);
             var removedRoles = beforeRoles.Except(afterRoles);
             if(addedRoles.Any())
                 fields.Add(new () { Name = "Roles Added", Value =  string.Join("\n", addedRoles)});
             if(removedRoles.Any())
                 fields.Add(new () { Name = "Roles Removed", Value = string.Join("\n", removedRoles)});
+        }
+        //If guild avatar changed add field
+        var attachments = new List<string>();
+        if (before.Value.GuildAvatarId != after.GuildAvatarId)
+        {
+            using var httpClient = new HttpClient();
+            //get root path
+            var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            //old avatar
+            var attachmentBytes = await httpClient.GetByteArrayAsync(before.Value.GetGuildAvatarUrl());
+            var path = Path.Combine(rootPath, $"{before.Value.GuildAvatarId}_before.png");
+            await File.WriteAllBytesAsync(path, attachmentBytes);
+            attachments.Add(path);
+            //new avatar
+            attachmentBytes = await httpClient.GetByteArrayAsync(after.GetGuildAvatarUrl());
+            path = Path.Combine(rootPath, $"{after.GuildAvatarId}_after.png");
+            await File.WriteAllBytesAsync(path, attachmentBytes);
+            attachments.Add(path);
+            //add field 
+            fields.Add(new () { Name = "Guild avatar updated", Value = "See attachments below" });
         }
         //Set author
         var author = new EmbedAuthorBuilder
@@ -121,7 +155,7 @@ public static class AuditLog
         };
         //Log event if fields are not empty
         if (fields.Count > 0)
-            await LogEvent($"Member Updated", after.Guild.Id.ToString(), Color.LightOrange, fields, author);
+            await LogEvent($"Member Updated", after.Guild.Id.ToString(), Color.LightOrange, fields, author, attachments );
     }
 
     private static async Task MessageDeletedHandler(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)

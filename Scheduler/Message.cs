@@ -27,7 +27,7 @@ public static class Message
             var attachments = JsonSerializer.Deserialize<List<string>>(attachmenst);
             foreach (var attachment in attachments)
             {
-                await channel.SendFileAsync(attachment,"");
+                await channel.SendFileAsync(attachment,attachment.Split('/').LastOrDefault(x => x.Contains('.')));
                 //delete file
                 File.Delete(attachment);
             }

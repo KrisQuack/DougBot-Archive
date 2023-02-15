@@ -6,15 +6,15 @@ using Fernandezja.ColorHashSharp;
 
 namespace DougBot.Systems;
 
-public class Events
+public static class Events
 {
     private static DiscordSocketClient _Client;
 
     public static async Task Monitor(DiscordSocketClient client)
     {
         _Client = client;
-        client.MessageReceived += MessageReceivedHandler;
-        client.UserJoined += UserJoinedHandler;
+        client.MessageReceived += async (message) => Task.Run(() => MessageReceivedHandler(message));
+        client.UserJoined += async (user) => Task.Run(() => UserJoinedHandler(user));
         Console.WriteLine("EventHandler Initialized");
     }
 

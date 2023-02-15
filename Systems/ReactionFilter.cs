@@ -15,6 +15,7 @@ public static class ReactionFilter
     public static async Task Monitor(DiscordSocketClient client)
     {
         client.ReactionAdded += ReactionAddedHandler;
+        client.ReactionAdded += async (message, channel, reaction) => Task.Run(() => ReactionAddedHandler(message, channel, reaction));
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
         {

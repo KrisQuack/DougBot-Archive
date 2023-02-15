@@ -35,7 +35,7 @@ public static class CleanForums
                                 (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2)))
                             {
                                 await thread.ModifyAsync(t => t.Archived = true);
-                                await AuditLog.LogEvent("**Thread Auto Closed**",dbGuild.Id, true, new List<EmbedFieldBuilder>
+                                await AuditLog.LogEvent("**Thread Auto Closed**",dbGuild.Id, Color.Green, new List<EmbedFieldBuilder>
                                 {
                                     new()
                                     {

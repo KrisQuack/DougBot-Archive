@@ -140,7 +140,7 @@ public class AIChatCmd : InteractionModuleBase
                 IsInline = false
             }
         };
-        AuditLog.LogEvent("***AI Message Approved***", Context.Guild.Id.ToString(), true, auditFields);
+        AuditLog.LogEvent("***AI Message Approved***", Context.Guild.Id.ToString(), Color.Green, auditFields);
     }
 
     [ComponentInteraction("aiChatDecline")]
@@ -164,6 +164,6 @@ public class AIChatCmd : InteractionModuleBase
                 IsInline = true
             }
         };
-        AuditLog.LogEvent("***AI Message Declined***", Context.Guild.Id.ToString(), false, auditFields);
+        AuditLog.LogEvent("***AI Message Declined***", Context.Guild.Id.ToString(), Color.Red, auditFields);
     }
 }

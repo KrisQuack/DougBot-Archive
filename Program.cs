@@ -45,7 +45,8 @@ public class Program
             GatewayIntents = GatewayIntents.All,
             AlwaysDownloadUsers = true,
             AlwaysResolveStickers = true,
-            LogLevel = LogSeverity.Info
+            LogLevel = LogSeverity.Info,
+            MessageCacheSize = 1000
         };
         _Client = new DiscordSocketClient(config);
         _Client.Log += Log;
@@ -62,6 +63,7 @@ public class Program
         {
             _FirstStart = false;
             //Register Plugins
+            AuditLog.Monitor(_Client);
             Scheduler.Scheduler.Schedule(_Client);
             Events.Monitor(_Client);
             CleanForums.Clean(_Client);
@@ -129,8 +131,7 @@ public class Program
                             IsInline = true
                         }
                 };
-                AuditLog.LogEvent("***Command Ran***",context.Guild.Id.ToString(), result.IsSuccess, auditFields);
-
+                AuditLog.LogEvent("***Command Ran***",context.Guild.Id.ToString(), result.IsSuccess ? Color.Green : Color.Red, auditFields);
                 if (!result.IsSuccess)
                 {
                     if (result.ErrorReason.Contains("was not present in the dictionary.") &&
@@ -163,8 +164,8 @@ public class Program
             AuditLog.LogEvent(
                 $"{cmdException.Command.Name} failed to execute in {cmdException.Context.Channel} by user {cmdException.Context.User.Username}.",
                 cmdException.Context.Guild.Id.ToString(),
-                false);
-            AuditLog.LogEvent(cmdException.ToString(), cmdException.Context.Guild.Id.ToString(), false);
+                Color.Red);
+            AuditLog.LogEvent(cmdException.ToString(), cmdException.Context.Guild.Id.ToString(), Color.Red);
         }
         else
         {

@@ -69,7 +69,7 @@ public static class ReactionFilter
                         { "messageId", Reaction.MessageId.ToString() },
                         { "emoteName", Reaction.Emote.Name }
                     };
-                    await new Queue("RemoveReaction", 2, reactDict, null).Insert();
+                    await new Queue("RemoveReaction", 3, reactDict, null).Insert();
                     //Assign role and schedule removal
                     var roleDict = new Dictionary<string, string>
                     {

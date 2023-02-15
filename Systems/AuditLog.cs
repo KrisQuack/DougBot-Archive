@@ -27,7 +27,7 @@ public static class AuditLog
         //Set Author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{user.Username}({user.Id}) left",
+            Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
             IconUrl = user.GetAvatarUrl()
         };
         //Log event
@@ -39,7 +39,7 @@ public static class AuditLog
         //Set Author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{user.Username}({user.Id}) banned",
+            Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
             IconUrl = user.GetAvatarUrl()
         };
         //Log event
@@ -51,7 +51,7 @@ public static class AuditLog
         //Set Author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{user.Username}({user.Id}) unbanned",
+            Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
             IconUrl = user.GetAvatarUrl()
         };
         //Log event
@@ -63,7 +63,7 @@ public static class AuditLog
         //Set Author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{user.Username}({user.Id}) joined",
+            Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
             IconUrl = user.GetAvatarUrl()
         };
         //Log event
@@ -80,8 +80,8 @@ public static class AuditLog
         if (before.Status != after.Status)
             fields.Add(new () { Name = "Status", Value = $"{before.Status} -> {after.Status}" });
         //If avatar changed add field
-        if (before.GetAvatarUrl() != after.GetAvatarUrl())
-            fields.Add(new () { Name = "Avatar", Value = $"{before.GetAvatarUrl()} -> {after.GetAvatarUrl()}" });
+        //if (before.GetAvatarUrl() != after.GetAvatarUrl())
+        //    fields.Add(new () { Name = "Avatar", Value = $"{before.GetAvatarUrl()} -> {after.GetAvatarUrl()}" });
         //If mutual guilds changed add field
         if (before.MutualGuilds.Count != after.MutualGuilds.Count)
         {
@@ -96,12 +96,13 @@ public static class AuditLog
         //Set author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{after.Username}({after.Id}) was updated",
+            Name = $"{after.Username}#{after.Discriminator} ({after.Id})",
             IconUrl = after.GetAvatarUrl()
         };
         //Log event for each mutual guild
-        foreach (var guild in after.MutualGuilds)
-            await LogEvent($"User Updated", guild.Id.ToString(), Color.LightOrange, fields, author);
+        if(fields.Count > 0)
+            foreach (var guild in after.MutualGuilds)
+                await LogEvent($"User Updated", guild.Id.ToString(), Color.LightOrange, fields, author);
     }
 
     private static async Task GuildMemberUpdatedHandler(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after)
@@ -123,11 +124,12 @@ public static class AuditLog
         //Set author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{after.Username}({after.Id}) was updated",
+            Name = $"{after.Username}#{after.Discriminator} ({after.Id})",
             IconUrl = after.GetAvatarUrl()
         };
-        //Log event
-        await LogEvent($"Member Updated", after.Guild.Id.ToString(), Color.LightOrange, fields, author);
+        //Log event if fields are not empty
+        if (fields.Count > 0)
+            await LogEvent($"Member Updated", after.Guild.Id.ToString(), Color.LightOrange, fields, author);
     }
 
     private static async Task MessageDeletedHandler(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
@@ -137,13 +139,13 @@ public static class AuditLog
         //Set fields
         var fields = new List<EmbedFieldBuilder>
         {
-            new () { Name = "Content", Value = message.Value.Content },
+            new () { Name = "Content", Value = !string.IsNullOrEmpty(message.Value.Content) ? message.Value.Content : "None" },
             new () { Name = "Attachments", Value = attachments.Count > 0 ? string.Join("\n", attachments.Select(a => a.Url)) : "None" }
         };
         //Set author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{message.Value.Author.Username}({message.Value.Author.Id}) deleted a message in {channel.Value.Name}",
+            Name = $"{message.Value.Author.Username}#{message.Value.Author.Discriminator} ({message.Value.Author.Id})",
             IconUrl = message.Value.Author.GetAvatarUrl()
         };
         //Log event
@@ -152,6 +154,8 @@ public static class AuditLog
 
     private static async Task MessageUpdatedHandler(Cacheable<IMessage, ulong> before, SocketMessage after, IChannel channel)
     {
+        if (before.Value.Content == after.Content)
+            return;
         //Set fields
         var fields = new List<EmbedFieldBuilder>
         {
@@ -161,12 +165,11 @@ public static class AuditLog
         //Set author
         var author = new EmbedAuthorBuilder
         {
-            Name = $"{after.Author.Username}({after.Author.Id}) updated a message in {channel.Name}",
-            IconUrl = after.Author.GetAvatarUrl(),
-            Url = after.GetJumpUrl()
+            Name = $"{after.Author.Username}#{after.Author.Discriminator} ({after.Author.Id})",
+            IconUrl = after.Author.GetAvatarUrl()
         };
         //Log event
-        await LogEvent($"Message Updated", (channel as SocketTextChannel).Guild.Id.ToString(), Color.LightOrange, fields, author);
+        await LogEvent($"[Message]({after.GetJumpUrl()}) Updated in {(channel as SocketTextChannel).Mention}", (channel as SocketTextChannel).Guild.Id.ToString(), Color.LightOrange, fields, author);
     }
 
     public static async Task LogEvent(string Content, string GuildId, Color EmbedColor,

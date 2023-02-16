@@ -63,7 +63,8 @@ public static class Events
                     { "channelId", dbGuild.DmReceiptChannel },
                     { "message", "" },
                     { "embedBuilders", embedJson },
-                    { "ping", "false" }
+                    { "ping", "false" },
+                    { "attachments", null }
                 };
                 await new Queue("SendMessage", null, dict, null).Insert();
             }

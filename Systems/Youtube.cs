@@ -54,7 +54,8 @@ public static class Youtube
                             { "channelId", dbYoutube.PostChannel },
                             { "message", mentionRole },
                             { "embedBuilders", embedJson },
-                            { "ping", "true" }
+                            { "ping", "true" },
+                            {"attachments",  null}
                         };
                         await new Queue("SendMessage", null, dict, null).Insert();
                         dbYoutube.LastVideoId = video.Id;

@@ -138,7 +138,7 @@ public class Program
                         command.Name == "timestamp")
                     {
                         await context.Interaction.RespondAsync(
-                            "Invalid time format. Please use the format `12:00 GMT ` or `01 Jan 2022 12:00 GMT`",
+                            "Invalid time format. Please use the format `12:00 GMT ` or `01 Jan 2022 12:00 GMT`\nIf this continues try https://discordtimestamp.com/",
                             ephemeral: true);
                     }
                     else

@@ -53,7 +53,6 @@ public static class ReactionFilter
             var channel = Channel.Value as SocketTextChannel;
             var guild = channel.Guild;
             var emote = Reaction.Emote;
-            var user = Reaction.User.Value;
             var whitelist = emoteWhitelists[guild.Id];
             var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
             var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
@@ -69,18 +68,8 @@ public static class ReactionFilter
                         { "messageId", Reaction.MessageId.ToString() },
                         { "emoteName", Reaction.Emote.Name }
                     };
-                    await new Queue("RemoveReaction", 3, reactDict, null).Insert();
-                    //Assign role and schedule removal
-                    var roleDict = new Dictionary<string, string>
-                    {
-                        { "guildId", guild.Id.ToString() },
-                        { "userId", user.Id.ToString() },
-                        { "roleId", dbGuild.ReactionFilterRole }
-                    };
-                    await new Queue("AddRole", null, roleDict, null).Insert();
-                    var randomOffset = new Random().Next(1, 31);
-                    await new Queue("RemoveRole", null, roleDict, DateTime.UtcNow.AddHours(1).AddMinutes(randomOffset))
-                        .Insert();
+                    var dueTime = Message.Value.Timestamp.AddMinutes(1).DateTime;
+                    await new Queue("RemoveReaction", 3, reactDict, dueTime).Insert();
                 }
             }
         }

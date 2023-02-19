@@ -41,11 +41,8 @@ public class AIChatCmd : InteractionModuleBase
             return;
         }
         var builder = new ComponentBuilder()
-            .WithButton("Send to chat", "aiChatApprove")
-            .WithButton("Retry", "aiChatRetry", ButtonStyle.Secondary);
-        await ModifyOriginalResponseAsync(r => r.Content =
-            "Message ready, Please approve\n" +
-            "Response: " + aiText);
+            .WithButton("Send to chat", "aiChatApprove");
+        await ModifyOriginalResponseAsync(r => r.Content = aiText);
         await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
     }
     
@@ -53,11 +50,10 @@ public class AIChatCmd : InteractionModuleBase
     public async Task ApproveResponse()
     {
         var interaction = Context.Interaction as SocketMessageComponent;
-        var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
         await RespondAsync("Approved, Typing and sending", ephemeral: true);
         await Context.Channel.TriggerTypingAsync();
         await Task.Delay(3000);
-        var response = await ReplyAsync(message);
+        var response = await ReplyAsync(interaction.Message.Content);
         var auditFields = new List<EmbedFieldBuilder>
         {
             new()
@@ -75,34 +71,10 @@ public class AIChatCmd : InteractionModuleBase
             new()
             {
                 Name = "Message",
-                Value = $"[{message}]({response.GetJumpUrl()})",
+                Value = $"[{interaction.Message.Content}]({response.GetJumpUrl()})",
                 IsInline = false
             }
         };
         AuditLog.LogEvent("***AI Message Approved***", Context.Guild.Id.ToString(), Color.Green, auditFields);
-    }
-
-    [ComponentInteraction("aiChatDecline")]
-    public async Task DeclineResponse()
-    {
-        var interaction = Context.Interaction as SocketMessageComponent;
-        var message = interaction.Message.Content.Split("\n")[1].Replace("Response: ", "");
-        await RespondAsync("Declined", ephemeral: true);
-        var auditFields = new List<EmbedFieldBuilder>
-        {
-            new()
-            {
-                Name = "Declined By",
-                Value = Context.User.Mention,
-                IsInline = true
-            },
-            new()
-            {
-                Name = "Message",
-                Value = message,
-                IsInline = true
-            }
-        };
-        AuditLog.LogEvent("***AI Message Declined***", Context.Guild.Id.ToString(), Color.Red, auditFields);
     }
 }

@@ -45,7 +45,7 @@ public class Program
             GatewayIntents = GatewayIntents.All,
             AlwaysDownloadUsers = true,
             AlwaysResolveStickers = true,
-            LogLevel = LogSeverity.Info,
+            LogLevel = LogSeverity.Verbose,
             MessageCacheSize = 1000
         };
         _Client = new DiscordSocketClient(config);

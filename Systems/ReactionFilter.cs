@@ -1,9 +1,6 @@
-using System.Text.Json;
 using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 using DougBot.Models;
-using DougBot.Systems;
 
 namespace DougBot.Systems;
 

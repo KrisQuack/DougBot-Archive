@@ -13,7 +13,7 @@ public class Scheduler
         while (true)
             try
             {
-                await Task.Delay(500);
+                await Task.Delay(1000);
                 //Run items 
                 var queueItems = await Queue.GetQueuesDue(10);
                 foreach (var queue in queueItems)

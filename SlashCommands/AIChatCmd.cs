@@ -31,7 +31,8 @@ public class AIChatCmd : InteractionModuleBase
             Temperature = (float)0.6,
             TopP = 1,
             PresencePenalty = (float)0.3,
-            FrequencyPenalty = (float)0.3
+            FrequencyPenalty = (float)0.3,
+            StopAsList = new[] {"\n", Environment.NewLine}
         }, OpenAI.GPT3.ObjectModels.Models.Davinci);
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
         var aiText = completionResult.Choices.FirstOrDefault().Text;

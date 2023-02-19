@@ -15,7 +15,7 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("aichat", "Send an AI message into chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
-    public async Task AIChat([Summary(description: "Prompt for the AI")] string prompt)
+    public async Task AIChat([Summary(description: "Prompt for the AI")] string prompt, [Summary(description: "Tokens to use (Default: 50)")] int tokens = 50)
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
@@ -27,7 +27,7 @@ public class AIChatCmd : InteractionModuleBase
         var completionResult = await openAiService.Completions.CreateCompletion(new CompletionCreateRequest
         {
             Prompt = prompt,
-            MaxTokens = 100,
+            MaxTokens = tokens,
             Temperature = (float)0.6,
             TopP = 1,
             PresencePenalty = (float)0.3,

@@ -25,6 +25,10 @@ public static class AuditLog
 
     private static async Task UserLeftHandler(SocketGuild guild, SocketUser user)
     {
+        //Get guild user
+        var guildUser = guild.GetUser(user.Id);;
+        //Set Fields with roles
+        var fields = new List<EmbedFieldBuilder> { new () { Name = "Roles", Value = string.Join("\n", guildUser.Roles.Select(r => r.Mention)) } };
         //Set Author
         var author = new EmbedAuthorBuilder
         {
@@ -32,7 +36,7 @@ public static class AuditLog
             IconUrl = user.GetAvatarUrl()
         };
         //Log event
-        await LogEvent($"User Left", guild.Id.ToString(), Color.Red, null, author);
+        await LogEvent($"User Left", guild.Id.ToString(), Color.Red, fields, author);
     }
     
     private static async Task UserBannedHandler(SocketUser user, SocketGuild guild)

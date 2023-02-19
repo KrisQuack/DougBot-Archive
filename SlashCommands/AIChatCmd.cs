@@ -27,7 +27,7 @@ public class AIChatCmd : InteractionModuleBase
         var completionResult = await openAiService.Completions.CreateCompletion(new CompletionCreateRequest
         {
             Prompt = prompt,
-            MaxTokens = 250,
+            MaxTokens = 100,
             Temperature = (float)0.6,
             TopP = 1,
             PresencePenalty = (float)0.3,

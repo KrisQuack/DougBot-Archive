@@ -13,6 +13,7 @@ public class Guild
     public string? OpenAiToken { get; set; }
     public string? OpenAiWordBlacklist { get; set; }
     public string? LogChannel { get; set; }
+    public List<UserSetting> Users { get; set; }
 
     public static async Task<Guild> GetGuild(string id)
     {

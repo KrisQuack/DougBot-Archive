@@ -2,14 +2,15 @@ using System.Diagnostics;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace DougBot.SlashCommands;
 
+[EnabledInDm(false)]
+[DefaultMemberPermissions(GuildPermission.Administrator)]
 public class SticketVoteCmd : InteractionModuleBase
 {
     [SlashCommand("stickervote", "Vote on what stickers to keep")]
-    [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.Administrator)]
     public async Task StickerVote()
     {
         var menuBuilder = new SelectMenuBuilder()
@@ -34,17 +35,17 @@ public class SticketVoteCmd : InteractionModuleBase
             .AddOption("EddieCat", "1062183353547227236")
             .AddOption("EddieFoot", "893379075777896469")
             .AddOption("EddiePray2?", "1031280714597027950")
-            .AddOption("Evil", "1022367600321253426")
+            .AddOption("Evil", "1022367600321253426");
+        var menuBuilder2 = new SelectMenuBuilder()
+            .WithPlaceholder("Select an option")
+            .WithMinValues(1)
+            .WithMaxValues(5)
             .AddOption("Gasp", "1052769550170591312")
             .AddOption("GRANDMA CREW", "867508606742822982")
             .AddOption("Henryed", "936049861197979709")
             .AddOption("HYPE", "885304356474327070")
             .AddOption("HYPER", "885304164710744104")
-            .AddOption("I don't trust you", "867181264708829184");
-        var menuBuilder2 = new SelectMenuBuilder()
-            .WithPlaceholder("Select an option")
-            .WithMinValues(1)
-            .WithMaxValues(5)
+            .AddOption("I don't trust you", "867181264708829184")
             .AddOption("KEKW", "867181095261831198")
             .AddOption("Not Bad", "943565714374131742")
             .AddOption("NotLikeThis", "904143109741490216")
@@ -57,7 +58,11 @@ public class SticketVoteCmd : InteractionModuleBase
             .AddOption("Pepper arrives", "887469396535156767")
             .AddOption("Plotting", "888835692371787896")
             .AddOption("Power Couple", "1054635800605765732")
-            .AddOption("Pray", "867903578832240641")
+            .AddOption("Pray", "867903578832240641");
+        var menuBuilder3 = new SelectMenuBuilder()
+            .WithPlaceholder("Select an option")
+            .WithMinValues(1)
+            .WithMaxValues(5)
             .AddOption("Realization", "871988640228708362")
             .AddOption("Regret", "896632780585332736")
             .AddOption("Rosa Relax", "879922145919107103")
@@ -69,11 +74,7 @@ public class SticketVoteCmd : InteractionModuleBase
             .AddOption("Simon", "915030030759911435")
             .AddOption("Simon and Henry", "919267399847526430")
             .AddOption("Simoned", "890765757552660521")
-            .AddOption("STACHE", "904096703794262158");
-        var menuBuilder3 = new SelectMenuBuilder()
-            .WithPlaceholder("Select an option")
-            .WithMinValues(1)
-            .WithMaxValues(5)
+            .AddOption("STACHE", "904096703794262158")
             .AddOption("Superiority", "986809532053327912")
             .AddOption("THINK DOUG", "881428536295047188")
             .AddOption("Thumbs up", "874827958697734164")
@@ -84,23 +85,98 @@ public class SticketVoteCmd : InteractionModuleBase
             .WithSelectMenu(menuBuilder.WithCustomId("keepSticker1"))
             .WithSelectMenu(menuBuilder2.WithCustomId("keepSticker2"))
             .WithSelectMenu(menuBuilder3.WithCustomId("keepSticker3"));
-        await ReplyAsync("***THIS IS A TEST PLACE HOLDER AND NOT OFFICIAL***\nVote on which stickers you would like to keep", components: builder.Build());
+        await ReplyAsync("Vote on which stickers you would like to keep", components: builder.Build());
         builder = new ComponentBuilder()
             .WithSelectMenu(menuBuilder.WithCustomId("removeSticker1"))
             .WithSelectMenu(menuBuilder2.WithCustomId("removeSticker2"))
-            .WithSelectMenu(menuBuilder3.WithCustomId("removeSticker3"));
-        await ReplyAsync("***THIS IS A TEST PLACE HOLDER AND NOT OFFICIAL***\nVote on which stickers you would like to remove", components: builder.Build());
+            .WithSelectMenu(menuBuilder3.WithCustomId("removeSticker3"))
+            .WithButton("Check my votes", "checkVotes");
+        await ReplyAsync("Vote on which stickers you would like to remove", components: builder.Build());
     }
 
-    [ComponentInteraction("keepSticker:*")]
-    public async Task keepSticker()
+    [ComponentInteraction("keepSticker*")]
+    public async Task keepSticker(string wild, string[] selected)
     {
-        //await RespondAsync($"{Context.User.Username} voted to keep: {string.Join(", ", Context.Interaction.Data)}", ephemeral: true);
+        var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
+        var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+        if (user == null)
+        {
+            settings.Users.Add(new UserSetting{Id = Context.User.Id.ToString()});
+            user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+            user.Storage = new Dictionary<string, string>();
+        }
+        //Remove vote if already exists
+        if (user.Storage.ContainsKey($"keepSticker{wild}"))
+        {
+            user.Storage.Remove($"keepSticker{wild}");
+        }
+        user.Storage.Add($"keepSticker{wild}", string.Join(",", selected));
+        settings.Update();
+        RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
     }
 
-    [ComponentInteraction("removeSticker:*")]
+    [ComponentInteraction("removeSticker*")]
+    public async Task removeSticker(string wild, string[] selected)
+    {
+        var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
+        var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+        if (user == null)
+        {
+            settings.Users.Add(new UserSetting{Id = Context.User.Id.ToString()});
+            user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+            user.Storage = new Dictionary<string, string>();
+        }
+        //Remove vote if already exists
+        if (user.Storage.ContainsKey($"removeSticker{wild}"))
+        {
+            user.Storage.Remove($"removeSticker{wild}");
+        }
+        user.Storage.Add($"removeSticker{wild}", string.Join(",", selected));
+        settings.Update();
+        RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
+    }
+    
+    [ComponentInteraction("checkVotes")]
     public async Task removeSticker()
     {
-        //await RespondAsync($"{Context.User.Username} voted to remove: {string.Join(", ", selected)}", ephemeral: true);
+        var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
+        var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+        if (user == null)
+        {
+            RespondAsync("You have not voted yet", ephemeral: true);
+            return;
+        }
+        var keep = new List<string>();
+        foreach (var keepDict in user.Storage.Where(keepDict => keepDict.Key.StartsWith("keepSticker")))
+        {
+            var range = keepDict.Value.Split(',');
+            Context.Guild.Stickers.Where(s => range.Contains(s.Id.ToString())).Select(s => s.Name).ToList().ForEach(keep.Add);
+        }
+        var remove = new List<string>();
+        foreach (var removeDict in user.Storage.Where(removeDict => removeDict.Key.StartsWith("removeSticker")))
+        {
+            var range = removeDict.Value.Split(',');
+            Context.Guild.Stickers.Where(s => range.Contains(s.Id.ToString())).Select(s => s.Name).ToList().ForEach(remove.Add);
+        }
+        //Create fields
+        var fields = new List<EmbedFieldBuilder>();
+        if (keep.Count > 0)
+        {
+            fields.Add(new EmbedFieldBuilder()
+                .WithName("Keep")
+                .WithValue(string.Join(", ", keep)));
+        }
+        if (remove.Count > 0)
+        {
+            fields.Add(new EmbedFieldBuilder()
+                .WithName("Remove")
+                .WithValue(string.Join(", ", remove)));
+        }
+        //Create embed
+        var embed = new EmbedBuilder()
+            .WithAuthor(Context.User)
+            .WithFields(fields)
+            .WithColor(Color.Blue);
+        RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 }

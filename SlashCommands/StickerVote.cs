@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace DougBot.SlashCommands;
 
-[EnabledInDm(false)]
-[DefaultMemberPermissions(GuildPermission.Administrator)]
 public class SticketVoteCmd : InteractionModuleBase
 {
+    [EnabledInDm(false)]
+    [DefaultMemberPermissions(GuildPermission.Administrator)]
     [SlashCommand("stickervote", "Vote on what stickers to keep")]
     public async Task StickerVote()
     {

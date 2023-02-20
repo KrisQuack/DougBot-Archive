@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -15,7 +14,8 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("aichat", "Send an AI message into chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
-    public async Task AIChat([Summary(description: "Prompt for the AI")] string prompt, [Summary(description: "Tokens to use (Default: 50)")] int tokens = 50)
+    public async Task AIChat([Summary(description: "Prompt for the AI")] string prompt,
+        [Summary(description: "Tokens to use (Default: 50)")] int tokens = 50)
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
@@ -32,7 +32,7 @@ public class AIChatCmd : InteractionModuleBase
             TopP = 1,
             PresencePenalty = (float)0.3,
             FrequencyPenalty = (float)0.3,
-            StopAsList = new[] {"\n", Environment.NewLine}
+            StopAsList = new[] { "\n", Environment.NewLine }
         }, OpenAI.GPT3.ObjectModels.Models.Davinci);
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
         var aiText = completionResult.Choices.FirstOrDefault().Text;
@@ -41,12 +41,13 @@ public class AIChatCmd : InteractionModuleBase
             await ModifyOriginalResponseAsync(r => r.Content = "No response from API");
             return;
         }
+
         var builder = new ComponentBuilder()
             .WithButton("Send to chat", "aiChatApprove");
         await ModifyOriginalResponseAsync(r => r.Content = aiText);
         await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
     }
-    
+
     [ComponentInteraction("aiChatApprove")]
     public async Task ApproveResponse()
     {

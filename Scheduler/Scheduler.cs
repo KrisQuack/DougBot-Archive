@@ -1,8 +1,5 @@
-using System.Diagnostics;
-using System.Text.Json;
 using Discord.WebSocket;
 using DougBot.Models;
-using DougBot.Systems;
 
 namespace DougBot.Scheduler;
 
@@ -49,7 +46,7 @@ public class Scheduler
                                     queue.Keys["message"],
                                     queue.Keys["embedBuilders"],
                                     bool.Parse(queue.Keys["ping"]),
-                                        queue.Keys["attachments"]);
+                                    queue.Keys["attachments"]);
                                 break;
                             case "SendDM":
                                 await Message.SendDM(Client,

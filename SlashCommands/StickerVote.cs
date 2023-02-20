@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace DougBot.SlashCommands;
 
@@ -101,15 +99,13 @@ public class SticketVoteCmd : InteractionModuleBase
         var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
         if (user == null)
         {
-            settings.Users.Add(new UserSetting{Id = Context.User.Id.ToString()});
+            settings.Users.Add(new UserSetting { Id = Context.User.Id.ToString() });
             user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
             user.Storage = new Dictionary<string, string>();
         }
+
         //Remove vote if already exists
-        if (user.Storage.ContainsKey($"keepSticker{wild}"))
-        {
-            user.Storage.Remove($"keepSticker{wild}");
-        }
+        if (user.Storage.ContainsKey($"keepSticker{wild}")) user.Storage.Remove($"keepSticker{wild}");
         user.Storage.Add($"keepSticker{wild}", string.Join(",", selected));
         settings.Update();
         RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
@@ -122,20 +118,18 @@ public class SticketVoteCmd : InteractionModuleBase
         var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
         if (user == null)
         {
-            settings.Users.Add(new UserSetting{Id = Context.User.Id.ToString()});
+            settings.Users.Add(new UserSetting { Id = Context.User.Id.ToString() });
             user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
             user.Storage = new Dictionary<string, string>();
         }
+
         //Remove vote if already exists
-        if (user.Storage.ContainsKey($"removeSticker{wild}"))
-        {
-            user.Storage.Remove($"removeSticker{wild}");
-        }
+        if (user.Storage.ContainsKey($"removeSticker{wild}")) user.Storage.Remove($"removeSticker{wild}");
         user.Storage.Add($"removeSticker{wild}", string.Join(",", selected));
         settings.Update();
         RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
     }
-    
+
     [ComponentInteraction("checkVotes")]
     public async Task removeSticker()
     {
@@ -146,32 +140,33 @@ public class SticketVoteCmd : InteractionModuleBase
             RespondAsync("You have not voted yet", ephemeral: true);
             return;
         }
+
         var keep = new List<string>();
         foreach (var keepDict in user.Storage.Where(keepDict => keepDict.Key.StartsWith("keepSticker")))
         {
             var range = keepDict.Value.Split(',');
-            Context.Guild.Stickers.Where(s => range.Contains(s.Id.ToString())).Select(s => s.Name).ToList().ForEach(keep.Add);
+            Context.Guild.Stickers.Where(s => range.Contains(s.Id.ToString())).Select(s => s.Name).ToList()
+                .ForEach(keep.Add);
         }
+
         var remove = new List<string>();
         foreach (var removeDict in user.Storage.Where(removeDict => removeDict.Key.StartsWith("removeSticker")))
         {
             var range = removeDict.Value.Split(',');
-            Context.Guild.Stickers.Where(s => range.Contains(s.Id.ToString())).Select(s => s.Name).ToList().ForEach(remove.Add);
+            Context.Guild.Stickers.Where(s => range.Contains(s.Id.ToString())).Select(s => s.Name).ToList()
+                .ForEach(remove.Add);
         }
+
         //Create fields
         var fields = new List<EmbedFieldBuilder>();
         if (keep.Count > 0)
-        {
             fields.Add(new EmbedFieldBuilder()
                 .WithName("Keep")
                 .WithValue(string.Join(", ", keep)));
-        }
         if (remove.Count > 0)
-        {
             fields.Add(new EmbedFieldBuilder()
                 .WithName("Remove")
                 .WithValue(string.Join(", ", remove)));
-        }
         //Create embed
         var embed = new EmbedBuilder()
             .WithAuthor(Context.User)

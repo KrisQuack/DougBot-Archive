@@ -6,16 +6,16 @@ namespace DougBot.Systems;
 
 public static class ReactionFilter
 {
-    static Dictionary<ulong, List<string>> emoteWhitelists = new();
-    static List<Guild> dbGuilds = new();
+    private static readonly Dictionary<ulong, List<string>> emoteWhitelists = new();
+    private static List<Guild> dbGuilds = new();
 
     public static async Task Monitor(DiscordSocketClient client)
     {
         client.ReactionAdded += ReactionAddedHandler;
-        client.ReactionAdded += async (message, channel, reaction) => Task.Run(() => ReactionAddedHandler(message, channel, reaction));
+        client.ReactionAdded += async (message, channel, reaction) =>
+            Task.Run(() => ReactionAddedHandler(message, channel, reaction));
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
-        {
             try
             {
                 dbGuilds = await Guild.GetGuilds();
@@ -37,7 +37,6 @@ public static class ReactionFilter
             {
                 Console.WriteLine(ex.ToString());
             }
-        }
     }
 
     private static async Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message,
@@ -54,7 +53,6 @@ public static class ReactionFilter
             var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
             var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
             if (whitelist != null && whitelistChannels != null)
-            {
                 if (whitelistChannels.Contains(Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
                 {
                     //Remove reaction
@@ -68,7 +66,6 @@ public static class ReactionFilter
                     var dueTime = Message.Value.Timestamp.AddMinutes(1).DateTime;
                     await new Queue("RemoveReaction", 3, reactDict, dueTime).Insert();
                 }
-            }
         }
         catch (Exception ex)
         {

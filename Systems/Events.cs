@@ -13,8 +13,8 @@ public static class Events
     public static async Task Monitor(DiscordSocketClient client)
     {
         _Client = client;
-        client.MessageReceived += async (message) => Task.Run(() => MessageReceivedHandler(message));
-        client.UserJoined += async (user) => Task.Run(() => UserJoinedHandler(user));
+        client.MessageReceived += async message => Task.Run(() => MessageReceivedHandler(message));
+        client.UserJoined += async user => Task.Run(() => UserJoinedHandler(user));
         Console.WriteLine("EventHandler Initialized");
     }
 

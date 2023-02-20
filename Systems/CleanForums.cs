@@ -35,35 +35,36 @@ public static class CleanForums
                                 (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2)))
                             {
                                 await thread.ModifyAsync(t => t.Archived = true);
-                                await AuditLog.LogEvent("**Thread Auto Closed**",dbGuild.Id, Color.Green, new List<EmbedFieldBuilder>
-                                {
-                                    new()
+                                await AuditLog.LogEvent("**Thread Auto Closed**", dbGuild.Id, Color.Green,
+                                    new List<EmbedFieldBuilder>
                                     {
-                                        Name = "Forum",
-                                        Value = forum.Mention,
-                                        IsInline = true
-                                    },
-                                    new()
-                                    {
-                                        Name = "Age",
-                                        Value = (DateTime.UtcNow - thread.CreatedAt.UtcDateTime).Days + " days",
-                                        IsInline = true
-                                    },
-                                    new()
-                                    {
-                                        Name = "Messages",
-                                        Value = thread.MessageCount.ToString(),
-                                        IsInline = true
-                                    },
-                                    new()
-                                    {
-                                        Name = "Title",
-                                        Value = $"[{thread.Name}](https://discord.com/channels/{thread.GuildId}/{thread.Id})",
-                                        IsInline = false
-                                    }
-                                });
-                            } 
-                                
+                                        new()
+                                        {
+                                            Name = "Forum",
+                                            Value = forum.Mention,
+                                            IsInline = true
+                                        },
+                                        new()
+                                        {
+                                            Name = "Age",
+                                            Value = (DateTime.UtcNow - thread.CreatedAt.UtcDateTime).Days + " days",
+                                            IsInline = true
+                                        },
+                                        new()
+                                        {
+                                            Name = "Messages",
+                                            Value = thread.MessageCount.ToString(),
+                                            IsInline = true
+                                        },
+                                        new()
+                                        {
+                                            Name = "Title",
+                                            Value =
+                                                $"[{thread.Name}](https://discord.com/channels/{thread.GuildId}/{thread.Id})",
+                                            IsInline = false
+                                        }
+                                    });
+                            }
                         }
                     }
                 }

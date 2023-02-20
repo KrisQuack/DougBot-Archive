@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
@@ -15,7 +14,7 @@ public class SetStatusCmd : InteractionModuleBase
         //Set the bots status
         var dict = new Dictionary<string, string>
         {
-            { "status", status },
+            { "status", status }
         };
         await new Queue("SetStatus", null, dict, null).Insert();
         await RespondAsync($"Status set to `{status}` and will update shortly");

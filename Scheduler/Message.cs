@@ -3,7 +3,6 @@ using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
 using Fernandezja.ColorHashSharp;
-using Exception = System.Exception;
 
 namespace DougBot.Scheduler;
 
@@ -27,14 +26,15 @@ public static class Message
             var attachments = JsonSerializer.Deserialize<List<string>>(attachmenst);
             foreach (var attachment in attachments)
             {
-                await channel.SendFileAsync(attachment,attachment.Split('/').LastOrDefault(x => x.Contains('.')));
+                await channel.SendFileAsync(attachment, attachment.Split('/').LastOrDefault(x => x.Contains('.')));
                 //delete file
                 File.Delete(attachment);
             }
         }
     }
 
-    public static async Task SendDM(DiscordSocketClient client,ulong GuildId, ulong UserId, ulong SenderId, string EmbedBuilders)
+    public static async Task SendDM(DiscordSocketClient client, ulong GuildId, ulong UserId, ulong SenderId,
+        string EmbedBuilders)
     {
         //Get the guild settings
         var dbGuild = await Guild.GetGuild(GuildId.ToString());
@@ -57,7 +57,8 @@ public static class Message
         {
             await user.SendMessageAsync(embeds: embeds.ToArray());
             Status = "Message Delivered";
-            color = (Color)colorHash.BuildToColor(UserId.ToString());;
+            color = (Color)colorHash.BuildToColor(UserId.ToString());
+            ;
         }
         catch (Exception ex)
         {
@@ -67,6 +68,7 @@ public static class Message
                 Status = "Error: " + ex.Message;
             color = Color.Red;
         }
+
         //Send status to mod channel
         embeds = JsonSerializer.Deserialize<List<EmbedBuilder>>(EmbedBuilders,
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } }).Select(embed =>

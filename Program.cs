@@ -3,10 +3,8 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Models;
 using DougBot.Scheduler;
 using DougBot.Systems;
-using Microsoft.EntityFrameworkCore;
 
 namespace DougBot;
 
@@ -16,7 +14,6 @@ public class Program
     private static InteractionService _Service;
     private static IServiceProvider _ServiceProvider;
     private static DiscordSocketClient _Client;
-    private bool _FirstStart = true;
 
     public static List<string> Faces = new()
     {
@@ -32,7 +29,9 @@ public class Program
         "ʘ‿ʘ"
     };
 
-        private static Task Main()
+    private bool _FirstStart = true;
+
+    private static Task Main()
     {
         return new Program().MainAsync();
     }
@@ -131,7 +130,8 @@ public class Program
                             IsInline = true
                         }
                 };
-                AuditLog.LogEvent("***Command Ran***",context.Guild.Id.ToString(), result.IsSuccess ? Color.Green : Color.Red, auditFields);
+                AuditLog.LogEvent("***Command Ran***", context.Guild.Id.ToString(),
+                    result.IsSuccess ? Color.Green : Color.Red, auditFields);
                 if (!result.IsSuccess)
                 {
                     if (result.ErrorReason.Contains("was not present in the dictionary.") &&

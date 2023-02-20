@@ -20,12 +20,13 @@ public class Guild
         await using var db = new Database.DougBotContext();
         return await db.Guilds.FindAsync(id);
     }
-    
+
     public static async Task<List<Guild>> GetGuilds()
     {
         await using var db = new Database.DougBotContext();
         return await db.Guilds.ToListAsync();
     }
+
     public async Task Update()
     {
         await using var db = new Database.DougBotContext();

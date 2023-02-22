@@ -92,6 +92,51 @@ public class SticketVoteCmd : InteractionModuleBase
         await ReplyAsync("Vote on which stickers you would like to remove", components: builder.Build());
     }
 
+    [EnabledInDm(false)]
+    [DefaultMemberPermissions(GuildPermission.Administrator)]
+    [SlashCommand("stickervoteresults", "View results of the sticker vote")]
+    public async Task stickerVoteResults()
+    {
+        var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
+        var keep = new Dictionary<string, int>();
+        var remove = new Dictionary<string, int>();
+        foreach (var user in settings.Users)
+        {
+            var keepStickers = user.Storage.Where(s => s.Key.StartsWith("keepSticker"));
+            var removeStickers = user.Storage.Where(s => s.Key.StartsWith("removeSticker"));
+            foreach (var sticker in keepStickers)
+            {
+                foreach (var s in sticker.Value.Split(','))
+                {
+                    var stickerName = Context.Guild.Stickers.FirstOrDefault(st => st.Id.ToString() == s).Name;
+                    if (keep.ContainsKey(stickerName)) keep[stickerName]++;
+                    else keep.Add(stickerName, 1);
+                }
+            }
+            foreach (var sticker in removeStickers)
+            {
+                foreach (var s in sticker.Value.Split(','))
+                {
+                    var stickerName = Context.Guild.Stickers.FirstOrDefault(st => st.Id.ToString() == s).Name;
+                    if (remove.ContainsKey(stickerName)) remove[stickerName]++;
+                    else remove.Add(stickerName, 1);
+                }
+            }
+        }
+        //Create fields
+        var fields = new List<EmbedFieldBuilder>
+        {
+            new EmbedFieldBuilder().WithName("Keep").WithValue(string.Join("\n", keep.OrderBy(s => s.Value).Select(s => $"{s.Key} - {s.Value}"))),
+            new EmbedFieldBuilder().WithName("Remove").WithValue(string.Join("\n", remove.OrderBy(s => s.Value).Select(s => $"{s.Key} - {s.Value}")))
+        };
+        //Create embed
+        var embed = new EmbedBuilder()
+            .WithTitle("Sticker Vote Results")
+            .WithFields(fields)
+            .WithColor(Color.Blue);
+        RespondAsync(embed: embed.Build());
+    }
+
     [ComponentInteraction("keepSticker*")]
     public async Task keepSticker(string wild, string[] selected)
     {
@@ -103,9 +148,9 @@ public class SticketVoteCmd : InteractionModuleBase
             user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
             user.Storage = new Dictionary<string, string>();
         }
-
         //Remove vote if already exists
         if (user.Storage.ContainsKey($"keepSticker{wild}")) user.Storage.Remove($"keepSticker{wild}");
+        //Add vote
         user.Storage.Add($"keepSticker{wild}", string.Join(",", selected));
         settings.Update();
         RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
@@ -122,16 +167,16 @@ public class SticketVoteCmd : InteractionModuleBase
             user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
             user.Storage = new Dictionary<string, string>();
         }
-
         //Remove vote if already exists
         if (user.Storage.ContainsKey($"removeSticker{wild}")) user.Storage.Remove($"removeSticker{wild}");
+        //Add vote
         user.Storage.Add($"removeSticker{wild}", string.Join(",", selected));
         settings.Update();
         RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
     }
 
     [ComponentInteraction("checkVotes")]
-    public async Task removeSticker()
+    public async Task checkVotes()
     {
         var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
         var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());

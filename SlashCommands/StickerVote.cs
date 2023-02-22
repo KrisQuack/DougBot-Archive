@@ -123,18 +123,16 @@ public class SticketVoteCmd : InteractionModuleBase
                 }
             }
         }
-        //Create fields
-        var fields = new List<EmbedFieldBuilder>
-        {
-            new EmbedFieldBuilder().WithName("Keep").WithValue(string.Join("\n", keep.OrderBy(s => s.Value).Select(s => $"{s.Key} - {s.Value}"))),
-            new EmbedFieldBuilder().WithName("Remove").WithValue(string.Join("\n", remove.OrderBy(s => s.Value).Select(s => $"{s.Key} - {s.Value}")))
-        };
         //Create embed
-        var embed = new EmbedBuilder()
-            .WithTitle("Sticker Vote Results")
-            .WithFields(fields)
-            .WithColor(Color.Blue);
-        RespondAsync(embed: embed.Build());
+        var embedKeep = new EmbedBuilder()
+            .WithTitle("Keep Results")
+            .WithDescription(string.Join("\n", keep.OrderByDescending(s => s.Value).Select(s => $"{s.Key}: {s.Value}")))
+            .WithColor(Color.Green).Build();
+        var embedRemove = new EmbedBuilder()
+            .WithTitle("Remove Results")
+            .WithDescription(string.Join("\n", remove.OrderByDescending(s => s.Value).Select(s => $"{s.Key}: {s.Value}")))
+            .WithColor(Color.Red).Build();
+        RespondAsync(embeds: new[] { embedKeep, embedRemove });
     }
 
     [ComponentInteraction("keepSticker*")]

@@ -44,6 +44,11 @@ public static class ReactionFilter
         {
             if (!Channel.HasValue || !dbGuilds.Any())
                 return;
+            IMessage realmessage;
+            if(!Message.HasValue) 
+                realmessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
+            else
+                realmessage = Message.Value;
             var channel = Channel.Value as SocketTextChannel;
             var guild = channel.Guild;
             var emote = Reaction.Emote;
@@ -61,7 +66,7 @@ public static class ReactionFilter
                         { "messageId", Reaction.MessageId.ToString() },
                         { "emoteName", Reaction.Emote.Name }
                     };
-                    var dueTime = Message.Value.Timestamp.AddMinutes(1).DateTime;
+                    var dueTime = realmessage.Timestamp.AddMinutes(1).DateTime;
                     await new Queue("RemoveReaction", 3, reactDict, dueTime).Insert();
                 }
         }

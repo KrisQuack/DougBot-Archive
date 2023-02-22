@@ -42,21 +42,18 @@ public static class ReactionFilter
     {
         try
         {
-            if (!Channel.HasValue || !dbGuilds.Any())
+            //Skip if no guilds or emotes
+            if (!dbGuilds.Any() && !emoteWhitelists.Any())
                 return;
-            IMessage realmessage;
-            if(!Message.HasValue) 
-                realmessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
-            else
-                realmessage = Message.Value;
-            var channel = Channel.Value as SocketTextChannel;
-            var guild = channel.Guild;
+            //Load values
+            var guild = (Reaction.Channel as SocketTextChannel).Guild;
             var emote = Reaction.Emote;
             var whitelist = emoteWhitelists[guild.Id];
             var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
             var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
+            //Check if emote is whitelisted
             if (whitelist != null && whitelistChannels != null)
-                if (whitelistChannels.Contains(Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
+                if (whitelistChannels.Contains(Reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
                 {
                     //Remove reaction
                     var reactDict = new Dictionary<string, string>
@@ -66,7 +63,14 @@ public static class ReactionFilter
                         { "messageId", Reaction.MessageId.ToString() },
                         { "emoteName", Reaction.Emote.Name }
                     };
-                    var dueTime = realmessage.Timestamp.AddMinutes(1).DateTime;
+                    //Get message if not cached
+                    IMessage realMessage;
+                    if(!Message.HasValue) 
+                        realMessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
+                    else
+                        realMessage = Message.Value;
+                    //Queue removal
+                    var dueTime = realMessage.Timestamp.AddMinutes(1).DateTime;
                     await new Queue("RemoveReaction", 3, reactDict, dueTime).Insert();
                 }
         }

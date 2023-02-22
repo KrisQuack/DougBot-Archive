@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
+using DougBot.Systems;
 
 namespace DougBot.SlashCommands;
 
@@ -135,44 +136,45 @@ public class SticketVoteCmd : InteractionModuleBase
         RespondAsync(embeds: new[] { embedKeep, embedRemove });
     }
 
-    [ComponentInteraction("keepSticker*")]
-    public async Task keepSticker(string wild, string[] selected)
+    [ComponentInteraction("*Sticker*")]
+    public async Task keepSticker(string type,string number, string[] selected)
     {
-        var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
-        var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
-        if (user == null)
+        try
         {
-            settings.Users.Add(new UserSetting { Id = Context.User.Id.ToString() });
-            user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
-            user.Storage = new Dictionary<string, string>();
+            var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
+            var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+            if (user == null)
+            {
+                settings.Users.Add(new UserSetting { Id = Context.User.Id.ToString() });
+                user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
+                user.Storage = new Dictionary<string, string>();
+            }
+            //Remove vote if already exists
+            if (user.Storage.ContainsKey($"{type}Sticker{number}")) user.Storage.Remove($"{type}Sticker{number}");
+            //Add vote
+            user.Storage.Add($"{type}Sticker{number}", string.Join(",", selected));
+            settings.Update();
+            RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
         }
-        //Remove vote if already exists
-        if (user.Storage.ContainsKey($"keepSticker{wild}")) user.Storage.Remove($"keepSticker{wild}");
-        //Add vote
-        user.Storage.Add($"keepSticker{wild}", string.Join(",", selected));
-        settings.Update();
-        RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
-    }
-
-    [ComponentInteraction("removeSticker*")]
-    public async Task removeSticker(string wild, string[] selected)
-    {
-        var settings = await Guild.GetGuild(Context.Guild.Id.ToString());
-        var user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
-        if (user == null)
+        catch (Exception e)
         {
-            settings.Users.Add(new UserSetting { Id = Context.User.Id.ToString() });
-            user = settings.Users.FirstOrDefault(u => u.Id == Context.User.Id.ToString());
-            user.Storage = new Dictionary<string, string>();
+            RespondAsync("An error occurred. Please try again later. This has been reported to Quack", ephemeral: true);
+            //create fields
+            var fields = new List<EmbedFieldBuilder>
+            {
+                new () {Name = "Exception", Value = e.Message},
+                new () {Name = "Stack Trace", Value = e.StackTrace}
+            };
+            //Create Author
+            var author = new EmbedAuthorBuilder
+            {
+                Name = $"{Context.User.Username}#{Context.User.Discriminator} ({Context.User.Id})",
+                IconUrl = Context.User.GetAvatarUrl()
+            };
+            AuditLog.LogEvent("Sticker Vote Error", Context.Guild.Id.ToString(), Color.Red, fields, author);
         }
-        //Remove vote if already exists
-        if (user.Storage.ContainsKey($"removeSticker{wild}")) user.Storage.Remove($"removeSticker{wild}");
-        //Add vote
-        user.Storage.Add($"removeSticker{wild}", string.Join(",", selected));
-        settings.Update();
-        RespondAsync("Selection submitted. You can change this any time", ephemeral: true);
     }
-
+    
     [ComponentInteraction("checkVotes")]
     public async Task checkVotes()
     {

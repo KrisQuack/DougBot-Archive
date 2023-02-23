@@ -15,7 +15,6 @@ public class SticketVoteCmd : InteractionModuleBase
         var menuBuilder = new SelectMenuBuilder()
             .WithPlaceholder("Select an option")
             .WithMinValues(1)
-            .WithMaxValues(5)
             .AddOption("A CREW POSTER", "867504132537581600")
             .AddOption("ALPHABET CREW", "867509834596352010")
             .AddOption("Beans", "867181384631713812")
@@ -38,7 +37,6 @@ public class SticketVoteCmd : InteractionModuleBase
         var menuBuilder2 = new SelectMenuBuilder()
             .WithPlaceholder("Select an option")
             .WithMinValues(1)
-            .WithMaxValues(5)
             .AddOption("Gasp", "1052769550170591312")
             .AddOption("GRANDMA CREW", "867508606742822982")
             .AddOption("Henryed", "936049861197979709")
@@ -61,7 +59,6 @@ public class SticketVoteCmd : InteractionModuleBase
         var menuBuilder3 = new SelectMenuBuilder()
             .WithPlaceholder("Select an option")
             .WithMinValues(1)
-            .WithMaxValues(5)
             .AddOption("Realization", "871988640228708362")
             .AddOption("Regret", "896632780585332736")
             .AddOption("Rosa Relax", "879922145919107103")
@@ -84,13 +81,13 @@ public class SticketVoteCmd : InteractionModuleBase
             .WithSelectMenu(menuBuilder.WithCustomId("keepSticker1"))
             .WithSelectMenu(menuBuilder2.WithCustomId("keepSticker2"))
             .WithSelectMenu(menuBuilder3.WithCustomId("keepSticker3"));
-        await ReplyAsync("Vote on which stickers you would like to keep", components: builder.Build());
+        await ReplyAsync("Which stickers would you like to keep?", components: builder.Build());
         builder = new ComponentBuilder()
             .WithSelectMenu(menuBuilder.WithCustomId("removeSticker1"))
             .WithSelectMenu(menuBuilder2.WithCustomId("removeSticker2"))
             .WithSelectMenu(menuBuilder3.WithCustomId("removeSticker3"))
             .WithButton("Check my votes", "checkVotes");
-        await ReplyAsync("Vote on which stickers you would like to remove", components: builder.Build());
+        await ReplyAsync("Which stickers would you like to remove?", components: builder.Build());
     }
 
     [EnabledInDm(false)]

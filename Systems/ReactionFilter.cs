@@ -11,7 +11,7 @@ public static class ReactionFilter
 
     public static async Task Monitor(DiscordSocketClient client)
     {
-        client.ReactionAdded += async (message, channel, reaction) => Task.Run(() => ReactionAddedHandler(message, channel, reaction));
+        client.ReactionAdded += ReactionAddedHandler;
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
             try
@@ -37,46 +37,49 @@ public static class ReactionFilter
             }
     }
 
-    private static async Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message,
-        Cacheable<IMessageChannel, ulong> Channel, SocketReaction Reaction)
+    private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message, Cacheable<IMessageChannel, ulong> Channel, SocketReaction Reaction)
     {
-        try
+        _ = Task.Run(async () =>
         {
-            //Skip if no guilds or emotes
-            if (!dbGuilds.Any() && !emoteWhitelists.Any())
-                return;
-            //Load values
-            var guild = (Reaction.Channel as SocketTextChannel).Guild;
-            var emote = Reaction.Emote;
-            var whitelist = emoteWhitelists[guild.Id];
-            var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
-            var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
-            //Check if emote is whitelisted
-            if (whitelist != null && whitelistChannels != null)
-                if (whitelistChannels.Contains(Reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
-                {
-                    //Remove reaction
-                    var reactDict = new Dictionary<string, string>
+            try
+            {
+                //Skip if no guilds or emotes
+                if (!dbGuilds.Any() && !emoteWhitelists.Any())
+                    return;
+                //Load values
+                var guild = (Reaction.Channel as SocketTextChannel).Guild;
+                var emote = Reaction.Emote;
+                var whitelist = emoteWhitelists[guild.Id];
+                var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
+                var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
+                //Check if emote is whitelisted
+                if (whitelist != null && whitelistChannels != null)
+                    if (whitelistChannels.Contains(Reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
                     {
-                        { "guildId", guild.Id.ToString() },
-                        { "channelId", Reaction.Channel.Id.ToString() },
-                        { "messageId", Reaction.MessageId.ToString() },
-                        { "emoteName", Reaction.Emote.Name }
-                    };
-                    //Get message if not cached
-                    IMessage realMessage;
-                    if(!Message.HasValue) 
-                        realMessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
-                    else
-                        realMessage = Message.Value;
-                    //Queue removal
-                    var dueTime = realMessage.Timestamp.AddMinutes(1).DateTime;
-                    await new Queue("RemoveReaction", 3, reactDict, dueTime).Insert();
-                }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
+                        //Remove reaction
+                        var reactDict = new Dictionary<string, string>
+                        {
+                            { "guildId", guild.Id.ToString() },
+                            { "channelId", Reaction.Channel.Id.ToString() },
+                            { "messageId", Reaction.MessageId.ToString() },
+                            { "emoteName", Reaction.Emote.Name }
+                        };
+                        //Get message if not cached
+                        IMessage realMessage;
+                        if(!Message.HasValue) 
+                            realMessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
+                        else
+                            realMessage = Message.Value;
+                        //Queue removal
+                        var dueTime = realMessage.Timestamp.AddMinutes(1).DateTime;
+                        await new Queue("RemoveReaction", 3, reactDict, dueTime).Insert();
+                    }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        });
+        return Task.CompletedTask;
     }
 }

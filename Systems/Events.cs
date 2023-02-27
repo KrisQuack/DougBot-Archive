@@ -13,23 +13,27 @@ public static class Events
     public static async Task Monitor(DiscordSocketClient client)
     {
         _Client = client;
-        client.MessageReceived += async message => Task.Run(() => MessageReceivedHandler(message));
-        client.UserJoined += async user => Task.Run(() => UserJoinedHandler(user));
+        client.MessageReceived += MessageReceivedHandler;
+        client.UserJoined += UserJoinedHandler;
         Console.WriteLine("EventHandler Initialized");
     }
 
-    private static async Task UserJoinedHandler(SocketGuildUser user)
+    private static Task UserJoinedHandler(SocketGuildUser user)
     {
+        _ = Task.Run(async () => {
         var dict = new Dictionary<string, string>
         {
             { "guildId", user.Guild.Id.ToString() },
             { "userId", user.Id.ToString() }
         };
         await new Queue("FreshCheck", null, dict, DateTime.UtcNow.AddMinutes(10)).Insert();
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task MessageReceivedHandler(SocketMessage message)
+    private static Task MessageReceivedHandler(SocketMessage message)
     {
+        _ = Task.Run(async () => {
         if (message.Channel is SocketDMChannel && message.Author.MutualGuilds.Any() &&
             message.Author.Id != _Client.CurrentUser.Id)
         {
@@ -69,5 +73,7 @@ public static class Events
                 await new Queue("SendMessage", null, dict, null).Insert();
             }
         }
+        });
+        return Task.CompletedTask;
     }
 }

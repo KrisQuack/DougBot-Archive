@@ -10,22 +10,22 @@ public static class AuditLog
 {
     public static async Task Monitor(DiscordSocketClient client)
     {
-        client.MessageUpdated += async (before, after, channel) =>
-            Task.Run(() => MessageUpdatedHandler(before, after, channel));
-        client.MessageDeleted += async (message, channel) => Task.Run(() => MessageDeletedHandler(message, channel));
-        client.GuildMemberUpdated += async (before, after) => Task.Run(() => GuildMemberUpdatedHandler(before, after));
-        client.UserUpdated += async (before, after) => Task.Run(() => UserUpdatedHandler(before, after));
-        client.UserJoined += async user => Task.Run(() => UserJoinedHandler(user));
-        client.UserLeft += async (guild, user) => Task.Run(() => UserLeftHandler(guild, user));
-        client.UserBanned += async (user, guild) => Task.Run(() => UserBannedHandler(user, guild));
-        client.UserUnbanned += async (user, guild) => Task.Run(() => UserUnbannedHandler(user, guild));
+        client.MessageUpdated += MessageUpdatedHandler;
+        client.MessageDeleted += MessageDeletedHandler;
+        client.GuildMemberUpdated += GuildMemberUpdatedHandler;
+        client.UserUpdated += UserUpdatedHandler;
+        client.UserJoined += UserJoinedHandler;
+        client.UserLeft += UserLeftHandler;
+        client.UserBanned += UserBannedHandler;
+        client.UserUnbanned += UserUnbannedHandler;
 
 
         Console.WriteLine("AuditLog Initialized");
     }
 
-    private static async Task UserLeftHandler(SocketGuild guild, SocketUser user)
+    private static Task UserLeftHandler(SocketGuild guild, SocketUser user)
     {
+        _ = Task.Run(async () => {
         //Get guild user
         var guildUser = guild.GetUser(user.Id);
         ;
@@ -40,10 +40,13 @@ public static class AuditLog
         };
         //Log event
         await LogEvent("User Left", guild.Id.ToString(), Color.Red, fields, author);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task UserBannedHandler(SocketUser user, SocketGuild guild)
+    private static Task UserBannedHandler(SocketUser user, SocketGuild guild)
     {
+        _ = Task.Run(async () => {
         //Set Author
         var author = new EmbedAuthorBuilder
         {
@@ -52,10 +55,13 @@ public static class AuditLog
         };
         //Log event
         await LogEvent("User Banned", guild.Id.ToString(), Color.Red, null, author);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task UserUnbannedHandler(SocketUser user, SocketGuild guild)
+    private static Task UserUnbannedHandler(SocketUser user, SocketGuild guild)
     {
+        _ = Task.Run(async () => {
         //Set Author
         var author = new EmbedAuthorBuilder
         {
@@ -64,10 +70,13 @@ public static class AuditLog
         };
         //Log event
         await LogEvent("User Unbanned", guild.Id.ToString(), Color.Green, null, author);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task UserJoinedHandler(SocketGuildUser user)
+    private static Task UserJoinedHandler(SocketGuildUser user)
     {
+        _ = Task.Run(async () => {
         //Set Author
         var author = new EmbedAuthorBuilder
         {
@@ -76,10 +85,13 @@ public static class AuditLog
         };
         //Log event
         await LogEvent("User Joined", user.Guild.Id.ToString(), Color.Green, null, author);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task UserUpdatedHandler(SocketUser before, SocketUser after)
+    private static Task UserUpdatedHandler(SocketUser before, SocketUser after)
     {
+        _ = Task.Run(async () => {
         var fields = new List<EmbedFieldBuilder>();
         //If username changed add field
         if (before.Username != after.Username)
@@ -115,10 +127,13 @@ public static class AuditLog
         if (fields.Count > 0)
             foreach (var guild in after.MutualGuilds)
                 await LogEvent("User Updated", guild.Id.ToString(), Color.LightOrange, fields, author, attachments);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task GuildMemberUpdatedHandler(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after)
+    private static Task GuildMemberUpdatedHandler(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after)
     {
+        _ = Task.Run(async () => {
         var fields = new List<EmbedFieldBuilder>();
         //If nickname changed add field
         if (before.Value.Nickname != after.Nickname)
@@ -167,11 +182,14 @@ public static class AuditLog
         //Log event if fields are not empty
         if (fields.Count > 0)
             await LogEvent("Member Updated", after.Guild.Id.ToString(), Color.LightOrange, fields, author, attachments);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task MessageDeletedHandler(Cacheable<IMessage, ulong> message,
+    private static Task MessageDeletedHandler(Cacheable<IMessage, ulong> message,
         Cacheable<IMessageChannel, ulong> channel)
     {
+        _ = Task.Run(async () => {
         //Download message attachments from url via httpclient
         var attachments = new List<string>();
         using var httpClient = new HttpClient();
@@ -207,11 +225,14 @@ public static class AuditLog
         //Log event
         await LogEvent($"Message Deleted in {(channel.Value as SocketTextChannel).Mention}",
             (channel.Value as SocketTextChannel).Guild.Id.ToString(), Color.Red, fields, author, attachments);
+        });
+        return Task.CompletedTask;
     }
 
-    private static async Task MessageUpdatedHandler(Cacheable<IMessage, ulong> before, SocketMessage after,
+    private static Task MessageUpdatedHandler(Cacheable<IMessage, ulong> before, SocketMessage after,
         IChannel channel)
     {
+        _ = Task.Run(async () => {
         if (before.Value.Content == after.Content)
             return;
         //Set fields
@@ -229,33 +250,39 @@ public static class AuditLog
         //Log event
         await LogEvent($"[Message]({after.GetJumpUrl()}) Updated in {(channel as SocketTextChannel).Mention}",
             (channel as SocketTextChannel).Guild.Id.ToString(), Color.LightOrange, fields, author);
+        });
+        return Task.CompletedTask;
     }
 
-    public static async Task LogEvent(string Content, string GuildId, Color EmbedColor,
+    public static Task LogEvent(string Content, string GuildId, Color EmbedColor,
         List<EmbedFieldBuilder> Fields = null, EmbedAuthorBuilder Author = null, List<string> attachments = null)
     {
-        var dbGuild = await Guild.GetGuild(GuildId);
-        var embed = new EmbedBuilder()
-            .WithDescription(Content)
-            .WithColor(EmbedColor)
-            .WithCurrentTimestamp();
-        if (Fields != null)
-            foreach (var field in Fields.Where(f => f.Name != "null"))
-                embed.AddField(field);
-        if (Author != null)
-            embed.WithAuthor(Author);
-
-        var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-            new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-        var dict = new Dictionary<string, string>
+        _ = Task.Run(async () =>
         {
-            { "guildId", GuildId },
-            { "channelId", dbGuild.LogChannel },
-            { "message", "" },
-            { "embedBuilders", embedJson },
-            { "ping", "true" },
-            { "attachments", attachments != null ? JsonSerializer.Serialize(attachments) : null }
-        };
-        await new Queue("SendMessage", 2, dict, null).Insert();
+            var dbGuild = await Guild.GetGuild(GuildId);
+            var embed = new EmbedBuilder()
+                .WithDescription(Content)
+                .WithColor(EmbedColor)
+                .WithCurrentTimestamp();
+            if (Fields != null)
+                foreach (var field in Fields.Where(f => f.Name != "null"))
+                    embed.AddField(field);
+            if (Author != null)
+                embed.WithAuthor(Author);
+
+            var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
+                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+            var dict = new Dictionary<string, string>
+            {
+                { "guildId", GuildId },
+                { "channelId", dbGuild.LogChannel },
+                { "message", "" },
+                { "embedBuilders", embedJson },
+                { "ping", "true" },
+                { "attachments", attachments != null ? JsonSerializer.Serialize(attachments) : null }
+            };
+            await new Queue("SendMessage", 2, dict, null).Insert();
+        });
+        return Task.CompletedTask;
     }
 }

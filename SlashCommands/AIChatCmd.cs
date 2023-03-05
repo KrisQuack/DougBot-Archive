@@ -33,7 +33,7 @@ public class AIChatCmd : InteractionModuleBase
             PresencePenalty = (float)0.3,
             FrequencyPenalty = (float)0.3,
             StopAsList = new[] { "\n", Environment.NewLine }
-        }, OpenAI.GPT3.ObjectModels.Models.Davinci);
+        }, OpenAI.GPT3.ObjectModels.Models.ChatGpt3_5Turbo);
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
         var aiText = completionResult.Choices.FirstOrDefault().Text;
         if (string.IsNullOrWhiteSpace(aiText))

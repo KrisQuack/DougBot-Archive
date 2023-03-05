@@ -14,7 +14,8 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("aichat", "Send an AI message into chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
-    public async Task AIChat([Summary(description: "Prompt for the AI")] string prompt,
+    public async Task AIChat([Summary(description: "Prompt for the AI (e.g. You are a helpful assistant)")] string prompt,
+        [Summary(description: "Input (e.g. Where is the capital of Germany?)")] string input,
         [Summary(description: "Tokens to use (Default: 50)")] int tokens = 50)
     {
         await RespondAsync("Command received", ephemeral: true);
@@ -24,18 +25,17 @@ public class AIChatCmd : InteractionModuleBase
         {
             ApiKey = dbGuild.OpenAiToken
         });
-        var completionResult = await openAiService.Completions.CreateCompletion(new CompletionCreateRequest
+        var completionResult = await openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
         {
-            Prompt = prompt,
-            MaxTokens = tokens,
-            Temperature = (float)0.6,
-            TopP = 1,
-            PresencePenalty = (float)0.3,
-            FrequencyPenalty = (float)0.3,
-            StopAsList = new[] { "\n", Environment.NewLine }
-        }, OpenAI.GPT3.ObjectModels.Models.ChatGpt3_5Turbo);
+            Messages = new List<ChatMessage>
+            {
+                ChatMessage.FromSystem(prompt),
+                ChatMessage.FromUser(input)
+            },
+            Model = OpenAI.GPT3.ObjectModels.Models.ChatGpt3_5Turbo
+        });
         if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
-        var aiText = completionResult.Choices.FirstOrDefault().Text;
+        var aiText = completionResult.Choices.First().Message.Content;
         if (string.IsNullOrWhiteSpace(aiText))
         {
             await ModifyOriginalResponseAsync(r => r.Content = "No response from API");

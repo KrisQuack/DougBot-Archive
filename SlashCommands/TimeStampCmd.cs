@@ -124,6 +124,6 @@ public class TimeStampCmd : InteractionModuleBase
             .AddField("Short Time", "`<t:" + parsedUnixTime + ":t>` : <t:" + parsedUnixTime + ":t>")
             .WithColor(Color.Blue)
             .Build();
-        await RespondAsync($"<t:{parsedUnixTime}:t> <t:{parsedTime}:R>", new[] { embed });
+        await RespondAsync($"`<t:{parsedUnixTime}:t> <t:{parsedUnixTime}:R>`", new[] { embed });
     }
 }

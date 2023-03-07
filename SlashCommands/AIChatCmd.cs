@@ -15,7 +15,8 @@ public class AIChatCmd : InteractionModuleBase
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
     public async Task AIChat([Summary(description: "Input (e.g. Where is the capital of Germany?)")] string input,
-        [Summary(description: "Prompt for the AI (e.g. You are a helpful assistant)")] string prompt = "You are a helpful and informative assistant")
+        [Summary(description: "Prompt for the AI (e.g. You are a helpful assistant)")]
+        string prompt = "You are a helpful and informative assistant")
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());

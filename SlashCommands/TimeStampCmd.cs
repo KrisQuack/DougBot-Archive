@@ -111,13 +111,12 @@ public class TimeStampCmd : InteractionModuleBase
             if (!DateTime.TryParseExact(dateString, "HH:mm zzz", CultureInfo.InvariantCulture, DateTimeStyles.None,
                     out parsedTime))
                 throw new ArgumentException(
-                    "Invalid time format. Please use the format `12:00 GMT ` or `01 Jan 2022 12:00 GMT`");
+                    "Invalid time format. Please use the format `12:00 GMT ` or `01 Jan 2022 12:00 GMT`" + tz == "PT"
+                        ? "\n\nYou input PT, please select PST or PDT respectively."
+                        : "");
         var parsedUnixTime = ((DateTimeOffset)parsedTime).ToUnixTimeSeconds().ToString();
         var embed = new EmbedBuilder()
             .WithTitle("Time Stamp")
-            .AddField("Stream Ping",
-                "`<t:" + parsedUnixTime + ":t> <t:" + parsedUnixTime + ":R>` : <t:" + parsedUnixTime + ":t> <t:" +
-                parsedUnixTime + ":R>\n")
             .AddField("Relative Time", "`<t:" + parsedUnixTime + ":R>` : <t:" + parsedUnixTime + ":R>")
             .AddField("Absolute Time", "`<t:" + parsedUnixTime + ":F>` : <t:" + parsedUnixTime + ":F>")
             .AddField("Short Date", "`<t:" + parsedUnixTime + ":f>` : <t:" + parsedUnixTime + ":f>")
@@ -125,6 +124,6 @@ public class TimeStampCmd : InteractionModuleBase
             .AddField("Short Time", "`<t:" + parsedUnixTime + ":t>` : <t:" + parsedUnixTime + ":t>")
             .WithColor(Color.Blue)
             .Build();
-        await RespondAsync(embeds: new[] { embed });
+        await RespondAsync($"<t:{parsedUnixTime}:t> <t:{parsedTime}:R>", new[] { embed });
     }
 }

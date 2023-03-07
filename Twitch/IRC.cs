@@ -10,10 +10,13 @@ namespace DougBot.Twitch;
 public class IRC
 {
     private TwitchAPI API;
-    private TwitchClient Client;
     private string BotID;
     private string BotName;
     private string ChannelName;
+    private TwitchClient Client;
+
+    private readonly string[] containsBlock = { "-.", ".-" };
+    private readonly string[] endsWithBlock = { "ussy" };
 
     public TwitchClient Initialize(TwitchAPI api, string botID, string botName, string channelName)
     {
@@ -39,15 +42,11 @@ public class IRC
         return Client;
     }
 
-    string[] containsBlock = { "-.", ".-" };
-    string[] endsWithBlock = { "ussy" };
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
         //Skip mods and broadcaster
-        if (Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster || Message.ChatMessage.Bits > 0)
-        {
-            return;
-        }
+        if (Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
+            Message.ChatMessage.Bits > 0) return;
         //Process
         _ = Task.Run(async () =>
         {
@@ -57,18 +56,17 @@ public class IRC
                 //Check for blocked words
                 if (containsBlock.Any(word => msg.Contains(word)) || endsWithBlock.Any(word => msg.EndsWith(word)))
                 {
-                    await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID, Message.ChatMessage.Id);
+                    await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
+                        Message.ChatMessage.Id);
                     return;
                 }
+
                 //Check for spam
                 var words = msg.Split(' ');
                 foreach (var word in words.Distinct())
-                {
-                    if(words.Count(w => w == word) > 5)
-                    {
-                        await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID, Message.ChatMessage.Id);
-                    }
-                }
+                    if (words.Count(w => w == word) > 5)
+                        await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
+                            Message.ChatMessage.Id);
             }
             catch (Exception e)
             {

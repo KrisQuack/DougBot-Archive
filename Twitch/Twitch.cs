@@ -2,7 +2,6 @@ using DougBot.Models;
 using TwitchLib.Api;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
-using TwitchLib.Client;
 
 namespace DougBot.Twitch;
 
@@ -16,13 +15,16 @@ public class Twitch
         //Setup API
         var API = new TwitchAPI();
         Task.Delay(10000);
-        var botRefresh = await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
-        var dougRefresh = await API.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret, settings.ClientId);
+        var botRefresh =
+            await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
+        var dougRefresh =
+            await API.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret,
+                settings.ClientId);
         API.Settings.AccessToken = botRefresh.AccessToken;
         API.Settings.ClientId = settings.ClientId;
         var botID = API.Helix.Users.GetUsersAsync(logins: new List<string> { settings.BotName }).Result.Users[0].Id;
-        var monitor = new LiveStreamMonitorService(API, 60);
-        monitor.SetChannelsByName(new List<string> { settings.ChannelName});
+        var monitor = new LiveStreamMonitorService(API);
+        monitor.SetChannelsByName(new List<string> { settings.ChannelName });
         monitor.OnStreamOnline += Monitor_OnStreamOnline;
         monitor.OnStreamOffline += Monitor_OnStreamOffline;
         //Setup PubSub
@@ -33,7 +35,9 @@ public class Twitch
         while (true)
         {
             await Task.Delay(botRefresh.ExpiresIn * 1000);
-            botRefresh = await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
+            botRefresh =
+                await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret,
+                    settings.ClientId);
             API.Settings.AccessToken = botRefresh.AccessToken;
         }
     }
@@ -43,6 +47,7 @@ public class Twitch
         Console.WriteLine($"Stream Online: {Stream.Channel}");
         //Automate online ticker, ping, perhaps twitch things like disable emote only mode
     }
+
     private static void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs Stream)
     {
         Console.WriteLine($"Stream Offline: {Stream.Channel}");

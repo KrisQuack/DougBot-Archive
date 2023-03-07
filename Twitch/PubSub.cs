@@ -2,24 +2,23 @@ using System.Text.Json;
 using Discord;
 using DougBot.Models;
 using TwitchLib.Api;
+using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
-using TwitchLib.PubSub.Models.Responses.Messages.AutomodCaughtMessage;
-using YoutubeExplode.Common;
 
 namespace DougBot.Twitch;
 
 public class PubSub
 {
     private TwitchAPI API;
-    private TwitchLib.PubSub.TwitchPubSub Client;
+    private TwitchPubSub Client;
     private string DougToken;
 
-    public TwitchLib.PubSub.TwitchPubSub Initialize(TwitchAPI api, string dougToken, string channelID)
+    public TwitchPubSub Initialize(TwitchAPI api, string dougToken, string channelID)
     {
         API = api;
         DougToken = dougToken;
-        Client = new TwitchLib.PubSub.TwitchPubSub();
+        Client = new TwitchPubSub();
         //Main events
         Client.OnListenResponse += OnListenResponse;
         Client.OnPubSubServiceConnected += OnPubSubServiceConnected;
@@ -46,7 +45,7 @@ public class PubSub
                 var embed = new EmbedBuilder()
                     .WithCurrentTimestamp();
                 long totalPoints;
-                string messageContent = "";
+                var messageContent = "";
                 switch (Prediction.Type)
                 {
                     //Prediction is created
@@ -60,16 +59,14 @@ public class PubSub
                         embed.AddField("Outcomes", string.Join("\n", Prediction.Outcomes.Select(p => $"{p.Title}")));
                         break;
                     //Predictiomn is locked
-                    case PredictionType.EventUpdated when  Prediction.Status == PredictionStatus.Locked:
+                    case PredictionType.EventUpdated when Prediction.Status == PredictionStatus.Locked:
                         embed.WithTitle($"Prediction Locked: {Prediction.Title}");
                         embed.WithColor(Color.Blue);
                         totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
                         foreach (var outcome in Prediction.Outcomes)
-                        {
                             embed.AddField($"{outcome.Title}",
                                 $"Users: {outcome.TotalUsers:n0}\nPoints: {outcome.TotalPoints:n0}\n" +
                                 $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
-                        }
                         break;
                     //Prediction was canceled
                     case PredictionType.EventUpdated when Prediction.Status == PredictionStatus.Canceled:
@@ -88,19 +85,18 @@ public class PubSub
                         embed.AddField($"🎉 {winOutcome.Title} 🎉",
                             $"Users: {winOutcome.TotalUsers:n0}\nPoints: {winOutcome.TotalPoints:n0}\n" +
                             $"Ratio: 1:{Math.Round(winRatio, 2)}" +
-                            $"\n\n__Biggest Winners__\n" +
+                            "\n\n__Biggest Winners__\n" +
                             string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
-                                .Select(p => $"{p.DisplayName} bet {p.Points:n0} and received {p.Points*winRatio:n0} points")));
+                                .Select(p =>
+                                    $"{p.DisplayName} bet {p.Points:n0} and received {p.Points * winRatio:n0} points")));
                         //Create field for each loosing outcome
                         foreach (var outcome in Prediction.Outcomes.Where(o => o.Id != winOutcome.Id))
-                        {
                             embed.AddField($"😭 {outcome.Title} 😭",
                                 $"Users: {outcome.TotalUsers:n0}\nPoints: {outcome.TotalPoints:n0}\n" +
                                 $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}" +
-                                $"\n\n__Biggest Losers__\n" +
+                                "\n\n__Biggest Losers__\n" +
                                 string.Join("\n", outcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
                                     .Select(p => $"{p.DisplayName} lost {p.Points:n0} points")));
-                        }
                         break;
                 }
 
@@ -170,20 +166,17 @@ public class PubSub
 
     private void OnPubSubServiceClosed(object sender, EventArgs e)
     {
-        Console.WriteLine($"Connection closed to pubsub server");
+        Console.WriteLine("Connection closed to pubsub server");
     }
 
     private void OnPubSubServiceConnected(object sender, EventArgs e)
     {
-        Console.WriteLine($"Connected to pubsub server");
+        Console.WriteLine("Connected to pubsub server");
         Client.SendTopics(DougToken);
     }
 
     private void OnListenResponse(object sender, OnListenResponseArgs e)
     {
-        if (!e.Successful)
-        {
-            Console.WriteLine($"Failed to listen! {e.Topic} {e.Response.Error}");
-        }
+        if (!e.Successful) Console.WriteLine($"Failed to listen! {e.Topic} {e.Response.Error}");
     }
 }

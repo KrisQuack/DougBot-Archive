@@ -3,7 +3,6 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Models;
 using DougBot.Scheduler;
 using DougBot.Systems;
 

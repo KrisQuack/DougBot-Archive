@@ -37,7 +37,8 @@ public static class ReactionFilter
             }
     }
 
-    private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message, Cacheable<IMessageChannel, ulong> Channel, SocketReaction Reaction)
+    private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message,
+        Cacheable<IMessageChannel, ulong> Channel, SocketReaction Reaction)
     {
         _ = Task.Run(async () =>
         {
@@ -66,7 +67,7 @@ public static class ReactionFilter
                         };
                         //Get message if not cached
                         IMessage realMessage;
-                        if(!Message.HasValue) 
+                        if (!Message.HasValue)
                             realMessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
                         else
                             realMessage = Message.Value;

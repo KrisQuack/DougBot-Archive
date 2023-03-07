@@ -14,6 +14,7 @@ public class Guild
     public string? OpenAiWordBlacklist { get; set; }
     public string? LogChannel { get; set; }
     public List<UserSetting> Users { get; set; }
+    public TwitchSetting TwitchSettings { get; set; }
 
     public static async Task<Guild> GetGuild(string id)
     {

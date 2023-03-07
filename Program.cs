@@ -3,6 +3,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using DougBot.Models;
 using DougBot.Scheduler;
 using DougBot.Systems;
 
@@ -14,20 +15,6 @@ public class Program
     private static InteractionService _Service;
     private static IServiceProvider _ServiceProvider;
     private static DiscordSocketClient _Client;
-
-    public static List<string> Faces = new()
-    {
-        "ʕ•ᴥ•ʔ",
-        "༼ つ ◕_◕ ༽つ",
-        "ᕙ(⇀‸↼‶)ᕗ",
-        "ᕦ(ò_óˇ)ᕤ",
-        "ಠ_ಠ",
-        "ಠ‿↼",
-        "(ᵔᴥᵔ)",
-        "༼ つ ಥ_ಥ ༽つ",
-        "༼ つ  ͡° ͜ʖ ͡° ༽つ",
-        "ʘ‿ʘ"
-    };
 
     private bool _FirstStart = true;
 
@@ -67,9 +54,10 @@ public class Program
             Events.Monitor(_Client);
             CleanForums.Clean(_Client);
             Youtube.CheckYoutube();
+            Twitch.Twitch.RunClient();
             ReactionFilter.Monitor(_Client);
             //Set status
-            await _Client.SetGameAsync(Faces[new Random().Next(0, Faces.Count)]);
+            await _Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
             //Register Commands
             _Service = new InteractionService(_Client.Rest);
             _Service.Log += Log;

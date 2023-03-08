@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using System.Text.Json;
 using Discord;
 using DougBot.Models;
@@ -44,8 +45,6 @@ public class PubSub
                 //create base embed
                 var embed = new EmbedBuilder()
                     .WithCurrentTimestamp();
-                long totalPoints;
-                long totalUsers;
                 var messageContent = "";
                 switch (Prediction.Type)
                 {
@@ -59,50 +58,44 @@ public class PubSub
                         embed.WithColor(Color.Green);
                         embed.AddField("Outcomes", string.Join("\n", Prediction.Outcomes.Select(p => $"{p.Title}")));
                         break;
-                    //Predictiomn is locked
-                    case PredictionType.EventUpdated when Prediction.Status == PredictionStatus.Locked:
-                        embed.WithTitle($"Prediction Locked: {Prediction.Title}");
-                        embed.WithColor(Color.Blue);
-                        totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
-                        totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
-                        foreach (var outcome in Prediction.Outcomes)
-                            embed.AddField($"{outcome.Title}",
-                                $"Users: {outcome.TotalUsers:n0} {(outcome.TotalUsers/totalUsers)*100:n0}\n" +
-                                $"Points: {outcome.TotalPoints:n0} {(outcome.TotalPoints/totalPoints)*100:n0}\n" +
-                                $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
-                        break;
                     //Prediction was canceled
                     case PredictionType.EventUpdated when Prediction.Status == PredictionStatus.Canceled:
                         embed.WithTitle($"Prediction Canceled: {Prediction.Title}");
                         embed.WithColor(Color.Red);
                         break;
                     //Prediction has Ended
-                    case PredictionType.EventUpdated when Prediction.Status == PredictionStatus.Resolved:
-                        embed.WithTitle($"Prediction Ended: {Prediction.Title}");
+                    case PredictionType.EventUpdated when Prediction.Status is PredictionStatus.Resolved or PredictionStatus.Locked:
+                        var status = Prediction.Status == PredictionStatus.Resolved ? "Ended" : "Locked";
+                        embed.WithTitle($"Prediction {status}: {Prediction.Title}");
                         embed.WithColor(Color.Gold);
                         //Get result
                         var winOutcome = Prediction.Outcomes.FirstOrDefault(p => p.Id == Prediction.WinningOutcomeId);
                         //Create field for winning outcome
-                        totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
-                        totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
+                        var totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
+                        var totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
                         var winRatio = (double)totalPoints / winOutcome.TotalPoints;
-                        embed.AddField($"🎉 {winOutcome.Title} 🎉",
-                            $"Users: {winOutcome.TotalUsers:n0} {(winOutcome.TotalUsers/totalUsers)*100:n0}\n" +
-                            $"Points: {winOutcome.TotalPoints:n0} {(winOutcome.TotalPoints/totalPoints)*100:n0}\n" +
-                            $"Ratio: 1:{Math.Round(winRatio, 2)}" +
-                            "\n\n__Biggest Winners__\n" +
-                            string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
-                                .Select(p =>
-                                    $"{p.DisplayName} bet {p.Points:n0} and received {p.Points * winRatio:n0} points")));
                         //Create field for each loosing outcome
-                        foreach (var outcome in Prediction.Outcomes.Where(o => o.Id != winOutcome.Id))
-                            embed.AddField($"😭 {outcome.Title} 😭",
-                                $"Users: {outcome.TotalUsers:n0} {(outcome.TotalUsers/totalUsers)*100:n0}\n" +
-                                $"Points: {outcome.TotalPoints:n0} {(outcome.TotalPoints/totalPoints)*100:n0}\n" +
-                                $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}" +
-                                "\n\n__Biggest Losers__\n" +
-                                string.Join("\n", outcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
-                                    .Select(p => $"{p.DisplayName} lost {p.Points:n0} points")));
+                        foreach (var outcome in Prediction.Outcomes)
+                        {
+                            var isWinner = outcome.Id == Prediction.WinningOutcomeId;
+                            embed.AddField(isWinner ? $"😭 {outcome.Title} 😭" : $"🎉 {winOutcome.Title} 🎉",
+                                $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers/totalUsers*100,0)}%\n" +
+                                $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints/totalPoints*100,0)}%\n" +
+                                $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
+                        }
+
+                        if (Prediction.Status == PredictionStatus.Resolved)
+                        {
+                            embed.AddField("__Biggest Losers__",
+                                string.Join("\n", Prediction.Outcomes.Where(p => p.Id != winOutcome.Id)
+                                    .SelectMany(p => p.TopPredictors)
+                                    .OrderByDescending(p => p.Points).Take(5)
+                                    .Select(p => $"{p.DisplayName} lost {p.Points:n0}")));
+                            embed.AddField("__Biggest Winners__",
+                                string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
+                                    .Select(p =>
+                                        $"{p.DisplayName} bet {p.Points:n0} and received {p.Points * winRatio:n0} points")));
+                        }
                         break;
                 }
 

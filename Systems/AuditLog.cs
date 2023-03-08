@@ -200,6 +200,9 @@ public static class AuditLog
     {
         _ = Task.Run(async () =>
         {
+            var channelObj = channel.Value as SocketTextChannel;
+            if (await BlacklistCheck(channelObj))
+                return;
             //Download message attachments from url via httpclient
             var attachments = new List<string>();
             using var httpClient = new HttpClient();
@@ -249,7 +252,8 @@ public static class AuditLog
     {
         _ = Task.Run(async () =>
         {
-            if (before.Value.Content == after.Content)
+            var channelObj = channel as SocketTextChannel;
+            if (before.Value.Content == after.Content || await BlacklistCheck(channelObj))
                 return;
             //Set fields
             var fields = new List<EmbedFieldBuilder>
@@ -264,8 +268,8 @@ public static class AuditLog
                 IconUrl = after.Author.GetAvatarUrl()
             };
             //Log event
-            await LogEvent($"[Message]({after.GetJumpUrl()}) Updated in {(channel as SocketTextChannel).Mention}",
-                (channel as SocketTextChannel).Guild.Id.ToString(), Color.LightOrange, fields, author);
+            await LogEvent($"[Message]({after.GetJumpUrl()}) Updated in {channelObj.Mention}",
+                channelObj.Guild.Id.ToString(), Color.LightOrange, fields, author);
         });
         return Task.CompletedTask;
     }
@@ -300,5 +304,11 @@ public static class AuditLog
             await new Queue("SendMessage", 2, dict, null).Insert();
         });
         return Task.CompletedTask;
+    }
+
+    private static async Task<bool> BlacklistCheck(SocketTextChannel channel)
+    {
+        var dbGuild = await Guild.GetGuild(channel.Guild.Id.ToString());
+        return dbGuild.LogBlacklistChannels.Contains(channel.Id.ToString())||dbGuild.LogBlacklistChannels.Contains(channel.CategoryId.ToString());
     }
 }

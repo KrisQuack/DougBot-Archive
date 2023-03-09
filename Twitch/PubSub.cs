@@ -94,7 +94,7 @@ public class PubSub
                             embed.AddField("__Biggest Winners__",
                                 string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
                                     .Select(p =>
-                                        $"{p.DisplayName} bet {p.Points:n0} and received {p.Points * winRatio:n0} points")));
+                                        $"{p.DisplayName} bet {p.Points:n0} won {p.Points * winRatio:n0} points")));
                         }
                         break;
                 }

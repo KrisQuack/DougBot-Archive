@@ -78,7 +78,7 @@ public class PubSub
                         foreach (var outcome in Prediction.Outcomes)
                         {
                             var isWinner = outcome.Id == Prediction.WinningOutcomeId;
-                            embed.AddField(isWinner ? $"😭 {outcome.Title} 😭" : $"🎉 {winOutcome.Title} 🎉",
+                            embed.AddField(isWinner ? $"😭 {outcome.Title} 😭" : $"🎉 {outcome.Title} 🎉",
                                 $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers/totalUsers*100,0)}%\n" +
                                 $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints/totalPoints*100,0)}%\n" +
                                 $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");

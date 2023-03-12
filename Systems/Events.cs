@@ -27,7 +27,7 @@ public static class Events
                 { "guildId", user.Guild.Id.ToString() },
                 { "userId", user.Id.ToString() }
             };
-            await new Queue("FreshCheck", null, dict, DateTime.UtcNow.AddMinutes(10)).Insert();
+            await new Queue("FreshCheck", null, dict, DateTime.UtcNow.AddMinutes(35)).Insert();
         });
         return Task.CompletedTask;
     }

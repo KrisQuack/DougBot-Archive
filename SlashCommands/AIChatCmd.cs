@@ -30,8 +30,8 @@ public class AIChatCmd : InteractionModuleBase
         ).OrderBy(m => m.CreatedAt);
         const string prompt = "You are a chat bot named Wah in a discord server of many people.\n" +
                               "Take in the text from the chat and produce a response to one of the users.\n" +
-                              "You must always respond in a slightly annoyed and sarcastic manner\n" +
-                              "When responding to a specific person ensure you say their name\n" +
+                              "You must always respond in a sarcastic but friendly manner\n" +
+                              "When responding to a specific person ensure you say their name in the format <@130062174918934528>\n" +
                               "You can not make appointments, do not even mention them\n" +
                               "Your pronouns are application/json\n" +
                               "Do not say anything rude\n" +
@@ -47,16 +47,16 @@ public class AIChatCmd : InteractionModuleBase
                 var replyID = message.Reference.MessageId;
                 var replyMessage = await Context.Channel.GetMessageAsync((ulong)replyID);
                 if (replyMessage != null && replyMessage.Author.Id == botUser.Id)
-                    messageString += $"{message.Author.Username}: Wah, {message.CleanContent}\n";
+                    messageString += $"{message.Author.Mention}: Wah, {message.CleanContent}\n";
                 else if (replyMessage != null)
-                    messageString += $"{message.Author.Username}: {replyMessage.Author.Username}, {message.CleanContent}\n";
+                    messageString += $"{message.Author.Mention}: {replyMessage.Author.Username}, {message.CleanContent}\n";
             }
             else
             {
-                messageString += $"{message.Author.Username}: {message.CleanContent}\n";
+                messageString += $"{message.Author.Mention}: {message.CleanContent}\n";
             }
         }
-        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,");
+        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,").Replace($"<@!{botUser.Id}>", "Wah");
         messageString += "Wah:";
         //Send to API
         using var client = new HttpClient();
@@ -99,7 +99,7 @@ public class AIChatCmd : InteractionModuleBase
         await RespondAsync("Approved, Typing and sending", ephemeral: true);
         await Context.Channel.TriggerTypingAsync();
         await Task.Delay(3000);
-        var response = await ReplyAsync(interaction.Message.Content);
+        var response = await ReplyAsync(interaction.Message.Content, allowedMentions: AllowedMentions.None);
         var auditFields = new List<EmbedFieldBuilder>
         {
             new()

@@ -13,17 +13,20 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("aichat", "Send an AI message into chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
-    public async Task AIChat( [Summary("read", "How many messages to read")] int read = 20)
+    public async Task AIChat([Summary("read", "How many messages to read")] int read = 20,
+        [Summary("user", "if that bot should exclusively talk to one user")] IGuildUser? user = null)
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         //Get chat messages
         var messages = await Context.Channel.GetMessagesAsync(read).FlattenAsync();
+        if(user != null)
+            messages = messages.Where(m => m.Author.Id == user.Id);
         messages = messages.Where(m =>
             !string.IsNullOrWhiteSpace(m.Content) &&
             (m.Flags.Value & MessageFlags.Ephemeral) == 0 &&
             !dbGuild.OpenAiUserBlacklist.Contains(m.Author.Id.ToString())
-            ).OrderBy(m => m.CreatedAt);
+        ).OrderBy(m => m.CreatedAt);
         const string prompt = "You are a chat bot named Wah in a discord server of many people.\n" +
                               "Take in the text from the chat and produce a response to one of the users.\n" +
                               "You must always respond in a slightly annoyed and sarcastic manner\n" +

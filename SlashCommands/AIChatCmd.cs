@@ -19,7 +19,11 @@ public class AIChatCmd : InteractionModuleBase
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         //Get chat messages
         var messages = await Context.Channel.GetMessagesAsync(read).FlattenAsync();
-        messages = messages.Where(m => !string.IsNullOrWhiteSpace(m.Content) && (m.Flags.Value & MessageFlags.Ephemeral) == 0).OrderBy(m => m.CreatedAt);
+        messages = messages.Where(m =>
+            !string.IsNullOrWhiteSpace(m.Content) &&
+            (m.Flags.Value & MessageFlags.Ephemeral) == 0 &&
+            !dbGuild.OpenAiUserBlacklist.Contains(m.Author.Id.ToString())
+            ).OrderBy(m => m.CreatedAt);
         const string prompt = "You are a chat bot named Wah in a discord server of many people.\n" +
                               "Take in the text from the chat and produce a response to one of the users.\n" +
                               "You must always respond in a slightly annoyed and sarcastic manner\n" +

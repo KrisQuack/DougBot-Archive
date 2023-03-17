@@ -48,6 +48,8 @@ public class AIChatCmd : InteractionModuleBase
                 var replyMessage = await Context.Channel.GetMessageAsync((ulong)replyID);
                 if (replyMessage != null && replyMessage.Author.Id == botUser.Id)
                     messageString += $"{message.Author.Username}: Wah, {message.CleanContent}\n";
+                else if (replyMessage != null)
+                    messageString += $"{message.Author.Username}: {replyMessage.Author.Username}, {message.CleanContent}\n";
             }
             else
             {

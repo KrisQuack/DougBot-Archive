@@ -18,10 +18,11 @@ public class AIChatCmd : InteractionModuleBase
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
+        var botUser = Context.Client.CurrentUser;
         //Get chat messages
         var messages = await Context.Channel.GetMessagesAsync(read).FlattenAsync();
         if(user != null)
-            messages = messages.Where(m => m.Author.Id == user.Id);
+            messages = messages.Where(m => m.Author.Id == user.Id || m.Author.Id == botUser.Id);
         messages = messages.Where(m =>
             !string.IsNullOrWhiteSpace(m.Content) &&
             (m.Flags.Value & MessageFlags.Ephemeral) == 0 &&
@@ -38,7 +39,6 @@ public class AIChatCmd : InteractionModuleBase
                               "Do not say anything mean\n\n";
         //Process all messages
         var messageString = "";
-        var botUser = Context.Client.CurrentUser;
         foreach (var message in messages)
         {
             //If message is a reply check if it was directed to Wah, if not then discard

@@ -1,11 +1,10 @@
+using System.Net.Http.Headers;
+using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Systems;
-using OpenAI.GPT3;
-using OpenAI.GPT3.Managers;
-using OpenAI.GPT3.ObjectModels.RequestModels;
 
 namespace DougBot.SlashCommands;
 
@@ -14,37 +13,75 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("aichat", "Send an AI message into chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
-    public async Task AIChat([Summary(description: "Input (e.g. Where is the capital of Germany?)")] string input,
-        [Summary(description: "Prompt for the AI (e.g. You are a helpful assistant)")]
-        string prompt = "You are a helpful and informative assistant")
+    public async Task AIChat( [Summary("read", "How many messages to read")] int read = 20)
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
-        //if full override is set then just send that, else get chat
-        var openAiService = new OpenAIService(new OpenAiOptions
+        //Get chat messages
+        var messages = await Context.Channel.GetMessagesAsync(read).FlattenAsync();
+        messages = messages.Where(m => !string.IsNullOrWhiteSpace(m.Content) && (m.Flags.Value & MessageFlags.Ephemeral) == 0).OrderBy(m => m.CreatedAt);
+        const string prompt = "You are a chat bot named Wah in a discord server of many people.\n" +
+                              "Take in the text from the chat and produce a response to one of the users.\n" +
+                              "You must always respond in a slightly annoyed and sarcastic manner\n" +
+                              "When responding to a specific person ensure you say their name\n" +
+                              "You can not make appointments, do not even mention them\n" +
+                              "Your pronouns are application/json\n" +
+                              "Do not say anything rude\n" +
+                              "Do not say anything offensive\n" +
+                              "Do not say anything mean\n\n";
+        //Process all messages
+        var messageString = "";
+        var botUser = Context.Client.CurrentUser;
+        foreach (var message in messages)
         {
-            ApiKey = dbGuild.OpenAiToken
-        });
-        var completionResult = await openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
-        {
-            Messages = new List<ChatMessage>
+            //If message is a reply check if it was directed to Wah, if not then discard
+            if (message.Reference != null)
             {
-                ChatMessage.FromSystem(prompt),
-                ChatMessage.FromUser(input)
-            },
-            Model = OpenAI.GPT3.ObjectModels.Models.ChatGpt3_5Turbo
-        });
-        if (!completionResult.Successful) throw new Exception("API Error: " + completionResult.Error);
-        var aiText = completionResult.Choices.First().Message.Content;
-        if (string.IsNullOrWhiteSpace(aiText))
+                var replyID = message.Reference.MessageId;
+                var replyMessage = await Context.Channel.GetMessageAsync((ulong)replyID);
+                if (replyMessage != null && replyMessage.Author.Id == botUser.Id)
+                    messageString += $"{message.Author.Username}: Wah, {message.CleanContent}\n";
+            }
+            else
+            {
+                messageString += $"{message.Author.Username}: {message.CleanContent}\n";
+            }
+        }
+        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,")
+            .Replace($"WAHAHA: Command received", "Wah")
+            .Replace($"@", "");
+        messageString += "Wah:";
+        //Send to API
+        using var client = new HttpClient();
+        var data = new
+        {
+            prompt = prompt + messageString,
+            max_tokens = 500,
+            temperature = 0.9,
+            frequency_penalty = 0,
+            presence_penalty = 0,
+            top_p = 1,
+            best_of = 1,
+            stop = new[] { "\n", "Wah:" }
+        };
+        var content = new StringContent(JsonSerializer.Serialize(data));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        content.Headers.Add("api-key", dbGuild.OpenAiToken);
+
+        var response = await client.PostAsync(dbGuild.OpenAiURL, content);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        responseContent = responseContent.Replace("Wah:", "");
+        var json = JsonDocument.Parse(responseContent);
+        var text = json.RootElement.GetProperty("choices")[0].GetProperty("text").GetString();
+        //Respond
+        if (string.IsNullOrWhiteSpace(text))
         {
             await ModifyOriginalResponseAsync(r => r.Content = "No response from API");
             return;
         }
-
         var builder = new ComponentBuilder()
             .WithButton("Send to chat", "aiChatApprove");
-        await ModifyOriginalResponseAsync(r => r.Content = aiText);
+        await ModifyOriginalResponseAsync(r => r.Content = text);
         await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
     }
 

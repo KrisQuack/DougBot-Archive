@@ -11,7 +11,7 @@ public class Guild
     public List<YoutubeSetting>? YoutubeSettings { get; set; }
     public string? DmReceiptChannel { get; set; }
     public string? OpenAiToken { get; set; }
-    public string? OpenAiWordBlacklist { get; set; }
+    public string? OpenAiURL { get; set; }
     public string? LogChannel { get; set; }
     public string? LogBlacklistChannels { get; set; }
     public List<UserSetting> Users { get; set; }

@@ -56,9 +56,7 @@ public class AIChatCmd : InteractionModuleBase
                 messageString += $"{message.Author.Username}: {message.CleanContent}\n";
             }
         }
-        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,")
-            .Replace($"WAHAHA: Command received", "Wah")
-            .Replace($"@", "");
+        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,");
         messageString += "Wah:";
         //Send to API
         using var client = new HttpClient();

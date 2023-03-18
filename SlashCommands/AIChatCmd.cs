@@ -94,7 +94,6 @@ public class AIChatCmd : InteractionModuleBase
 
         var response = await client.PostAsync(dbGuild.OpenAiURL, content);
         var responseContent = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"{prompt+messageString}\n\n\n{responseContent}");
         responseContent = responseContent.Replace("Wah:", "");
         if (!responseContent.Contains("choices") && !responseContent.Contains("text"))
         {

@@ -16,5 +16,6 @@ public class TypingCmd : InteractionModuleBase
         var type = channel.EnterTypingState();
         await Task.Delay(seconds * 1000);
         type.Dispose();
+        await Task.Delay(1000);
     }
 }

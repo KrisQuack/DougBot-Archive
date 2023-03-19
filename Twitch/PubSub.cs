@@ -67,7 +67,7 @@ public class PubSub
                 {
                     var status = Prediction.Status == PredictionStatus.Resolved ? "Ended" : "Locked";
                     embed.WithTitle($"Prediction {status}: {Prediction.Title}");
-                    embed.WithColor(Color.Gold);
+                    embed.WithColor(Prediction.Status == PredictionStatus.Resolved ? Color.Orange : Color.Gold);
                     //Get result
                     var winOutcome = Prediction.Outcomes.FirstOrDefault(p => p.Id == Prediction.WinningOutcomeId);
                     //Create field for winning outcome
@@ -82,19 +82,15 @@ public class PubSub
                             $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints / totalPoints * 100, 0)}%\n" +
                             $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
                     }
-
-                    if (Prediction.Status == PredictionStatus.Resolved)
-                    {
-                        embed.AddField("__Biggest Losers__",
-                            string.Join("\n", Prediction.Outcomes.Where(p => p.Id != winOutcome.Id)
-                                .SelectMany(p => p.TopPredictors)
-                                .OrderByDescending(p => p.Points).Take(5)
-                                .Select(p => $"{p.DisplayName} lost {p.Points:n0}")));
-                        embed.AddField("__Biggest Winners__",
-                            string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
-                                .Select(p =>
-                                    $"{p.DisplayName} bet {p.Points:n0} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")));
-                    }
+                    embed.AddField("__Biggest Losers__",
+                        string.Join("\n", Prediction.Outcomes.Where(p => p.Id != winOutcome.Id)
+                            .SelectMany(p => p.TopPredictors)
+                            .OrderByDescending(p => p.Points).Take(5)
+                            .Select(p => $"{p.DisplayName} {(Prediction.Status == PredictionStatus.Resolved ? "lost" : "bet")} {p.Points:n0}")));
+                    embed.AddField("__Biggest Winners__",
+                        string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
+                            .Select(p =>
+                                $"{p.DisplayName} bet {p.Points:n0} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")));
                 }
 
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },

@@ -12,6 +12,7 @@ public class Guild
     public string? DmReceiptChannel { get; set; }
     public string? OpenAiToken { get; set; }
     public string? OpenAiURL { get; set; } 
+    public List<string> OpenAiPrompt { get; set; }
     public string? OpenAiUserBlacklist { get; set; }
     
     public string? LogChannel { get; set; }

@@ -88,7 +88,7 @@ public class AIChatCmd : InteractionModuleBase
         }
         var builder = new ComponentBuilder()
             .WithButton("Send to chat", "aiChatApprove");
-        await ModifyOriginalResponseAsync(r => r.Content = text.Replace(". ", ".\n\n"));
+        await ModifyOriginalResponseAsync(r => r.Content = text.Replace(". ", ".\n"));
         await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
     }
 
@@ -96,12 +96,11 @@ public class AIChatCmd : InteractionModuleBase
     public async Task ApproveResponse()
     {
         var interaction = Context.Interaction as SocketMessageComponent;
-        await RespondAsync("Approved, Typing and sending", ephemeral: true);
         IUserMessage response = null;
-        foreach(var line in interaction.Message.Content.Split("\n\n"))
+        foreach(var line in interaction.Message.Content.Split("\n"))
         {
-            await Task.Delay(5000);
             response = await ReplyAsync(line, allowedMentions: AllowedMentions.None);
+            await Task.Delay(3000);
         }
         var auditFields = new List<EmbedFieldBuilder>
         {

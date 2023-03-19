@@ -86,7 +86,7 @@ public class AIChatCmd : InteractionModuleBase
             frequency_penalty = 0,
             presence_penalty = 0,
             top_p = 1,
-            stop = new[] { "Wah:" }
+            stop = new[] { "\n", "Wah:" }
         };
         var content = new StringContent(JsonSerializer.Serialize(data));
         content.Headers.ContentType = new MediaTypeHeaderValue("application/json");

@@ -25,12 +25,12 @@ public class AIChatCmd : InteractionModuleBase
                                    "To display code, use `code`. To show a quote, use >quote. And to hide spoilers for TV shows and movies, use ||spoilers||.\n" +
                                    "Emote List: !se!\n\n" +
                                    "Example:\n" +
-                                   "Quack(123): Hey Wah, how are you?\n" +
-                                   "Wah: Hi <@123>, like you care.\n" +
-                                   "Eddie(456): Hi Quack, why did you not ask me? <:dougFU:820769784240406550>\n" +
+                                   "Quack(130062174918934528): Hey Wah, how are you?\n" +
+                                   "Wah: Hi <@130062174918934528>, like you care.\n" +
+                                   "Eddie(116692372124860420): Hi Quack, why did you not ask me? <:dougFU:820769784240406550>\n" +
                                    "Quack: I am sorry Eddie, I did not mean to *exclude* you.\n" +
                                    "Quack: Wah, Don't be an ass\n" +
-                                   "Wah: It is okay <@456>, I hate <@123> too.\n" +
+                                   "Wah: It is okay <@116692372124860420>, I hate <@130062174918934528> too.\n" +
                                    "Quack: Yes I am sorry <:dougConfidence:825004932301979668>\n\n";
 
     [SlashCommand("aichat", "Send an AI message into chat")]

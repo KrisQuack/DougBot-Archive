@@ -15,7 +15,8 @@ public class AIChatCmd : InteractionModuleBase
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
     public async Task AIChat([Summary("read", "How many messages to read"), MaxValue(200)] int read = 10,
-        [Summary("user", "If that bot should exclusively talk to one user")] IGuildUser? user = null)
+        [Summary("user", "If that bot should exclusively talk to one user")] IGuildUser? user = null,
+        [Summary("generations", "How many generations to run the AI for"), MaxValue(10)] int generations = 3)
     {
         await RespondAsync("Command received", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
@@ -55,51 +56,50 @@ public class AIChatCmd : InteractionModuleBase
         messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,").Replace($"<@!{botUser.Id}>", "Wah").Replace("WAHAHA(1037302561058848799)", "Wah");
         messageString += "Wah:";
         //Send to API
-        using var client = new HttpClient();
-        var data = new
+        var builder = new ComponentBuilder();
+        var agregateResponse = "";
+        for (var i = 0; i < generations; i++)
         {
-            prompt = prompt + messageString,
-            max_tokens = 500,
-            temperature = 0.9,
-            frequency_penalty = 0,
-            presence_penalty = 0,
-            top_p = 1,
-            stop = new[] { "\n", "Wah:" }
-        };
-        var content = new StringContent(JsonSerializer.Serialize(data));
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        content.Headers.Add("api-key", dbGuild.OpenAiToken);
+            using var client = new HttpClient();
+            var data = new
+            {
+                prompt = prompt + messageString,
+                max_tokens = 500,
+                temperature = 0.9,
+                frequency_penalty = 0,
+                presence_penalty = 0,
+                top_p = 1,
+                stop = new[] { "\n", "Wah:" }
+            };
+            var content = new StringContent(JsonSerializer.Serialize(data));
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            content.Headers.Add("api-key", dbGuild.OpenAiToken);
 
-        var response = await client.PostAsync(dbGuild.OpenAiURL, content);
-        var responseContent = await response.Content.ReadAsStringAsync();
-        responseContent = responseContent.Replace("Wah:", "");
-        if (!responseContent.Contains("choices") && !responseContent.Contains("text"))
-        {
-            await ModifyOriginalResponseAsync(r => r.Content = responseContent);
-            return;
+            var response = await client.PostAsync(dbGuild.OpenAiURL, content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            responseContent = responseContent.Replace("Wah:", "");
+            if (!responseContent.Contains("choices") && !responseContent.Contains("text")) continue;
+            var json = JsonDocument.Parse(responseContent);
+            var text = json.RootElement.GetProperty("choices")[0].GetProperty("text").GetString();
+            //Respond
+            if (string.IsNullOrWhiteSpace(text)) continue; 
+            builder.WithButton($"Option {i}", $"aiChatApprove{i}");
+            agregateResponse += $"\n\n{i}) {text.Replace(". ", ".\n")}";
+            //Add builder to Components that already exist
         }
-        var json = JsonDocument.Parse(responseContent);
-        var text = json.RootElement.GetProperty("choices")[0].GetProperty("text").GetString();
-        //Respond
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            await ModifyOriginalResponseAsync(r => r.Content = "No response from API");
-            return;
-        }
-        var builder = new ComponentBuilder()
-            .WithButton("Send to chat", "aiChatApprove");
-        await ModifyOriginalResponseAsync(r => r.Content = text.Replace(". ", ".\n"));
-        await ModifyOriginalResponseAsync(m => m.Components = builder.Build());
+        await ModifyOriginalResponseAsync(r => r.Content = agregateResponse);
+        await ModifyOriginalResponseAsync(r => r.Components = builder.Build());
     }
 
-    [ComponentInteraction("aiChatApprove")]
-    public async Task ApproveResponse()
+    [ComponentInteraction("aiChatApprove*")]
+    public async Task ApproveResponse(int index)
     {
         var interaction = Context.Interaction as SocketMessageComponent;
         IUserMessage response = null;
-        foreach(var line in interaction.Message.Content.Split("\n"))
+        var messages = interaction.Message.Content.Split("\n\n")[index].Replace($"{index}) ","").Split("\n");
+        foreach(var message in messages)
         {
-            response = await ReplyAsync(line, allowedMentions: AllowedMentions.None);
+            response = await ReplyAsync(message, allowedMentions: AllowedMentions.None);
             await Task.Delay(3000);
         }
         var auditFields = new List<EmbedFieldBuilder>

@@ -23,7 +23,7 @@ public class AIChatCmd : InteractionModuleBase
         var botUser = Context.Client.CurrentUser;
         //Add emotes list to prompt
         var rnd = new Random();
-        var emotes = Context.Guild.Emotes.Where(x => !x.IsManaged && !x.Animated).OrderBy(_ => rnd.Next()).Take(25);
+        var emotes = Context.Guild.Emotes.Where(x => !x.IsManaged && !x.Animated).OrderBy(_ => rnd.Next()).Take(100);
         var prompt = string.Join("\n",dbGuild.OpenAiPrompt).Replace("!se!", string.Join(",", emotes.Select(e => $"<:{e.Name}:{e.Id}>")));
         //Get chat messages
         var messages = await Context.Channel.GetMessagesAsync(200, CacheMode.CacheOnly).FlattenAsync();
@@ -57,7 +57,7 @@ public class AIChatCmd : InteractionModuleBase
         messageString += "Wah:";
         //Send to API
         var builder = new ComponentBuilder();
-        var agregateResponse = "";
+        var aggregateResponse = "";
         for (var i = 0; i < generations; i++)
         {
             using var client = new HttpClient();
@@ -84,10 +84,11 @@ public class AIChatCmd : InteractionModuleBase
             //Respond
             if (string.IsNullOrWhiteSpace(text)) continue; 
             builder.WithButton($"Option {i}", $"aiChatApprove{i}");
-            agregateResponse += $"\n\n{i}) {text.Replace(". ", ".\n")}";
-            //Add builder to Components that already exist
+            aggregateResponse += $"\n\n{i}) {text.Replace(". ", ".\n")}";
+            //sleep as to not hammer the API
+            await Task.Delay(1000);
         }
-        await ModifyOriginalResponseAsync(r => r.Content = agregateResponse);
+        await ModifyOriginalResponseAsync(r => r.Content = aggregateResponse);
         await ModifyOriginalResponseAsync(r => r.Components = builder.Build());
     }
 

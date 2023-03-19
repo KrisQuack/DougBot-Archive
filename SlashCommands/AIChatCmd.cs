@@ -18,7 +18,7 @@ public class AIChatCmd : InteractionModuleBase
         [Summary("user", "If that bot should exclusively talk to one user")] IGuildUser? user = null,
         [Summary("generations", "How many generations to run the AI for"), MaxValue(10)] int generations = 3)
     {
-        await RespondAsync("Command received, This may take a few minutes depending on the number of generations", ephemeral: true);
+        await RespondAsync("Processing may take a few seconds", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         var botUser = Context.Client.CurrentUser;
         //Add emotes list to prompt
@@ -60,38 +60,42 @@ public class AIChatCmd : InteractionModuleBase
         var fields = new List<EmbedFieldBuilder>();
         for (var i = 0; i < generations; i++)
         {
-            using var client = new HttpClient();
-            var data = new
+            try
             {
-                prompt = prompt + messageString,
-                max_tokens = 500,
-                temperature = 0.9,
-                frequency_penalty = 0,
-                presence_penalty = 0,
-                top_p = 1,
-                stop = new[] { "\n", $"Wah({botUser.Id}):","Wah:" }
-            };
-            var content = new StringContent(JsonSerializer.Serialize(data));
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            content.Headers.Add("api-key", dbGuild.OpenAiToken);
+                using var client = new HttpClient();
+                var data = new
+                {
+                    prompt = prompt + messageString,
+                    max_tokens = 500,
+                    temperature = 0.9,
+                    frequency_penalty = 0,
+                    presence_penalty = 0,
+                    top_p = 1,
+                    stop = new[] { "\n", $"Wah({botUser.Id}):","Wah:" }
+                };
+                var content = new StringContent(JsonSerializer.Serialize(data));
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                content.Headers.Add("api-key", dbGuild.OpenAiToken);
 
-            var response = await client.PostAsync(dbGuild.OpenAiURL, content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-            responseContent = responseContent.Replace("Wah:", "");
-            if (!responseContent.Contains("choices") && !responseContent.Contains("text")) continue;
-            var json = JsonDocument.Parse(responseContent);
-            var text = json.RootElement.GetProperty("choices")[0].GetProperty("text").GetString();
-            //Respond
-            if (string.IsNullOrWhiteSpace(text)) continue; 
-            builder.WithButton($"{i}", $"aiChatApprove{i}");
-            fields.Add(new EmbedFieldBuilder
-            {
-                Name = $"{i}",
-                Value = text.Replace(".", ".\n"),
-                IsInline = false
-            });
-            //sleep as to not hammer the API
-            await Task.Delay(1000);
+                var response = await client.PostAsync(dbGuild.OpenAiURL, content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                responseContent = responseContent.Replace("Wah:", "");
+                if (!responseContent.Contains("choices") && !responseContent.Contains("text")) continue;
+                var json = JsonDocument.Parse(responseContent);
+                var text = json.RootElement.GetProperty("choices")[0].GetProperty("text").GetString();
+                //Respond
+                if (string.IsNullOrWhiteSpace(text)) continue; 
+                builder.WithButton($"{i}", $"aiChatApprove{i}");
+                fields.Add(new EmbedFieldBuilder
+                {
+                    Name = $"{i}",
+                    Value = text.Replace(".", ".\n"),
+                    IsInline = false
+                });
+                //sleep as to not hammer the API
+                await Task.Delay(1000);
+            }
+            catch (Exception e){Console.WriteLine(e);}
         }
         var embed = new EmbedBuilder
         {

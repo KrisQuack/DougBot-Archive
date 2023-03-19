@@ -18,7 +18,7 @@ public class AIChatCmd : InteractionModuleBase
         [Summary("user", "If that bot should exclusively talk to one user")] IGuildUser? user = null,
         [Summary("generations", "How many generations to run the AI for"), MaxValue(10)] int generations = 3)
     {
-        await RespondAsync("Command received", ephemeral: true);
+        await RespondAsync("Command received, This may take a few minutes depending on the number of generations", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         var botUser = Context.Client.CurrentUser;
         //Add emotes list to prompt
@@ -53,11 +53,11 @@ public class AIChatCmd : InteractionModuleBase
                 messageString += $"{message.Author.Username}({message.Author.Id}): {message.Content}\n";
             }
         }
-        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,").Replace($"<@!{botUser.Id}>", "Wah").Replace("WAHAHA(1037302561058848799)", "Wah");
-        messageString += "Wah:";
+        messageString = messageString.Replace($"@{botUser.Username}#{botUser.Discriminator}", "Wah,").Replace($"<@!{botUser.Id}>", "Wah").Replace($"{botUser.Username}({botUser.Id})", $"Wah({botUser.Id}):");
+        messageString += "Wah({botUser.Id}):";
         //Send to API
         var builder = new ComponentBuilder();
-        var aggregateResponse = "";
+        var fields = new List<EmbedFieldBuilder>();
         for (var i = 0; i < generations; i++)
         {
             using var client = new HttpClient();
@@ -69,7 +69,7 @@ public class AIChatCmd : InteractionModuleBase
                 frequency_penalty = 0,
                 presence_penalty = 0,
                 top_p = 1,
-                stop = new[] { "\n", "Wah:" }
+                stop = new[] { "\n", $"Wah({botUser.Id}):","Wah:" }
             };
             var content = new StringContent(JsonSerializer.Serialize(data));
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -83,21 +83,33 @@ public class AIChatCmd : InteractionModuleBase
             var text = json.RootElement.GetProperty("choices")[0].GetProperty("text").GetString();
             //Respond
             if (string.IsNullOrWhiteSpace(text)) continue; 
-            builder.WithButton($"Option {i}", $"aiChatApprove{i}");
-            aggregateResponse += $"\n\n{i}) {text.Replace(". ", ".\n")}";
+            builder.WithButton($"{i}", $"aiChatApprove{i}");
+            fields.Add(new EmbedFieldBuilder
+            {
+                Name = $"{i}",
+                Value = text.Replace(".", ".\n"),
+                IsInline = false
+            });
             //sleep as to not hammer the API
             await Task.Delay(1000);
         }
-        await ModifyOriginalResponseAsync(r => r.Content = aggregateResponse);
+        var embed = new EmbedBuilder
+        {
+            Title = "AI Chat",
+            Description = "Please select a response to send to chat",
+            Fields = fields,
+            Color = Color.Blue
+        };
+        await ModifyOriginalResponseAsync(r => r.Embeds = new[] { embed.Build() });
         await ModifyOriginalResponseAsync(r => r.Components = builder.Build());
     }
 
     [ComponentInteraction("aiChatApprove*")]
-    public async Task ApproveResponse(int index)
+    public async Task ApproveResponse(string index)
     {
         var interaction = Context.Interaction as SocketMessageComponent;
         IUserMessage response = null;
-        var messages = interaction.Message.Content.Split("\n\n")[index].Replace($"{index}) ","").Split("\n");
+        var messages = interaction.Message.Embeds.FirstOrDefault().Fields.FirstOrDefault(f => f.Name == index).Value.Split("\n");
         foreach(var message in messages)
         {
             response = await ReplyAsync(message, allowedMentions: AllowedMentions.None);

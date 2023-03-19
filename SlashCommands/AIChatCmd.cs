@@ -14,9 +14,9 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("aichat", "Send an AI message into chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
-    public async Task AIChat([Summary("read", "How many messages to read"), MaxValue(200)] int read = 10,
+    public async Task AIChat([Summary("read", "How many messages to read (20)"), MaxValue(200)] int read = 20,
         [Summary("user", "If that bot should exclusively talk to one user")] IGuildUser? user = null,
-        [Summary("generations", "How many generations to run the AI for"), MaxValue(10)] int generations = 3)
+        [Summary("generations", "How many generations to run the AI for (3)")] int generations = 3)
     {
         await RespondAsync("Processing may take a few seconds", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
@@ -26,7 +26,7 @@ public class AIChatCmd : InteractionModuleBase
         var emotes = Context.Guild.Emotes.Where(x => !x.IsManaged && !x.Animated).OrderBy(_ => rnd.Next()).Take(100);
         var prompt = string.Join("\n",dbGuild.OpenAiPrompt).Replace("!se!", string.Join(",", emotes.Select(e => $"<:{e.Name}:{e.Id}>")));
         //Get chat messages
-        var messages = await Context.Channel.GetMessagesAsync(200, CacheMode.CacheOnly).FlattenAsync();
+        var messages = await Context.Channel.GetMessagesAsync(200).FlattenAsync();
         if(user != null)
             messages = messages.Where(m => m.Author.Id == user.Id || m.Author.Id == botUser.Id);
         //Filter messages to ignore, select number to read, and order by date
@@ -89,7 +89,7 @@ public class AIChatCmd : InteractionModuleBase
                 fields.Add(new EmbedFieldBuilder
                 {
                     Name = $"{i}",
-                    Value = text.Replace(".", ".\n"),
+                    Value = text.Replace(". ", ".\n"),
                     IsInline = false
                 });
                 //sleep as to not hammer the API

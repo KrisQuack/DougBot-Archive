@@ -38,65 +38,63 @@ public class PubSub
 
     private void PubSub_OnPrediction(object? sender, OnPredictionArgs Prediction)
     {
-        try
+        _ = Task.Run(async () =>
         {
-            _ = Task.Run(async () =>
+            try
             {
                 //create base embed
                 var embed = new EmbedBuilder()
                     .WithCurrentTimestamp();
                 var messageContent = "";
-                switch (Prediction.Type)
+                if (Prediction.Type == PredictionType.EventCreated)
                 {
-                    //Prediction is created
-                    case PredictionType.EventCreated:
-                        var endDate = Prediction.CreatedAt.Value.AddSeconds(Prediction.PredictionTime);
-                        var endDateOffset = new DateTimeOffset(endDate).ToUnixTimeSeconds();
-                        messageContent = "<@&1080237787174948936>";
-                        embed.WithTitle($"Prediction Created: {Prediction.Title}");
-                        embed.WithDescription($"Voting ends: <t:{endDateOffset}:R>");
-                        embed.WithColor(Color.Green);
-                        embed.AddField("Outcomes", string.Join("\n", Prediction.Outcomes.Select(p => $"{p.Title}")));
-                        break;
-                    //Prediction was canceled
-                    case PredictionType.EventUpdated when Prediction.Status == PredictionStatus.Canceled:
-                        embed.WithTitle($"Prediction Canceled: {Prediction.Title}");
-                        embed.WithColor(Color.Red);
-                        break;
-                    //Prediction has Ended
-                    case PredictionType.EventUpdated when Prediction.Status is PredictionStatus.Resolved or PredictionStatus.Locked:
-                        var status = Prediction.Status == PredictionStatus.Resolved ? "Ended" : "Locked";
-                        embed.WithTitle($"Prediction {status}: {Prediction.Title}");
-                        embed.WithColor(Color.Gold);
-                        //Get result
-                        var winOutcome = Prediction.Outcomes.FirstOrDefault(p => p.Id == Prediction.WinningOutcomeId);
-                        //Create field for winning outcome
-                        var totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
-                        var totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
-                        var winRatio = (double)totalPoints / winOutcome.TotalPoints;
-                        //Create field for each loosing outcome
-                        foreach (var outcome in Prediction.Outcomes)
-                        {
-                            var isWinner = outcome.Id == Prediction.WinningOutcomeId;
-                            embed.AddField(isWinner ? $"🎉 {outcome.Title} 🎉" : $"😭 {outcome.Title} 😭",
-                                $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers/totalUsers*100,0)}%\n" +
-                                $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints/totalPoints*100,0)}%\n" +
-                                $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
-                        }
+                    var endDate = Prediction.CreatedAt.Value.AddSeconds(Prediction.PredictionTime);
+                    var endDateOffset = new DateTimeOffset(endDate).ToUnixTimeSeconds();
+                    messageContent = "<@&1080237787174948936>";
+                    embed.WithTitle($"Prediction Created: {Prediction.Title}");
+                    embed.WithDescription($"Voting ends: <t:{endDateOffset}:R>");
+                    embed.WithColor(Color.Green);
+                    embed.AddField("Outcomes", string.Join("\n", Prediction.Outcomes.Select(p => $"{p.Title}")));
+                }
+                else if (Prediction.Type == PredictionType.EventUpdated &&
+                         Prediction.Status == PredictionStatus.Canceled)
+                {
+                    embed.WithTitle($"Prediction Canceled: {Prediction.Title}");
+                    embed.WithColor(Color.Red);
+                }
+                else if (Prediction.Type == PredictionType.EventUpdated &&
+                         (Prediction.Status == PredictionStatus.Resolved ||Prediction.Status == PredictionStatus.Locked))
+                {
+                    var status = Prediction.Status == PredictionStatus.Resolved ? "Ended" : "Locked";
+                    embed.WithTitle($"Prediction {status}: {Prediction.Title}");
+                    embed.WithColor(Color.Gold);
+                    //Get result
+                    var winOutcome = Prediction.Outcomes.FirstOrDefault(p => p.Id == Prediction.WinningOutcomeId);
+                    //Create field for winning outcome
+                    var totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
+                    var totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
+                    //Create field for each loosing outcome
+                    foreach (var outcome in Prediction.Outcomes)
+                    {
+                        var isWinner = outcome.Id == Prediction.WinningOutcomeId;
+                        embed.AddField(isWinner ? $"🎉 {outcome.Title} 🎉" : $"{outcome.Title}",
+                            $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers / totalUsers * 100, 0)}%\n" +
+                            $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints / totalPoints * 100, 0)}%\n" +
+                            $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
+                    }
 
-                        if (Prediction.Status == PredictionStatus.Resolved)
-                        {
-                            embed.AddField("__Biggest Losers__",
-                                string.Join("\n", Prediction.Outcomes.Where(p => p.Id != winOutcome.Id)
-                                    .SelectMany(p => p.TopPredictors)
-                                    .OrderByDescending(p => p.Points).Take(5)
-                                    .Select(p => $"{p.DisplayName} lost {p.Points:n0}")));
-                            embed.AddField("__Biggest Winners__",
-                                string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
-                                    .Select(p =>
-                                        $"{p.DisplayName} bet {p.Points:n0} won {p.Points * winRatio:n0} points")));
-                        }
-                        break;
+                    if (Prediction.Status == PredictionStatus.Resolved)
+                    {
+                        embed.AddField("__Biggest Losers__",
+                            string.Join("\n", Prediction.Outcomes.Where(p => p.Id != winOutcome.Id)
+                                .SelectMany(p => p.TopPredictors)
+                                .OrderByDescending(p => p.Points).Take(5)
+                                .Select(p => $"{p.DisplayName} lost {p.Points:n0}")));
+                        embed.AddField("__Biggest Winners__",
+                            string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
+                                .Select(p =>
+                                    $"{p.DisplayName} bet {p.Points:n0} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")));
+                    }
                 }
 
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
@@ -111,13 +109,12 @@ public class PubSub
                     { "attachments", null }
                 };
                 new Queue("SendMessage", 1, dict, null).Insert();
-            });
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        });
     }
 
     private void PubSub_OnChannelPointsRewardRedeemed(object sender, OnChannelPointsRewardRedeemedArgs Redemption)

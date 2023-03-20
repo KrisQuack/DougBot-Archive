@@ -63,7 +63,7 @@ public class PubSub
                     embed.WithColor(Color.Red);
                 }
                 else if (Prediction.Type == PredictionType.EventUpdated &&
-                         (Prediction.Status == PredictionStatus.Resolved ||Prediction.Status == PredictionStatus.Locked))
+                         (Prediction.Status == PredictionStatus.Resolved || Prediction.Status == PredictionStatus.Locked))
                 {
                     var status = Prediction.Status == PredictionStatus.Resolved ? "Ended" : "Locked";
                     embed.WithTitle($"Prediction {status}: {Prediction.Title}");

@@ -50,4 +50,11 @@ public class Queue
         db.Queues.Remove(this);
         await db.SaveChangesAsync();
     }
+
+    public async Task Update()
+    {
+        await using var db = new Database.DougBotContext();
+        db.Queues.Update(this);
+        await db.SaveChangesAsync();
+    }
 }

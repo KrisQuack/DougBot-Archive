@@ -13,10 +13,10 @@
         <PackageReference Include="Discord.Net" Version="3.9.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.3" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" Version="7.0.3" />
-        <PackageReference Include="TwitchLib.Api" Version="3.9.0-preview-f7f2908" />
+        <PackageReference Include="TwitchLib.Api" Version="3.9.0" />
         <PackageReference Include="TwitchLib.Client" Version="3.4.0-preview-d6687358268723051c755034b155a703c97c353a" />
         <PackageReference Include="TwitchLib.PubSub" Version="3.2.6" />
-        <PackageReference Include="YoutubeExplode" Version="6.2.9" />
+        <PackageReference Include="YoutubeExplode" Version="6.2.10" />
     </ItemGroup>
 
     <ItemGroup>

@@ -14,11 +14,20 @@ public class Twitch
             Console.WriteLine("Twitch Initialized");
             //Load settings
             var settings = (await Guild.GetGuild("567141138021089308")).TwitchSettings;
+            //Setup API
+            var API = new TwitchAPI();
+            var monitor = new LiveStreamMonitorService(API);
+            monitor.SetChannelsByName(new List<string> { settings.ChannelName });
+            monitor.OnStreamOnline += Monitor_OnStreamOnline;
+            monitor.OnStreamOffline += Monitor_OnStreamOffline;
+            monitor.Start();
+            //Setup PubSub
+            var pubSub = new PubSub().Initialize(API, settings.ChannelId);
+            //Setup IRC anonymously
+            new IRC().Initialize(API, "853660174", settings.BotName, settings.ChannelName);
             //Refresh token when expired
             while (true)
             {
-                //Setup API
-                var API = new TwitchAPI();
                 var botRefresh =
                     await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
                 var dougRefresh =
@@ -26,21 +35,9 @@ public class Twitch
                         settings.ClientId);
                 API.Settings.AccessToken = botRefresh.AccessToken;
                 API.Settings.ClientId = settings.ClientId;
-                var botID = API.Helix.Users.GetUsersAsync(logins: new List<string> { settings.BotName }).Result.Users[0].Id;
-                var monitor = new LiveStreamMonitorService(API);
-                monitor.SetChannelsByName(new List<string> { settings.ChannelName });
-                monitor.OnStreamOnline += Monitor_OnStreamOnline;
-                monitor.OnStreamOffline += Monitor_OnStreamOffline;
-                monitor.Start();
-                //Setup PubSub
-                var pubSub = new PubSub().Initialize(API, dougRefresh.AccessToken, settings.ChannelId);
-                //Setup IRC Client
-                var IRC = new IRC().Initialize(API, botID, settings.BotName, settings.ChannelName);
-                //Wait to refresh
-                await Task.Delay(dougRefresh.ExpiresIn * 1000);
-                IRC.Disconnect();
-                pubSub.Disconnect();
-                monitor.Stop();
+                pubSub.SendTopics(dougRefresh.AccessToken);
+                //Wait 1 hour to refresh
+                await Task.Delay(TimeSpan.FromHours(1));
             }
         }
         catch (Exception e)

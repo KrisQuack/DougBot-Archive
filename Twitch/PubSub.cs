@@ -13,16 +13,13 @@ public class PubSub
 {
     private TwitchAPI API;
     private TwitchPubSub Client;
-    private string DougToken;
 
-    public TwitchPubSub Initialize(TwitchAPI api, string dougToken, string channelID)
+    public TwitchPubSub Initialize(TwitchAPI api, string channelID)
     {
         API = api;
-        DougToken = dougToken;
         Client = new TwitchPubSub();
         //Main events
         Client.OnListenResponse += OnListenResponse;
-        Client.OnPubSubServiceConnected += OnPubSubServiceConnected;
         Client.OnPubSubServiceClosed += OnPubSubServiceClosed;
         Client.OnPubSubServiceError += OnPubSubServiceError;
         //Listeners
@@ -168,12 +165,6 @@ public class PubSub
     private void OnPubSubServiceClosed(object sender, EventArgs e)
     {
         Console.WriteLine("Connection closed to pubsub server");
-    }
-
-    private void OnPubSubServiceConnected(object sender, EventArgs e)
-    {
-        Console.WriteLine("Connected to pubsub server");
-        Client.SendTopics(DougToken);
     }
 
     private void OnListenResponse(object sender, OnListenResponseArgs e)

@@ -24,7 +24,7 @@ public class IRC
         BotID = botID;
         BotName = botName;
         ChannelName = channelName;
-        var credentials = new ConnectionCredentials(botName, API.Settings.AccessToken, disableUsernameCheck: true);
+        var credentials = new ConnectionCredentials("justinfan7011", "", disableUsernameCheck: true);
         var clientOptions = new ClientOptions
         {
             MessagesAllowedInPeriod = 750,

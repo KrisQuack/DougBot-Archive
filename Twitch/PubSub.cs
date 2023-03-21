@@ -63,54 +63,43 @@ public class PubSub
                     embed.WithTitle($"Prediction Canceled: {Prediction.Title}");
                     embed.WithColor(Color.Red);
                 }
-                //Locked
-                else if (Prediction.Type == PredictionType.EventUpdated && Prediction.Status == PredictionStatus.Locked)
+                //Locked or Resolved
+                else if (Prediction.Type == PredictionType.EventUpdated && (Prediction.Status == PredictionStatus.Locked || Prediction.Status == PredictionStatus.Resolved))
                 {
-                    embed.WithTitle($"Prediction Locked: {Prediction.Title}");
-                    embed.WithColor(Color.Orange);
-                    //Create field for winning outcome
-                    var totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
-                    var totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
-                    //Create field for each loosing outcome
-                    foreach (var outcome in Prediction.Outcomes)
-                    {
-                        embed.AddField($"{outcome.Title}",
-                            $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers / totalUsers * 100, 0)}%\n" +
-                            $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints / totalPoints * 100, 0)}%\n" +
-                            $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}\n" +
-                            $"__high rollers__\n" + string.Join("\n", outcome.TopPredictors
-                                .OrderByDescending(p => p.Points)
-                                .Select(p => $"{p.DisplayName} bet {p.Points:n0}")));
-                    }
-                }
-                //Ended
-                else if (Prediction.Type == PredictionType.EventUpdated && Prediction.Status == PredictionStatus.Resolved)
-                {
-                    embed.WithTitle($"Prediction Ended: {Prediction.Title}");
-                    embed.WithColor(Color.Orange);
-                    //Get result
+                    var isResolved = Prediction.Status == PredictionStatus.Resolved;
+                    embed.WithTitle($"Prediction {(isResolved ? "Ended" : "Locked")}: {Prediction.Title}");
+                    embed.WithColor(isResolved ? Color.Orange : Color.Blue);
                     var winOutcome = Prediction.Outcomes.FirstOrDefault(p => p.Id == Prediction.WinningOutcomeId);
-                    //Create field for winning outcome
                     var totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
                     var totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
                     //Create field for each loosing outcome
                     foreach (var outcome in Prediction.Outcomes)
                     {
-                        var isWinner = outcome.Id == Prediction.WinningOutcomeId;
-                        embed.AddField(isWinner ? $"🎉 {outcome.Title} 🎉" : $"{outcome.Title}",
+                        var isWinning = winOutcome != null && outcome.Id == Prediction.WinningOutcomeId;
+                        embed.AddField(isWinning ? $"🎉{outcome.Title}🎉" : $"{outcome.Title}",
                             $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers / totalUsers * 100, 0)}%\n" +
                             $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints / totalPoints * 100, 0)}%\n" +
-                            $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}");
+                            $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}\n\n" +
+                            $"**__High Rollers__**\n" +
+                            (!isResolved ?
+                                //Locked
+                                string.Join("\n", outcome.TopPredictors
+                                    .OrderByDescending(p => p.Points)
+                                    .Take(5)
+                                    .Select(p => $"{p.DisplayName} bet {p.Points:n0}")) : 
+                                isWinning ?
+                                    //Resolved : Win
+                                    string.Join("\n", outcome.TopPredictors
+                                        .OrderByDescending(p => p.Points)
+                                        .Take(5)
+                                        .Select(p => $"{p.DisplayName} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")) :
+                                    //Resolved : Loss
+                                    string.Join("\n", outcome.TopPredictors
+                                        .OrderByDescending(p => p.Points)
+                                        .Take(5)
+                                        .Select(p => $"{p.DisplayName} lost {p.Points:n0}"))
+                                    ), true);
                     }
-                    embed.AddField("__Biggest Losers__",
-                        string.Join("\n", Prediction.Outcomes.Where(p => p.Id != winOutcome.Id)
-                            .SelectMany(p => p.TopPredictors)
-                            .OrderByDescending(p => p.Points).Take(5)
-                            .Select(p => $"{p.DisplayName} lost {p.Points:n0}")));
-                    embed.AddField("__Biggest Winners__",
-                        string.Join("\n", winOutcome.TopPredictors.OrderByDescending(p => p.Points).Take(5)
-                            .Select(p =>
-                                $"{p.DisplayName} bet {p.Points:n0} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")));
                 }
                 //Send message
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },

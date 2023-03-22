@@ -36,8 +36,12 @@ public class Twitch
                 API.Settings.AccessToken = botRefresh.AccessToken;
                 API.Settings.ClientId = settings.ClientId;
                 pubSub.SendTopics(dougRefresh.AccessToken);
-                //Wait 1 hour to refresh
-                await Task.Delay(TimeSpan.FromHours(1));
+                //Get the lowest refresh time
+                var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn ? botRefresh.ExpiresIn : dougRefresh.ExpiresIn;
+                refreshTime = (int)(refreshTime - TimeSpan.FromMinutes(30).TotalSeconds);
+                Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds");
+                await Task.Delay((refreshTime-1800)*1000);
+                Console.WriteLine("Refreshing Tokens");
             }
         }
         catch (Exception e)

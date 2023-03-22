@@ -64,7 +64,7 @@ public class IRC
                 //Check for spam
                 var words = msg.Split(' ');
                 foreach (var word in words.Distinct())
-                    if (words.Count(w => w == word) > 5)
+                    if (words.Count(w => w == word) > 10)
                         await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
                             Message.ChatMessage.Id);
             }

@@ -28,6 +28,7 @@ public class Twitch
             //Refresh token when expired
             while (true)
             {
+                Console.WriteLine("Refreshing Tokens");
                 var botRefresh =
                     await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
                 var dougRefresh =
@@ -41,7 +42,6 @@ public class Twitch
                 refreshTime = (int)(refreshTime - TimeSpan.FromMinutes(30).TotalSeconds);
                 Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds");
                 await Task.Delay((refreshTime-1800)*1000);
-                Console.WriteLine("Refreshing Tokens");
             }
         }
         catch (Exception e)

@@ -22,7 +22,8 @@ public class BotStatusCmd : InteractionModuleBase
             var usedMemoryInMB = usedMemory / (1024 * 1024);
             //Get threads
             var currentAppThreadsCount = process.Threads.Count;
-            var threadList = process.Threads.Cast<ProcessThread>().OrderByDescending(t => t.TotalProcessorTime).Select(t => $"ID: {t.Id}\n" + $"  State: {t.ThreadState}\n" + $"  Time: {t.TotalProcessorTime}\n" + $"  Priority: {t.CurrentPriority}").ToList();
+            var threadList = process.Threads.Cast<ProcessThread>().ToList();
+            var youngThreads = threadList.Count(t => t.TotalProcessorTime.TotalMinutes < 1);
             //Get queue
             var queue = await Queue.GetQueues();
             var queueCount = queue.Count;
@@ -32,9 +33,9 @@ public class BotStatusCmd : InteractionModuleBase
                 .AddField("Uptime", $"{uptime.Days} days {uptime.Hours} hours {uptime.Minutes} minutes {uptime.Seconds} seconds", true)
                 .AddField("Memory Usage", $"{usedMemoryInMB} MB", true)
                 .AddField("Threads", $"{currentAppThreadsCount}", true)
+                .AddField("Young Threads (<1m)", $"{youngThreads}", true)
                 .AddField("Pending Jobs", queueCount, true)
                 .AddField("Due Jobs", dueCount, true)
-                .AddField("Thread List", $"```{string.Join("\n", threadList)}```", false)
                 .Build();
             await RespondAsync(embeds: new[] { embed }, ephemeral: true);
         }

@@ -6,17 +6,16 @@ using TwitchLib.Api;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
+using TwitchLib.PubSub.Models.Responses.Messages.AutomodCaughtMessage;
 
 namespace DougBot.Twitch;
 
 public class PubSub
 {
-    private TwitchAPI API;
     private TwitchPubSub Client;
 
-    public TwitchPubSub Initialize(TwitchAPI api, string channelID)
+    public TwitchPubSub Initialize()
     {
-        API = api;
         Client = new TwitchPubSub();
         //Main events
         Client.OnListenResponse += OnListenResponse;
@@ -24,11 +23,7 @@ public class PubSub
         Client.OnPubSubServiceError += OnPubSubServiceError;
         //Listeners
         Client.OnPrediction += PubSub_OnPrediction;
-        Client.ListenToPredictions(channelID);
         Client.OnChannelPointsRewardRedeemed += PubSub_OnChannelPointsRewardRedeemed;
-        Client.ListenToChannelPoints(channelID);
-
-        Client.Connect();
 
         return Client;
     }
@@ -83,18 +78,18 @@ public class PubSub
                                 string.Join("\n", outcome.TopPredictors
                                     .OrderByDescending(p => p.Points)
                                     .Take(5)
-                                    .Select(p => $"{p.DisplayName} bet {p.Points:n0}")) : 
+                                    .Select(p => $"{p.DisplayName} bet {p.Points:n0}"))+"\n" : 
                                 isWinning ?
                                     //Resolved : Win
                                     string.Join("\n", outcome.TopPredictors
                                         .OrderByDescending(p => p.Points)
                                         .Take(5)
-                                        .Select(p => $"{p.DisplayName} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")) :
+                                        .Select(p => $"{p.DisplayName} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points"))+"\n" :
                                     //Resolved : Loss
                                     string.Join("\n", outcome.TopPredictors
                                         .OrderByDescending(p => p.Points)
                                         .Take(5)
-                                        .Select(p => $"{p.DisplayName} lost {p.Points:n0}"))
+                                        .Select(p => $"{p.DisplayName} lost {p.Points:n0}"))+"\n"
                                     ), true);
                     }
                 }

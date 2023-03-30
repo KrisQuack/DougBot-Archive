@@ -22,13 +22,14 @@ public class Twitch
             monitor.OnStreamOffline += Monitor_OnStreamOffline;
             monitor.Start();
             //Setup PubSub
-            var pubSub = new PubSub().Initialize(API, settings.ChannelId);
+            var pubSub = new PubSub().Initialize();
             //Setup IRC anonymously
-            new IRC().Initialize(API, "853660174", settings.BotName, settings.ChannelName);
+            var irc = new IRC().Initialize(API, "853660174", settings.BotName, settings.ChannelName);
             //Refresh token when expired
             while (true)
             {
                 Console.WriteLine("Refreshing Tokens");
+                //Refresh tokens
                 var botRefresh =
                     await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
                 var dougRefresh =
@@ -36,12 +37,21 @@ public class Twitch
                         settings.ClientId);
                 API.Settings.AccessToken = botRefresh.AccessToken;
                 API.Settings.ClientId = settings.ClientId;
-                pubSub.SendTopics(dougRefresh.AccessToken);
+                //Connect IRC
+                irc.Connect();
+                //Update PubSub
+                pubSub.Connect();
+                pubSub.ListenToChannelPoints(settings.ChannelId);
+                pubSub.ListenToPredictions(settings.ChannelId);
+                pubSub.OnPubSubServiceConnected += (Sender, e) => pubSub.SendTopics(dougRefresh.AccessToken);
                 //Get the lowest refresh time
                 var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn ? botRefresh.ExpiresIn : dougRefresh.ExpiresIn;
                 refreshTime = (int)(refreshTime - TimeSpan.FromMinutes(30).TotalSeconds);
                 Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds");
                 await Task.Delay((refreshTime-1800)*1000);
+                //Disconnected
+                pubSub.Disconnect();
+                irc.Disconnect();
             }
         }
         catch (Exception e)

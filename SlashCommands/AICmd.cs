@@ -11,12 +11,12 @@ namespace DougBot.SlashCommands;
 public class AIChatCmd : InteractionModuleBase
 {
 
-    [SlashCommand("analyze", "Analyze the current chat")]
+    [SlashCommand("analyse", "Analyses the current chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
     public async Task Analyze([Summary("read", "How many messages to read (50)"), MaxValue(200)] int read = 50)
     {
-        await RespondAsync("Analyzing...", ephemeral: true);
+        await RespondAsync("Analysing...", ephemeral: true);
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         var messages = await Context.Channel.GetMessagesAsync(200).FlattenAsync();
         //Filter messages to ignore, select number to read, and order by date
@@ -42,11 +42,17 @@ public class AIChatCmd : InteractionModuleBase
                 StopSequences = { "Assistant:", "\n" }
             });
             var completion = response.Value.Choices[0].Text;
-            await ModifyOriginalResponseAsync(m => m.Content = completion);
+            var embed = new EmbedBuilder()
+                .WithColor(Color.Blue)
+                .WithTitle("Chat Analysis")
+                .WithDescription(completion)
+                .WithFooter("Powered by OpenAI GPT-3.5")
+                .Build();
+            await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed });
         }
         catch (Exception e)
         {
-            await ModifyOriginalResponseAsync(m => m.Content = "Failed to analyze chat: "+e.Message);
+            await ModifyOriginalResponseAsync(m => m.Content = "Failed to analyse chat: "+e.Message);
         }
     }
 }

@@ -13,7 +13,7 @@ public class AIChatCmd : InteractionModuleBase
 
     [SlashCommand("analyze", "Analyze the current chat")]
     [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.Administrator)]
+    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
     public async Task Analyze([Summary("read", "How many messages to read (50)"), MaxValue(200)] int read = 50)
     {
         await RespondAsync("Analyzing...", ephemeral: true);

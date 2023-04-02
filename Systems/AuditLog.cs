@@ -104,24 +104,6 @@ public static class AuditLog
                     { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
             //If guild avatar changed add field
             var attachments = new List<string>();
-            if (before.AvatarId != after.AvatarId)
-            {
-                using var httpClient = new HttpClient();
-                //get root path
-                var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                //old avatar
-                var attachmentBytes = await httpClient.GetByteArrayAsync(before.GetAvatarUrl());
-                var path = Path.Combine(rootPath, $"{before.AvatarId}_before.png");
-                await File.WriteAllBytesAsync(path, attachmentBytes);
-                attachments.Add(path);
-                //new avatar
-                attachmentBytes = await httpClient.GetByteArrayAsync(after.GetAvatarUrl());
-                path = Path.Combine(rootPath, $"{after.AvatarId}_after.png");
-                await File.WriteAllBytesAsync(path, attachmentBytes);
-                attachments.Add(path);
-                //add field 
-                fields.Add(new EmbedFieldBuilder { Name = "Avatar updated", Value = "See attachments below" });
-            }
 
             //Set author
             var author = new EmbedAuthorBuilder

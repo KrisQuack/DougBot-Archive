@@ -13,7 +13,6 @@ public class Guild
     public string? OpenAiToken { get; set; }
     public string? OpenAiURL { get; set; } 
     public List<string> OpenAiPrompt { get; set; }
-    public string? OpenAiUserBlacklist { get; set; }
     
     public string? LogChannel { get; set; }
     public string? LogBlacklistChannels { get; set; }

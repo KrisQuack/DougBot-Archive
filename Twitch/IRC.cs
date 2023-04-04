@@ -77,9 +77,10 @@ public class IRC
 
     private void Client_OnLog(object sender, OnLogArgs e)
     {
-        if (!e.Data.Contains("PRIVMSG") && !e.Data.Contains("CLEARMSG") && !e.Data.Contains("USERNOTICE") &&
-            !e.Data.Contains("CLEARCHAT") && !e.Data.Contains("PART") && !e.Data.Contains("JOIN"))
-            Console.WriteLine($"{DateTime.UtcNow.ToString()} {e.Data}");
+        var keywords = new List<string> { "PRIVMSG", "CLEARMSG", "USERNOTICE", "CLEARCHAT", "PART", "JOIN", "PING", "PONG" };
+
+        if (!keywords.Any(keyword => e.Data.Contains(keyword)))
+            Console.WriteLine($"{DateTime.UtcNow:u} {e.Data}");
     }
 
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs Channel)

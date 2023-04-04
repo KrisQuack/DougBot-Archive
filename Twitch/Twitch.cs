@@ -43,7 +43,11 @@ public class Twitch
                 pubSub.Connect();
                 pubSub.ListenToChannelPoints(settings.ChannelId);
                 pubSub.ListenToPredictions(settings.ChannelId);
-                pubSub.OnPubSubServiceConnected += (Sender, e) => pubSub.SendTopics(dougRefresh.AccessToken);
+                pubSub.OnPubSubServiceConnected += (Sender, e) =>
+                {
+                    pubSub.SendTopics(dougRefresh.AccessToken);
+                    Console.WriteLine("PubSub Connected");
+                };
                 //Get the lowest refresh time
                 var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn ? botRefresh.ExpiresIn : dougRefresh.ExpiresIn;
                 refreshTime = (int)(refreshTime - TimeSpan.FromMinutes(30).TotalSeconds);

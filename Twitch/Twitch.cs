@@ -1,5 +1,6 @@
 using DougBot.Models;
 using TwitchLib.Api;
+using TwitchLib.Api.Auth;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
 
@@ -21,8 +22,21 @@ public class Twitch
             monitor.OnStreamOnline += Monitor_OnStreamOnline;
             monitor.OnStreamOffline += Monitor_OnStreamOffline;
             monitor.Start();
+            //Setup tokens
+            RefreshResponse dougRefresh = null;
+            RefreshResponse botRefresh = null;
             //Setup PubSub
             var pubSub = new PubSub().Initialize();
+            pubSub.OnPubSubServiceConnected += (Sender, e) =>
+            {
+                while (dougRefresh == null)
+                {
+                    Console.WriteLine("Waiting for tokens");
+                    Task.Delay(1000);
+                }
+                pubSub.SendTopics(dougRefresh.AccessToken);
+                Console.WriteLine("PubSub Connected");
+            };
             //Setup IRC anonymously
             var irc = new IRC().Initialize(API, "853660174", settings.BotName, settings.ChannelName);
             //Refresh token when expired
@@ -30,9 +44,9 @@ public class Twitch
             {
                 Console.WriteLine("Refreshing Tokens");
                 //Refresh tokens
-                var botRefresh =
+                botRefresh =
                     await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
-                var dougRefresh =
+                dougRefresh =
                     await API.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret,
                         settings.ClientId);
                 API.Settings.AccessToken = botRefresh.AccessToken;
@@ -40,18 +54,12 @@ public class Twitch
                 //Connect IRC
                 irc.Connect();
                 //Update PubSub
-                //We need to override the default pubsub connection event somehow?????????
-                pubSub.OnPubSubServiceConnected += (Sender, e) =>
-                {
-                    pubSub.SendTopics(dougRefresh.AccessToken);
-                    Console.WriteLine("PubSub Connected");
-                };
                 pubSub.Connect();
                 pubSub.ListenToChannelPoints(settings.ChannelId);
                 pubSub.ListenToPredictions(settings.ChannelId);
                 //Get the lowest refresh time
                 var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn ? botRefresh.ExpiresIn : dougRefresh.ExpiresIn;
-                Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):hh:mm}");
+                Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
                 await Task.Delay((refreshTime-1800)*1000);
                 //Disconnected
                 pubSub.Disconnect();

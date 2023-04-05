@@ -109,6 +109,6 @@ public class reportModal : IModal
 {
     public string Title => "Generate Report";
 
-    [ModalTextInput("reason", TextInputStyle.Paragraph, "Please explain what it is you are reporting an any details that may help us.")]
+    [ModalTextInput("reason", TextInputStyle.Paragraph, "Please explain what it is you are reporting and any details that may help us.")]
     public string Reason { get; set; }
 }

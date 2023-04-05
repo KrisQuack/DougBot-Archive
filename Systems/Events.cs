@@ -41,8 +41,7 @@ public static class Events
             {
                 //Get guilds
                 var mutualGuilds = message.Author.MutualGuilds.Select(g => g.Id.ToString());
-                var dbGuilds = await Guild.GetGuilds();
-                dbGuilds = dbGuilds.Where(g => mutualGuilds.Contains(g.Id)).ToList();
+                //Create embed to send to guild
                 var embeds = new List<EmbedBuilder>();
                 //Main embed
                 var colorHash = new ColorHash();
@@ -56,24 +55,18 @@ public static class Events
                     .WithCurrentTimestamp());
                 //Attachment embeds
                 embeds.AddRange(message.Attachments.Select(attachment =>
-                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
-                        .WithUrl(attachment.Url)));
-                var embedJson = JsonSerializer.Serialize(embeds,
-                    new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                //Send message to each guild the user is in
-                foreach (var dbGuild in dbGuilds)
+                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url).WithUrl(attachment.Url)));
+                //Confirm message and where to send
+                var builder = new ComponentBuilder();
+                builder.WithButton("CANCEL", "dmRecieved:cancel:cancel", ButtonStyle.Danger);
+                foreach (var guild in message.Author.MutualGuilds)
                 {
-                    var dict = new Dictionary<string, string>
-                    {
-                        { "guildId", dbGuild.Id },
-                        { "channelId", dbGuild.DmReceiptChannel },
-                        { "message", "" },
-                        { "embedBuilders", embedJson },
-                        { "ping", "false" },
-                        { "attachments", null }
-                    };
-                    await new Queue("SendMessage", null, dict, null).Insert();
+                    var guildId = guild.Id.ToString();
+                    var guildName = guild.Name;
+                    builder.WithButton(guildName, $"dmRecieved:{guildId}:{guildName}");
                 }
+                await message.Author.SendMessageAsync("This message will be sent to the Mod team, please select the server you would like to send it to",
+                    embeds: embeds.Select(embed => embed.Build()).ToArray(), components: builder.Build());
             }
         });
         return Task.CompletedTask;

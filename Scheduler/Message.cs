@@ -9,7 +9,7 @@ namespace DougBot.Scheduler;
 public static class Message
 {
     public static async Task Send(DiscordSocketClient client, ulong GuildId, ulong ChannelId, string Message,
-        string EmbedBuilders, bool Ping = false, string attachmenst = null)
+        string EmbedBuilders, bool Ping = false, string attachments = null)
     {
         //Get the guild and channel
         var guild = client.GetGuild(GuildId);
@@ -17,14 +17,19 @@ public static class Message
         //Deserialize the embeds
         var embedBuildersList = JsonSerializer.Deserialize<List<EmbedBuilder>>(EmbedBuilders,
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+        //If embeds have attachment url also add it as the image url
+        foreach (var embed in embedBuildersList.Where(embed => embed.Url != null && embed.ImageUrl == null))
+        {
+            embed.WithImageUrl(embed.Url);
+        }
         //Send the message
         await channel.SendMessageAsync(Message, embeds: embedBuildersList.Select(embed => embed.Build()).ToArray(),
             allowedMentions: Ping ? AllowedMentions.All : AllowedMentions.None);
         //Send the attachments
-        if (attachmenst != null)
+        if (attachments != null)
         {
-            var attachments = JsonSerializer.Deserialize<List<string>>(attachmenst);
-            foreach (var attachment in attachments)
+            var attachList = JsonSerializer.Deserialize<List<string>>(attachments);
+            foreach (var attachment in attachList)
             {
                 await channel.SendFileAsync(attachment, attachment.Split('/').LastOrDefault(x => x.Contains('.')));
                 //delete file

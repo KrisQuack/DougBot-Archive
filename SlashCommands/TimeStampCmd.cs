@@ -105,7 +105,7 @@ public class TimeStampCmd : InteractionModuleBase
         dateString = dateString.Substring(0, dateString.Length - tz.Length);
         dateString += s_timeZoneOffsets[tz];
         //Try to parse the date and if it fails try to parse the time
-        var parsedTime = DateTime.Now;
+        var parsedTime = DateTime.UtcNow;
         if (!DateTime.TryParseExact(dateString, "dd MMM yyyy HH:mm zzz", CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out parsedTime))
             if (!DateTime.TryParseExact(dateString, "HH:mm zzz", CultureInfo.InvariantCulture, DateTimeStyles.None,

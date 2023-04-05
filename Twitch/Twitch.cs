@@ -40,18 +40,18 @@ public class Twitch
                 //Connect IRC
                 irc.Connect();
                 //Update PubSub
-                pubSub.Connect();
-                pubSub.ListenToChannelPoints(settings.ChannelId);
-                pubSub.ListenToPredictions(settings.ChannelId);
+                //We need to override the default pubsub connection event somehow?????????
                 pubSub.OnPubSubServiceConnected += (Sender, e) =>
                 {
                     pubSub.SendTopics(dougRefresh.AccessToken);
                     Console.WriteLine("PubSub Connected");
                 };
+                pubSub.Connect();
+                pubSub.ListenToChannelPoints(settings.ChannelId);
+                pubSub.ListenToPredictions(settings.ChannelId);
                 //Get the lowest refresh time
                 var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn ? botRefresh.ExpiresIn : dougRefresh.ExpiresIn;
-                refreshTime = (int)(refreshTime - TimeSpan.FromMinutes(30).TotalSeconds);
-                Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds");
+                Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):hh:mm}");
                 await Task.Delay((refreshTime-1800)*1000);
                 //Disconnected
                 pubSub.Disconnect();

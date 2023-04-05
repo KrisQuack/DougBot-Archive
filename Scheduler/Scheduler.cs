@@ -68,7 +68,7 @@ public class Scheduler
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex);
-                        queue.DueAt = DateTime.Now.AddYears(10);
+                        queue.DueAt = DateTime.UtcNow.AddYears(10);
                         await queue.Update();
                     }
 

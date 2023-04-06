@@ -105,7 +105,7 @@ public class PubSub
                         { "guildId", "567141138021089308" },
                         { "channelId", "886548334154760242" },
                         { "message", $"{outcome.Title} - {highestRollers.Count} <@130062174918934528>" },
-                        { "embedBuilders", "" },
+                        { "embedBuilders", "[]" },
                         { "ping", "true" },
                         { "attachments", null }
                     };

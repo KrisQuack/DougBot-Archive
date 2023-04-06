@@ -93,6 +93,12 @@ public class PubSub
                                     ), true);
                     }
                 }
+                //Check the embed is not empty
+                if (embed.Title == null)
+                {
+                    Console.WriteLine($"Prediction event not handled: {Prediction.Type} - {Prediction.Status}");
+                    return;
+                }
                 //Send message
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                     new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });

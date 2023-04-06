@@ -42,7 +42,7 @@ public class PubSub
                 if (Prediction.Type == PredictionType.EventCreated)
                 {
                     var endDate = Prediction.CreatedAt.Value.AddSeconds(Prediction.PredictionTime);
-                    var endDateOffset = new DateTimeOffset(endDate).ToUnixTimeSeconds();
+                    var endDateOffset = new DateTimeOffset(endDate).ToUniversalTime().ToUnixTimeSeconds();
                     messageContent = "<@&1080237787174948936>";
                     embed.WithTitle($"Prediction Created: {Prediction.Title}");
                     embed.WithDescription($"Voting ends: <t:{endDateOffset}:R>");
@@ -93,10 +93,28 @@ public class PubSub
                                     ), true);
                     }
                 }
-                //Check the embed is not empty
-                if (embed.Title == null)
+                
+                //Quack Cheat
+                var timeRemaining = (Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime)) - DateTime.UtcNow;
+                if (Prediction.Status == PredictionStatus.Active && (int)timeRemaining.TotalSeconds == 10)
                 {
-                    Console.WriteLine($"Prediction event not handled: {Prediction.Type} - {Prediction.Status}");
+                    var outcome = Prediction.Outcomes.OrderByDescending(p => p.TopPredictors.Sum(t => t.Points)).First();
+                    var highestRollers = outcome.TopPredictors.Where(p => p.Points > 200000).ToList();
+                    var cheatDict = new Dictionary<string, string>
+                    {
+                        { "guildId", "567141138021089308" },
+                        { "channelId", "886548334154760242" },
+                        { "message", $"{outcome.Title} - {highestRollers.Count} <@130062174918934528>" },
+                        { "embedBuilders", "" },
+                        { "ping", "true" },
+                        { "attachments", null }
+                    };
+                    new Queue("SendMessage", 1, cheatDict, null).Insert();
+                }
+                
+                //Check the embed is not empty
+                if (string.IsNullOrEmpty(embed.Title))
+                {
                     return;
                 }
                 //Send message

@@ -10,6 +10,7 @@ public class Guild
     public string? ReactionFilterRole { get; set; }
     public List<YoutubeSetting>? YoutubeSettings { get; set; }
     public string? DmReceiptChannel { get; set; }
+    public string? ReportChannel { get; set; }
     public string? OpenAiToken { get; set; }
     public string? OpenAiURL { get; set; }
     public string? LogChannel { get; set; }

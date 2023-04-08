@@ -89,7 +89,7 @@ public class ReportCmd : InteractionModuleBase
             var dict = new Dictionary<string, string>
             {
                 { "guildId", dbGuild.Id },
-                { "channelId", dbGuild.DmReceiptChannel },
+                { "channelId", dbGuild.ReportChannel },
                 { "message", "" },
                 { "embedBuilders", embedJson },
                 { "ping", "false" },

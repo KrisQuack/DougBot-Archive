@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using DougBot.Models;
 
 namespace DougBot.SlashCommands;
@@ -36,7 +35,7 @@ public class SendDMCMD : InteractionModuleBase
         await new Queue("SendDM", 0, dict, null).Insert();
         await RespondAsync("DM Queued", ephemeral: true);
     }
-    
+
     [ComponentInteraction("dmRecieved:*:*")]
     public async Task DMProcess(string guildId, string guildName)
     {
@@ -47,6 +46,7 @@ public class SendDMCMD : InteractionModuleBase
             await interaction.Message.DeleteAsync();
             return;
         }
+
         var embedJson = JsonSerializer.Serialize(interaction.Message.Embeds,
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         var dict = new Dictionary<string, string>

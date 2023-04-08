@@ -9,14 +9,13 @@ namespace DougBot.Twitch;
 
 public class IRC
 {
+    private readonly string[] containsBlock = { "-.", ".-" };
+    private readonly string[] endsWithBlock = { "ussy" };
     private TwitchAPI API;
     private string BotID;
     private string BotName;
     private string ChannelName;
     private TwitchClient Client;
-
-    private readonly string[] containsBlock = { "-.", ".-" };
-    private readonly string[] endsWithBlock = { "ussy" };
 
     public TwitchClient Initialize(TwitchAPI api, string botID, string botName, string channelName)
     {
@@ -77,7 +76,8 @@ public class IRC
 
     private void Client_OnLog(object sender, OnLogArgs e)
     {
-        var keywords = new List<string> { "PRIVMSG", "CLEARMSG", "USERNOTICE", "CLEARCHAT", "PART", "JOIN", "PING", "PONG" };
+        var keywords = new List<string>
+            { "PRIVMSG", "CLEARMSG", "USERNOTICE", "CLEARCHAT", "PART", "JOIN", "PING", "PONG" };
 
         if (!keywords.Any(keyword => e.Data.Contains(keyword)))
             Console.WriteLine($"{DateTime.UtcNow:u} {e.Data}");

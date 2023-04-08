@@ -34,6 +34,7 @@ public class Twitch
                     Console.WriteLine("Waiting for tokens");
                     Task.Delay(1000);
                 }
+
                 pubSub.SendTopics(dougRefresh.AccessToken);
                 Console.WriteLine("PubSub Connected");
             };
@@ -45,7 +46,8 @@ public class Twitch
                 Console.WriteLine("Refreshing Tokens");
                 //Refresh tokens
                 botRefresh =
-                    await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret, settings.ClientId);
+                    await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret,
+                        settings.ClientId);
                 dougRefresh =
                     await API.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret,
                         settings.ClientId);
@@ -58,9 +60,12 @@ public class Twitch
                 pubSub.ListenToChannelPoints(settings.ChannelId);
                 pubSub.ListenToPredictions(settings.ChannelId);
                 //Get the lowest refresh time
-                var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn ? botRefresh.ExpiresIn : dougRefresh.ExpiresIn;
-                Console.WriteLine($"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
-                await Task.Delay((refreshTime-1800)*1000);
+                var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn
+                    ? botRefresh.ExpiresIn
+                    : dougRefresh.ExpiresIn;
+                Console.WriteLine(
+                    $"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
+                await Task.Delay((refreshTime - 1800) * 1000);
                 //Disconnected
                 pubSub.Disconnect();
                 irc.Disconnect();

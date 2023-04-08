@@ -19,9 +19,7 @@ public static class Message
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         //If embeds have attachment url also add it as the image url
         foreach (var embed in embedBuildersList.Where(embed => embed.Url != null && embed.ImageUrl == null))
-        {
             embed.WithImageUrl(embed.Url);
-        }
         //Send the message
         await channel.SendMessageAsync(Message, embeds: embedBuildersList.Select(embed => embed.Build()).ToArray(),
             allowedMentions: Ping ? AllowedMentions.All : AllowedMentions.None);

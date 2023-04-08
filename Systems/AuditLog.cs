@@ -291,6 +291,7 @@ public static class AuditLog
     private static async Task<bool> BlacklistCheck(SocketTextChannel channel)
     {
         var dbGuild = await Guild.GetGuild(channel.Guild.Id.ToString());
-        return dbGuild.LogBlacklistChannels.Contains(channel.Id.ToString())||dbGuild.LogBlacklistChannels.Contains(channel.CategoryId.ToString());
+        return dbGuild.LogBlacklistChannels.Contains(channel.Id.ToString()) ||
+               dbGuild.LogBlacklistChannels.Contains(channel.CategoryId.ToString());
     }
 }

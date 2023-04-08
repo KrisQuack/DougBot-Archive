@@ -12,7 +12,7 @@ public class AIChatCmd : InteractionModuleBase
     [SlashCommand("analyse", "Analyses the current chat")]
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
-    public async Task Analyze([Summary("read", "How many messages to read (50)"), MaxValue(200)] int read = 50)
+    public async Task Analyze([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
     {
         //Initial response
         var embed = new EmbedBuilder()
@@ -20,7 +20,7 @@ public class AIChatCmd : InteractionModuleBase
             .WithTitle("Chat Analysis")
             .WithDescription("Processing")
             .WithFooter("Powered by OpenAI GPT-4");
-        await RespondAsync(embeds: new []{ embed.Build() }, ephemeral: true);
+        await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
         //Get values
         var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         var channel = Context.Channel as ITextChannel;
@@ -35,7 +35,7 @@ public class AIChatCmd : InteractionModuleBase
         var client = new OpenAIClient(new Uri(dbGuild.OpenAiURL), new AzureKeyCredential(dbGuild.OpenAiToken));
         try
         {
-            var chatCompletionsOptions = new ChatCompletionsOptions()
+            var chatCompletionsOptions = new ChatCompletionsOptions
             {
                 Messages =
                 {
@@ -54,25 +54,25 @@ public class AIChatCmd : InteractionModuleBase
                                 7) No Political Discussion, This is a server dedicated to a video-game man and people would like it to be light-hearted. Politics is often depressing and can lead to full-on debates, which we would like to avoid.
                                 8) No Sexual Topics, This server is not 18+. We strictly forbid pornographic content, and its distribution/share. In addition, do not talk about sexual activities and references excessively or frequently to the point of making people uncomfortable. Occasional mature jokes/humor is allowed.
                                 9) No Extremely Distressing topics, We strictly forbid violent imagery, and any other related content. In addition, distressing conversation about mental health/trauma/suicide should be avoided. If you feel the need to vent or ask for help, go over to supportive-af. However, we do not offer medical support, and we advise to seek professional help."
-                        ),
-                    new ChatMessage(ChatRole.User, 
+                    ),
+                    new ChatMessage(ChatRole.User,
                         @"Quack: Hey guys, I was thinking about the election and wanted to know what you thought about it? Who are you voting for?
                                 Eira: We can't talk about politics here
                                 Quack: Fuck the mods"
-                        ),
-                    new ChatMessage(ChatRole.Assistant, 
+                    ),
+                    new ChatMessage(ChatRole.Assistant,
                         "The topic was about Elections, Quack broke rule 7 No Political Discussion by asking about the election and rule 3 for disrespecting moderation"
                     ),
-                    new ChatMessage(ChatRole.User, 
+                    new ChatMessage(ChatRole.User,
                         @"Quack: What is your guys favourite Mug?
                                 Eira: Mine is a big one shaped like a pumpkin, I use it for tea
                                 Quack: TEA WHAT, that's gross I have a spreadsheet one I use for coffee
                                 Quack: I also brew my coffee in a french press
                                 Eira: That's cool :)"
-                        ),
-                    new ChatMessage(ChatRole.Assistant, 
+                    ),
+                    new ChatMessage(ChatRole.Assistant,
                         "The topic was about Mugs and beverages contained in them, No rules were broken"
-                        ),
+                    ),
                     new ChatMessage(ChatRole.User,
                         @"Quack: The weather outside is so bad
                                 Eira: It is so sunny here, where are you?
@@ -83,10 +83,10 @@ public class AIChatCmd : InteractionModuleBase
                                 Quack: That is not true
                                 Seal: Yeah the UK is cringe they have awful food and weather and talk like idiots
                                 Seal: Just like the french qui sentent le fromage"
-                        ),
-                    new ChatMessage(ChatRole.Assistant, 
+                    ),
+                    new ChatMessage(ChatRole.Assistant,
                         "The topic was weather, Eddie broke rule 2 for offensive stereotypes against the British, Seal broke rule 2 for offensive speech against the French, Seal broke rule 5 for speaking in french"
-                        ),
+                    ),
                     new ChatMessage(ChatRole.User, messageString)
                 },
                 MaxTokens = 500,
@@ -95,7 +95,7 @@ public class AIChatCmd : InteractionModuleBase
                 FrequencyPenalty = 0.5f
             };
             var response = await client.GetChatCompletionsAsync(
-                deploymentOrModelName: "WahSpeech",
+                "WahSpeech",
                 chatCompletionsOptions);
             var completion = response.Value.Choices[0].Message.Content;
             embed.WithDescription(completion);

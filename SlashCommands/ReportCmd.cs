@@ -11,19 +11,19 @@ public class ReportCmd : InteractionModuleBase
 {
     [MessageCommand("Report Message")]
     [EnabledInDm(false)]
-    public async Task ReportMessage (IMessage message)
+    public async Task ReportMessage(IMessage message)
     {
         var channel = message.Channel as SocketGuildChannel;
         await RespondWithModalAsync<reportModal>($"report:{channel.Id}:{message.Id}:0");
     }
-    
+
     [UserCommand("Report User")]
     [EnabledInDm(false)]
-    public async Task ReportUser (IGuildUser user)
+    public async Task ReportUser(IGuildUser user)
     {
         await RespondWithModalAsync<reportModal>($"report:0:0:{user.Id}");
     }
-    
+
     [ModalInteraction("report:*:*:*")]
     public async Task ReportProcess(string channelID, string messageID, string userID, reportModal modal)
     {
@@ -44,7 +44,8 @@ public class ReportCmd : InteractionModuleBase
                     .WithFields(
                         new EmbedFieldBuilder()
                             .WithName("User Info")
-                            .WithValue($"\nMention: {reportedUser.Mention}\nUsername: {reportedUser.Username}#{reportedUser.Discriminator}\nID: {reportedUser.Id}"),
+                            .WithValue(
+                                $"\nMention: {reportedUser.Mention}\nUsername: {reportedUser.Username}#{reportedUser.Discriminator}\nID: {reportedUser.Id}"),
                         new EmbedFieldBuilder()
                             .WithName("Reason")
                             .WithValue(modal.Reason)
@@ -67,7 +68,8 @@ public class ReportCmd : InteractionModuleBase
                     .WithFields(
                         new EmbedFieldBuilder()
                             .WithName("User Info")
-                            .WithValue($"\nMention: {message.Author.Mention}\nUsername: {message.Author.Username}#{message.Author.Discriminator}\nID: {message.Author.Id}"),
+                            .WithValue(
+                                $"\nMention: {message.Author.Mention}\nUsername: {message.Author.Username}#{message.Author.Discriminator}\nID: {message.Author.Id}"),
                         new EmbedFieldBuilder()
                             .WithName("Message Info")
                             .WithValue($"\nChannel: {channel.Mention}\nMessage: {message.Content}"),
@@ -82,8 +84,10 @@ public class ReportCmd : InteractionModuleBase
                     .WithCurrentTimestamp());
                 //Attachment embeds
                 embeds.AddRange(message.Attachments.Select(attachment =>
-                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url).WithUrl(attachment.Url)));
+                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
+                        .WithUrl(attachment.Url)));
             }
+
             var embedJson = JsonSerializer.Serialize(embeds,
                 new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
             var dict = new Dictionary<string, string>
@@ -100,15 +104,18 @@ public class ReportCmd : InteractionModuleBase
         }
         catch (Exception e)
         {
-            await ModifyOriginalResponseAsync(m => m.Content = "An error occured while submitting this request, Please try again or open a ticket.");
+            await ModifyOriginalResponseAsync(m =>
+                m.Content = "An error occured while submitting this request, Please try again or open a ticket.");
             throw;
         }
     }
 }
+
 public class reportModal : IModal
 {
-    public string Title => "Generate Report";
-
-    [ModalTextInput("reason", TextInputStyle.Paragraph, "Please explain what it is you are reporting and any details that may help us.")]
+    [ModalTextInput("reason", TextInputStyle.Paragraph,
+        "Please explain what it is you are reporting and any details that may help us.")]
     public string Reason { get; set; }
+
+    public string Title => "Generate Report";
 }

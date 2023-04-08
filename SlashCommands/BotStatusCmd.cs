@@ -30,12 +30,13 @@ public class BotStatusCmd : InteractionModuleBase
             var dueCount = queue.Count(q => q.DueAt < DateTime.UtcNow);
             var embed = new EmbedBuilder()
                 .WithTitle("Bot Status")
-                .AddField("Uptime", $"{uptime.Days} days {uptime.Hours} hours {uptime.Minutes} minutes {uptime.Seconds} seconds", true)
+                .AddField("Uptime",
+                    $"{uptime.Days} days {uptime.Hours} hours {uptime.Minutes} minutes {uptime.Seconds} seconds", true)
                 .AddField("Memory Usage", $"{usedMemoryInMB} MB", true)
                 .AddField("Threads", $"{currentAppThreadsCount}", true)
                 .AddField("Young Threads (<10s)", $"{youngThreads}", true)
                 .AddField("Pending Jobs", queueCount, true)
-                .AddField("Due Jobs", dueCount, true) 
+                .AddField("Due Jobs", dueCount, true)
                 .Build();
             await RespondAsync(embeds: new[] { embed }, ephemeral: true);
         }

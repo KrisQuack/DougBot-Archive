@@ -1,12 +1,9 @@
-using System.Reflection.Emit;
 using System.Text.Json;
 using Discord;
 using DougBot.Models;
-using TwitchLib.Api;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
-using TwitchLib.PubSub.Models.Responses.Messages.AutomodCaughtMessage;
 
 namespace DougBot.Twitch;
 
@@ -50,13 +47,16 @@ public class PubSub
                     embed.AddField("Outcomes", string.Join("\n", Prediction.Outcomes.Select(p => $"{p.Title}")));
                 }
                 //Canceled
-                else if (Prediction.Type == PredictionType.EventUpdated && Prediction.Status == PredictionStatus.Canceled)
+                else if (Prediction.Type == PredictionType.EventUpdated &&
+                         Prediction.Status == PredictionStatus.Canceled)
                 {
                     embed.WithTitle($"Prediction Canceled: {Prediction.Title}");
                     embed.WithColor(Color.Red);
                 }
                 //Locked or Resolved
-                else if (Prediction.Type == PredictionType.EventUpdated && (Prediction.Status == PredictionStatus.Locked || Prediction.Status == PredictionStatus.Resolved))
+                else if (Prediction.Type == PredictionType.EventUpdated &&
+                         (Prediction.Status == PredictionStatus.Locked ||
+                          Prediction.Status == PredictionStatus.Resolved))
                 {
                     var isResolved = Prediction.Status == PredictionStatus.Resolved;
                     embed.WithTitle($"Prediction {(isResolved ? "Ended" : "Locked")}: {Prediction.Title}");
@@ -73,50 +73,65 @@ public class PubSub
                             $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints / totalPoints * 100, 0)}%\n" +
                             $"Ratio: 1:{Math.Round((double)totalPoints / outcome.TotalPoints, 2)}\n\n" +
                             $"**__High Rollers__**\n" +
-                            (!isResolved ?
+                            (!isResolved
+                                ?
                                 //Locked
                                 string.Join("\n", outcome.TopPredictors
                                     .OrderByDescending(p => p.Points)
                                     .Take(5)
-                                    .Select(p => $"{p.DisplayName} bet {p.Points:n0}"))+"\n" : 
-                                isWinning ?
+                                    .Select(p => $"{p.DisplayName} bet {p.Points:n0}")) + "\n"
+                                : isWinning
+                                    ?
                                     //Resolved : Win
                                     string.Join("\n", outcome.TopPredictors
                                         .OrderByDescending(p => p.Points)
                                         .Take(5)
-                                        .Select(p => $"{p.DisplayName} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points"))+"\n" :
+                                        .Select(p =>
+                                            $"{p.DisplayName} won {p.Points * ((double)totalPoints / winOutcome.TotalPoints):n0} points")) +
+                                    "\n"
+                                    :
                                     //Resolved : Loss
                                     string.Join("\n", outcome.TopPredictors
                                         .OrderByDescending(p => p.Points)
                                         .Take(5)
-                                        .Select(p => $"{p.DisplayName} lost {p.Points:n0}"))+"\n"
-                                    ), true);
+                                        .Select(p => $"{p.DisplayName} lost {p.Points:n0}")) + "\n"
+                            ), true);
                     }
                 }
-                
+
                 //Quack Cheat
-                var timeRemaining = (Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime)) - DateTime.UtcNow;
-                if (Prediction.Status == PredictionStatus.Active && (int)timeRemaining.TotalSeconds == 10)
+                var timeRemaining = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime) -
+                                    DateTime.UtcNow;
+                if (Prediction.Status == PredictionStatus.Active &&
+                    new[] { 10, 20, 30, 60 }.Contains((int)timeRemaining.TotalSeconds))
                 {
-                    var outcome = Prediction.Outcomes.OrderByDescending(p => p.TopPredictors.Sum(t => t.Points)).First();
-                    var highestRollers = outcome.TopPredictors.Where(p => p.Points > 200000).ToList();
+                    var cheatEmbed = new EmbedBuilder()
+                        .WithCurrentTimestamp()
+                        .WithTitle($"Prediction Quack Cheat: {Prediction.Title}")
+                        .WithColor(Color.DarkBlue);
+                    foreach (var outCome in Prediction.Outcomes)
+                    {
+                        var cheatHighRollers = outCome.TopPredictors.OrderByDescending(p => p.Points).ToList();
+                        cheatEmbed.AddField($"{outCome.Title} - {cheatHighRollers.Sum(c => c.Points):n0}",
+                            string.Join("\n", cheatHighRollers.Select(p => $"{p.DisplayName} - {p.Points:n0}")), true);
+                    }
+
+                    var cheatEmbedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { cheatEmbed },
+                        new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
                     var cheatDict = new Dictionary<string, string>
                     {
                         { "guildId", "567141138021089308" },
                         { "channelId", "886548334154760242" },
-                        { "message", $"{outcome.Title} - {highestRollers.Count} <@130062174918934528>" },
-                        { "embedBuilders", "[]" },
+                        { "message", "" },
+                        { "embedBuilders", cheatEmbedJson },
                         { "ping", "true" },
                         { "attachments", null }
                     };
                     new Queue("SendMessage", 1, cheatDict, null).Insert();
                 }
-                
+
                 //Check the embed is not empty
-                if (string.IsNullOrEmpty(embed.Title))
-                {
-                    return;
-                }
+                if (string.IsNullOrEmpty(embed.Title)) return;
                 //Send message
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                     new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });

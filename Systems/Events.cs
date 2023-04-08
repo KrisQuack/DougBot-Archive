@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
@@ -55,7 +54,8 @@ public static class Events
                     .WithCurrentTimestamp());
                 //Attachment embeds
                 embeds.AddRange(message.Attachments.Select(attachment =>
-                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url).WithUrl(attachment.Url)));
+                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
+                        .WithUrl(attachment.Url)));
                 //Confirm message and where to send
                 var builder = new ComponentBuilder();
                 builder.WithButton("CANCEL", "dmRecieved:cancel:cancel", ButtonStyle.Danger);
@@ -65,7 +65,9 @@ public static class Events
                     var guildName = guild.Name;
                     builder.WithButton(guildName, $"dmRecieved:{guildId}:{guildName}");
                 }
-                await message.Author.SendMessageAsync("This message will be sent to the Mod team, please select the server you would like to send it to",
+
+                await message.Author.SendMessageAsync(
+                    "This message will be sent to the Mod team, please select the server you would like to send it to",
                     embeds: embeds.Select(embed => embed.Build()).ToArray(), components: builder.Build());
             }
         });

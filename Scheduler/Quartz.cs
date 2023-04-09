@@ -86,7 +86,7 @@ internal class ConsoleLogProvider : ILogProvider
     {
         return (level, func, exception, parameters) =>
         {
-            if (func != null && !func().Contains("Batch acquisition of {0} triggers"))
+            if (level >= LogLevel.Info && func != null )
             {
                 Console.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + level + "] " + func(), parameters);
             }

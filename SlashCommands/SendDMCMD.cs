@@ -28,8 +28,8 @@ public class SendDMCMD : InteractionModuleBase
                 .WithText("Any replies to this DM will be sent to the mod team"));
         var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-        var sendDmJob = JobBuilder.Create<SendMessageJob>()
-            .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", Context.Guild.Id.ToString())
+        var sendDmJob = JobBuilder.Create<SendDmJob>()
+            .WithIdentity($"sendDMJob-{Guid.NewGuid()}", Context.Guild.Id.ToString())
             .StoreDurably()
             .UsingJobData("guildId", Context.Guild.Id.ToString())
             .UsingJobData("userId", user.Id.ToString())
@@ -37,7 +37,7 @@ public class SendDMCMD : InteractionModuleBase
             .UsingJobData("senderId", Context.User.Id.ToString())
             .Build();
         var sendDmTrigger = TriggerBuilder.Create()
-            .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", Context.Guild.Id.ToString())
+            .WithIdentity($"sendDMTrigger-{Guid.NewGuid()}", Context.Guild.Id.ToString())
             .StartNow()
             .Build();
         await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);

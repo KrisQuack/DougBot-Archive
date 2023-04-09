@@ -282,7 +282,6 @@ public static class AuditLog
                 new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
             var sendMessageJob = JobBuilder.Create<SendMessageJob>()
                 .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", GuildId)
-                .StoreDurably()
                 .UsingJobData("guildId", GuildId)
                 .UsingJobData("channelId", dbGuild.LogChannel)
                 .UsingJobData("message", "")

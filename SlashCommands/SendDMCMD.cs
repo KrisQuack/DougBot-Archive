@@ -30,7 +30,6 @@ public class SendDMCMD : InteractionModuleBase
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         var sendDmJob = JobBuilder.Create<SendDmJob>()
             .WithIdentity($"sendDMJob-{Guid.NewGuid()}", Context.Guild.Id.ToString())
-            .StoreDurably()
             .UsingJobData("guildId", Context.Guild.Id.ToString())
             .UsingJobData("userId", user.Id.ToString())
             .UsingJobData("embedBuilders", embedJson)
@@ -59,7 +58,6 @@ public class SendDMCMD : InteractionModuleBase
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
         var sendMessageJob = JobBuilder.Create<SendMessageJob>()
             .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", dbGuild.Id)
-            .StoreDurably()
             .UsingJobData("guildId", dbGuild.Id)
             .UsingJobData("channelId", dbGuild.DmReceiptChannel)
             .UsingJobData("message", "")

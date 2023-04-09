@@ -40,7 +40,6 @@ public class CheckYoutubeJob : IJob
                     
                     var sendMessageJob = JobBuilder.Create<SendMessageJob>()
                         .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", dbGuild.Id)
-                        .StoreDurably()
                         .UsingJobData("guildId", dbGuild.Id)
                         .UsingJobData("channelId", dbYoutube.PostChannel)
                         .UsingJobData("message", mentionRole)

@@ -45,20 +45,9 @@ public static class Quartz
         {
             await Task.Delay(1000);
         }
-        //Clean jobs without a trigger
-        var jobKeys = await SchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
-        foreach (var jobKey in jobKeys)
-        {
-            var triggers = await SchedulerInstance.GetTriggersOfJob(jobKey);
-            if (triggers.Count == 0)
-            {
-                await SchedulerInstance.DeleteJob(jobKey);
-            }
-        }
         //Clean Forums
         var job = JobBuilder.Create<CleanForumsJob>()
             .WithIdentity("CleanForumsJob", "System")
-            .StoreDurably()
             .Build();
         var trigger = TriggerBuilder.Create()
             .WithIdentity("CleanForumsTrigger", "System")
@@ -69,7 +58,6 @@ public static class Quartz
         //Youtube
         job = JobBuilder.Create<CheckYoutubeJob>()
             .WithIdentity("YoutubeJob", "System")
-            .StoreDurably()
             .Build();
         trigger = TriggerBuilder.Create()
             .WithIdentity("YoutubeTrigger", "System")

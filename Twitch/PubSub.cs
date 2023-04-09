@@ -123,7 +123,6 @@ public class PubSub
                         new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
                     var cheatSendMessageJob = JobBuilder.Create<SendMessageJob>()
                         .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                        .StoreDurably()
                         .UsingJobData("guildId", "567141138021089308")
                         .UsingJobData("channelId", "886548334154760242")
                         .UsingJobData("message", "")
@@ -145,7 +144,6 @@ public class PubSub
                     new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
                 var sendMessageJob = JobBuilder.Create<SendMessageJob>()
                     .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                    .StoreDurably()
                     .UsingJobData("guildId", "567141138021089308")
                     .UsingJobData("channelId", "1070317311505997864")
                     .UsingJobData("message", messageContent)
@@ -192,7 +190,6 @@ public class PubSub
                     new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
                 var sendMessageJob = JobBuilder.Create<SendMessageJob>()
                     .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                    .StoreDurably()
                     .UsingJobData("guildId", "567141138021089308")
                     .UsingJobData("channelId", "1070317311505997864")
                     .UsingJobData("message", "")

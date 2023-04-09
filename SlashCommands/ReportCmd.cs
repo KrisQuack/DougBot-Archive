@@ -3,10 +3,12 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DougBot.Models;
+using DougBot.Scheduler;
 using Fernandezja.ColorHashSharp;
+using Quartz;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.SlashCommands;
-
 public class ReportCmd : InteractionModuleBase
 {
     [MessageCommand("Report Message")]
@@ -14,18 +16,18 @@ public class ReportCmd : InteractionModuleBase
     public async Task ReportMessage(IMessage message)
     {
         var channel = message.Channel as SocketGuildChannel;
-        await RespondWithModalAsync<reportModal>($"report:{channel.Id}:{message.Id}:0");
+        await RespondWithModalAsync<reportModal>($"report:{message.Id}:0");
     }
 
     [UserCommand("Report User")]
     [EnabledInDm(false)]
     public async Task ReportUser(IGuildUser user)
     {
-        await RespondWithModalAsync<reportModal>($"report:0:0:{user.Id}");
+        await RespondWithModalAsync<reportModal>($"report:0:{user.Id}");
     }
 
-    [ModalInteraction("report:*:*:*")]
-    public async Task ReportProcess(string channelID, string messageID, string userID, reportModal modal)
+    [ModalInteraction("report:*:*",true)]
+    public async Task ReportProcess(string messageID, string userID, reportModal modal)
     {
         await RespondAsync("Submitting...", ephemeral: true);
         try
@@ -63,7 +65,6 @@ public class ReportCmd : InteractionModuleBase
                 var message = await channel.GetMessageAsync(ulong.Parse(messageID));
                 embeds.Add(new EmbedBuilder()
                     .WithTitle("Message Reported")
-                    .WithDescription($"Reason: {modal.Reason}")
                     .WithUrl(message.GetJumpUrl())
                     .WithFields(
                         new EmbedFieldBuilder()
@@ -90,16 +91,21 @@ public class ReportCmd : InteractionModuleBase
 
             var embedJson = JsonSerializer.Serialize(embeds,
                 new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-            var dict = new Dictionary<string, string>
-            {
-                { "guildId", dbGuild.Id },
-                { "channelId", dbGuild.ReportChannel },
-                { "message", "" },
-                { "embedBuilders", embedJson },
-                { "ping", "false" },
-                { "attachments", null }
-            };
-            await new Queue("SendMessage", null, dict, null).Insert();
+            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", dbGuild.Id)
+                .StoreDurably()
+                .UsingJobData("guildId", dbGuild.Id)
+                .UsingJobData("channelId", dbGuild.ReportChannel)
+                .UsingJobData("message", "")
+                .UsingJobData("embedBuilders", embedJson)
+                .UsingJobData("ping", "false")
+                .UsingJobData("attachments", null)
+                .Build();
+            var sendMessageTrigger = TriggerBuilder.Create()
+                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
+                .StartNow()
+                .Build();
+            await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
             await ModifyOriginalResponseAsync(m => m.Content = "Your report has been sent to the mods.");
         }
         catch (Exception e)

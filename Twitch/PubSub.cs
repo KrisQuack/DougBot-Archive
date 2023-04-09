@@ -1,9 +1,12 @@
 using System.Text.Json;
 using Discord;
 using DougBot.Models;
+using DougBot.Scheduler;
+using Quartz;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Twitch;
 
@@ -118,16 +121,21 @@ public class PubSub
 
                     var cheatEmbedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { cheatEmbed },
                         new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                    var cheatDict = new Dictionary<string, string>
-                    {
-                        { "guildId", "567141138021089308" },
-                        { "channelId", "886548334154760242" },
-                        { "message", "" },
-                        { "embedBuilders", cheatEmbedJson },
-                        { "ping", "true" },
-                        { "attachments", null }
-                    };
-                    new Queue("SendMessage", 1, cheatDict, null).Insert();
+                    var cheatSendMessageJob = JobBuilder.Create<SendMessageJob>()
+                        .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
+                        .StoreDurably()
+                        .UsingJobData("guildId", "567141138021089308")
+                        .UsingJobData("channelId", "886548334154760242")
+                        .UsingJobData("message", "")
+                        .UsingJobData("embedBuilders", cheatEmbedJson)
+                        .UsingJobData("ping", "true")
+                        .UsingJobData("attachments", null)
+                        .Build();
+                    var cheatSendMessageTrigger = TriggerBuilder.Create()
+                        .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                        .StartNow()
+                        .Build();
+                    await Scheduler.Quartz.SchedulerInstance.ScheduleJob(cheatSendMessageJob, cheatSendMessageTrigger);
                 }
 
                 //Check the embed is not empty
@@ -135,16 +143,21 @@ public class PubSub
                 //Send message
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                     new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                var dict = new Dictionary<string, string>
-                {
-                    { "guildId", "567141138021089308" },
-                    { "channelId", "1070317311505997864" },
-                    { "message", messageContent },
-                    { "embedBuilders", embedJson },
-                    { "ping", "true" },
-                    { "attachments", null }
-                };
-                new Queue("SendMessage", 1, dict, null).Insert();
+                var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                    .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
+                    .StoreDurably()
+                    .UsingJobData("guildId", "567141138021089308")
+                    .UsingJobData("channelId", "1070317311505997864")
+                    .UsingJobData("message", messageContent)
+                    .UsingJobData("embedBuilders", embedJson)
+                    .UsingJobData("ping", "true")
+                    .UsingJobData("attachments", null)
+                    .Build();
+                var sendMessageTrigger = TriggerBuilder.Create()
+                    .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                    .StartNow()
+                    .Build();
+                await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
             }
             catch (Exception ex)
             {
@@ -177,16 +190,21 @@ public class PubSub
                     .WithCurrentTimestamp();
                 var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                     new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                var dict = new Dictionary<string, string>
-                {
-                    { "guildId", "567141138021089308" },
-                    { "channelId", "1080251555619557445" },
-                    { "message", "" },
-                    { "embedBuilders", embedJson },
-                    { "ping", "true" },
-                    { "attachments", null }
-                };
-                await new Queue("SendMessage", 1, dict, null).Insert();
+                var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                    .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
+                    .StoreDurably()
+                    .UsingJobData("guildId", "567141138021089308")
+                    .UsingJobData("channelId", "1070317311505997864")
+                    .UsingJobData("message", "")
+                    .UsingJobData("embedBuilders", embedJson)
+                    .UsingJobData("ping", "true")
+                    .UsingJobData("attachments", null)
+                    .Build();
+                var sendMessageTrigger = TriggerBuilder.Create()
+                    .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                    .StartNow()
+                    .Build();
+                await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
             }
         });
     }

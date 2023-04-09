@@ -7,7 +7,6 @@ public class Database
     public class DougBotContext : DbContext
     {
         public DbSet<Guild>? Guilds { get; set; }
-        public DbSet<Queue>? Queues { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -23,10 +22,6 @@ public class Database
                 .ToContainer("Guilds")
                 .HasPartitionKey(e => e.Id);
             modelBuilder.Entity<Guild>().OwnsMany(p => p.YoutubeSettings);
-
-            modelBuilder.Entity<Queue>()
-                .ToContainer("Queues")
-                .HasPartitionKey(e => e.Id);
         }
     }
 }

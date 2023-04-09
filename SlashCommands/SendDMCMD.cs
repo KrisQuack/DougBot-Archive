@@ -2,6 +2,9 @@ using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
+using DougBot.Scheduler;
+using Quartz;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.SlashCommands;
 
@@ -25,18 +28,23 @@ public class SendDMCMD : InteractionModuleBase
                 .WithText("Any replies to this DM will be sent to the mod team"));
         var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-        var dict = new Dictionary<string, string>
-        {
-            { "guildId", Context.Guild.Id.ToString() },
-            { "userId", user.Id.ToString() },
-            { "embedBuilders", embedJson },
-            { "SenderId", Context.User.Id.ToString() }
-        };
-        await new Queue("SendDM", 0, dict, null).Insert();
+        var sendDmJob = JobBuilder.Create<SendMessageJob>()
+            .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", Context.Guild.Id.ToString())
+            .StoreDurably()
+            .UsingJobData("guildId", Context.Guild.Id.ToString())
+            .UsingJobData("userId", user.Id.ToString())
+            .UsingJobData("embedBuilders", embedJson)
+            .UsingJobData("senderId", Context.User.Id.ToString())
+            .Build();
+        var sendDmTrigger = TriggerBuilder.Create()
+            .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", Context.Guild.Id.ToString())
+            .StartNow()
+            .Build();
+        await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
         await RespondAsync("DM Queued", ephemeral: true);
     }
 
-    [ComponentInteraction("dmRecieved:*:*")]
+    [ComponentInteraction("dmRecieved:*:*",true)]
     public async Task DMProcess(string guildId, string guildName)
     {
         var interaction = Context.Interaction as IComponentInteraction;
@@ -49,16 +57,21 @@ public class SendDMCMD : InteractionModuleBase
 
         var embedJson = JsonSerializer.Serialize(interaction.Message.Embeds,
             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-        var dict = new Dictionary<string, string>
-        {
-            { "guildId", dbGuild.Id },
-            { "channelId", dbGuild.DmReceiptChannel },
-            { "message", "" },
-            { "embedBuilders", embedJson },
-            { "ping", "false" },
-            { "attachments", null }
-        };
-        await new Queue("SendMessage", null, dict, null).Insert();
+        var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+            .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", dbGuild.Id)
+            .StoreDurably()
+            .UsingJobData("guildId", dbGuild.Id)
+            .UsingJobData("channelId", dbGuild.DmReceiptChannel)
+            .UsingJobData("message", "")
+            .UsingJobData("embedBuilders", embedJson)
+            .UsingJobData("ping", "false")
+            .UsingJobData("attachments", null)
+            .Build();
+        var sendMessageTrigger = TriggerBuilder.Create()
+            .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
+            .StartNow()
+            .Build();
+        await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
         await interaction.Message.DeleteAsync();
         await RespondAsync($"Message Sent to {guildName}");
     }

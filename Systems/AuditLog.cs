@@ -1,15 +1,21 @@
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
+using DougBot.Scheduler;
+using Quartz;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Systems;
 
 public static class AuditLog
 {
-    public static async Task Monitor(DiscordSocketClient client)
+    public static async Task Monitor()
     {
+        var client = Program._Client;
         client.MessageUpdated += MessageUpdatedHandler;
         client.MessageDeleted += MessageDeletedHandler;
         client.GuildMemberUpdated += GuildMemberUpdatedHandler;
@@ -274,16 +280,21 @@ public static class AuditLog
 
             var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                 new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-            var dict = new Dictionary<string, string>
-            {
-                { "guildId", GuildId },
-                { "channelId", dbGuild.LogChannel },
-                { "message", "" },
-                { "embedBuilders", embedJson },
-                { "ping", "true" },
-                { "attachments", attachments != null ? JsonSerializer.Serialize(attachments) : null }
-            };
-            await new Queue("SendMessage", 2, dict, null).Insert();
+            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", GuildId)
+                .StoreDurably()
+                .UsingJobData("guildId", GuildId)
+                .UsingJobData("channelId", dbGuild.LogChannel)
+                .UsingJobData("message", "")
+                .UsingJobData("embedBuilders", embedJson)
+                .UsingJobData("ping", "true")
+                .UsingJobData("attachments", null)
+                .Build();
+            var sendMessageTrigger = TriggerBuilder.Create()
+                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", GuildId)
+                .StartNow()
+                .Build();
+            await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
         });
         return Task.CompletedTask;
     }

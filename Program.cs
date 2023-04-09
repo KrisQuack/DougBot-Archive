@@ -5,6 +5,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using DougBot.Scheduler;
 using DougBot.Systems;
+using Quartz;
 
 namespace DougBot;
 
@@ -13,7 +14,8 @@ public class Program
     //Main Variables
     private static InteractionService _Service;
     private static IServiceProvider _ServiceProvider;
-    private static DiscordSocketClient _Client;
+    public static DiscordSocketClient _Client { get; private set; }
+    public static Random Random {get; private set; } = new Random();
 
     private bool _FirstStart = true;
 
@@ -48,13 +50,12 @@ public class Program
         {
             _FirstStart = false;
             //Register Plugins
-            AuditLog.Monitor(_Client);
-            Scheduler.Scheduler.Schedule(_Client);
-            Events.Monitor(_Client);
-            CleanForums.Clean(_Client);
-            Youtube.CheckYoutube();
+            Scheduler.Quartz.Initialize();
+            AuditLog.Monitor();
+            Events.Monitor();
             Twitch.Twitch.RunClient();
-            ReactionFilter.Monitor(_Client);
+            ReactionFilter.Monitor();
+            Scheduler.Quartz.CoreJobs();
             //Set status
             await _Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
             //Register Commands

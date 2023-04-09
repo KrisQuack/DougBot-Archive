@@ -9,25 +9,16 @@ public static class Events
 {
     private static DiscordSocketClient _Client;
 
-    public static async Task Monitor(DiscordSocketClient client)
+    public static async Task Monitor()
     {
-        _Client = client;
-        client.MessageReceived += MessageReceivedHandler;
-        client.UserJoined += UserJoinedHandler;
+        _Client = Program._Client;;
+        _Client.MessageReceived += MessageReceivedHandler;
+        _Client.UserJoined += UserJoinedHandler;
         Console.WriteLine("EventHandler Initialized");
     }
 
     private static Task UserJoinedHandler(SocketGuildUser user)
     {
-        _ = Task.Run(async () =>
-        {
-            var dict = new Dictionary<string, string>
-            {
-                { "guildId", user.Guild.Id.ToString() },
-                { "userId", user.Id.ToString() }
-            };
-            await new Queue("FreshCheck", null, dict, DateTime.UtcNow.AddMinutes(35)).Insert();
-        });
         return Task.CompletedTask;
     }
 
@@ -38,8 +29,6 @@ public static class Events
             if (message.Channel is SocketDMChannel && message.Author.MutualGuilds.Any() &&
                 message.Author.Id != _Client.CurrentUser.Id)
             {
-                //Get guilds
-                var mutualGuilds = message.Author.MutualGuilds.Select(g => g.Id.ToString());
                 //Create embed to send to guild
                 var embeds = new List<EmbedBuilder>();
                 //Main embed

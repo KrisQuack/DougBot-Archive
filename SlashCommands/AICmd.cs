@@ -7,11 +7,11 @@ using DougBot.Models;
 namespace DougBot.SlashCommands;
 
 [Group("ai", "AI based commands")]
+[EnabledInDm(false)]
+[DefaultMemberPermissions(GuildPermission.ModerateMembers)]
 public class AIChatCmd : InteractionModuleBase
 {
     [SlashCommand("analyse", "Analyses the current chat")]
-    [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
     public async Task Analyze([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
     {
         //Initial response

@@ -55,6 +55,7 @@ public class Program
             Events.Monitor();
             Twitch.Twitch.RunClient();
             ReactionFilter.Monitor();
+            ForumAi.Monitor();
             Scheduler.Quartz.CoreJobs();
             //Set status
             await _Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);

@@ -13,6 +13,7 @@ public class Guild
     public string? ReportChannel { get; set; }
     public string? OpenAiToken { get; set; }
     public string? OpenAiURL { get; set; }
+    public string? OpenAiChatForum { get; set; }
     public string? LogChannel { get; set; }
     public string? LogBlacklistChannels { get; set; }
     public TwitchSetting TwitchSettings { get; set; }

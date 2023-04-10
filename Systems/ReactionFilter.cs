@@ -25,6 +25,9 @@ public static class ReactionFilter
                 emoteWhitelists.Clear();
                 foreach (var dbGuild in dbGuilds)
                 {
+                    //If settings are null, skip
+                    if (string.IsNullOrEmpty(dbGuild.ReactionFilterEmotes))
+                        continue;
                     //Get guild from client
                     var guild = client.Guilds.FirstOrDefault(g => g.Id.ToString() == dbGuild.Id);
                     //Compile whitelist
@@ -49,11 +52,11 @@ public static class ReactionFilter
         {
             try
             {
-                //Skip if no guilds or emotes
-                if (!dbGuilds.Any() && !emoteWhitelists.Any())
+                var guild = (Reaction.Channel as SocketTextChannel).Guild;
+                //Skip if emoteWhitelists does not contain guild
+                if (!emoteWhitelists.ContainsKey(guild.Id) || !dbGuilds.Any())
                     return;
                 //Load values
-                var guild = (Reaction.Channel as SocketTextChannel).Guild;
                 var emote = Reaction.Emote;
                 var whitelist = emoteWhitelists[guild.Id];
                 var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());

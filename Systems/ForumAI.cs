@@ -33,7 +33,7 @@ public static class ForumAi
                         .WithDescription("Hmm, let me think about that...")
                         .WithFooter("Powered by OpenAI GPT-4");
                     var responseEmbed = await threadChannel.SendMessageAsync(embeds: new []{embed.Build()});
-                    var messages = await threadChannel.GetMessagesAsync(200).FlattenAsync();
+                    var messages = await threadChannel.GetMessagesAsync(500).FlattenAsync();
                     messages = messages.OrderBy(m => m.CreatedAt);
                     //Setup OpenAI
                     var client = new OpenAIClient(new Uri(dbGuild.OpenAiURL), new AzureKeyCredential(dbGuild.OpenAiToken));
@@ -78,11 +78,13 @@ public static class ForumAi
                     }
                     catch (Exception e)
                     {
-                        var response = "Failed to analyse chat: " + e.Message;
+                        var response = e.Message;
                         if (e.Message.Contains("content management policy."))
                             response = "Failed to analyse chat: Content is not allowed by Azure's content management policy.";
                         embed.WithColor(Color.Red);
-                        embed.WithDescription(response);
+                        embed.WithFields(new EmbedFieldBuilder()
+                            .WithName("Error")
+                            .WithValue(response));
                     }
                     await responseEmbed.ModifyAsync(m => m.Embeds = new []{embed.Build()});
                 }

@@ -110,8 +110,8 @@ public class PubSub
                 {
                     var cheatEmbed = new EmbedBuilder()
                         .WithCurrentTimestamp()
-                        .WithTitle($"Prediction Quack Cheat: {Prediction.Title}")
-                        .WithColor(Color.DarkBlue);
+                        .WithTitle($"{(int)timeRemaining.TotalSeconds} :Prediction Quack Cheat: {Prediction.Title}")
+                        .WithColor(Color.DarkGrey);
                     foreach (var outCome in Prediction.Outcomes)
                     {
                         var cheatHighRollers = outCome.TopPredictors.OrderByDescending(p => p.Points).ToList();

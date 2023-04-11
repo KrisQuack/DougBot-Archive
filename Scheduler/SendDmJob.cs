@@ -18,7 +18,11 @@ public class SendDmJob : IJob
             var userId = Convert.ToUInt64(dataMap.GetString("userId"));
             var senderId = Convert.ToUInt64(dataMap.GetString("senderId"));
             var embedBuilders = dataMap.GetString("embedBuilders");
-
+            
+            //check for nulls and return if any are null
+            if (guildId == 0 || userId == 0 || senderId == 0 || embedBuilders == null)
+                return;
+            
             var dbGuild = await Guild.GetGuild(guildId.ToString());
             var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
             var channel = guild.Channels.FirstOrDefault(c => c.Id.ToString() == dbGuild.DmReceiptChannel) as SocketTextChannel;

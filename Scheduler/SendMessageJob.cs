@@ -20,6 +20,10 @@ public class SendMessageJob : IJob
         var ping = dataMap.GetBoolean("ping");
         var attachments = dataMap.GetString("attachments");
 
+        //check for nulls and return if any are null
+        if (guildId == 0 || channelId == 0 || message == null)
+            return;
+        
         // Get the guild and channel
         var guild = Program._Client.GetGuild(guildId);
         var channel = guild.Channels.FirstOrDefault(x => x.Id == channelId) as SocketTextChannel;

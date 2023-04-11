@@ -14,6 +14,10 @@ public class RemoveReactionJob : IJob
         var messageId = Convert.ToUInt64(dataMap.GetString("messageId"));
         var emoteName = dataMap.GetString("emoteName");
 
+        //check for nulls and return if any are null
+        if (guildId == 0 || channelId == 0 || messageId == 0 || emoteName == null)
+            return;
+        
         var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
         var channel = guild.Channels.FirstOrDefault(c => c.Id == channelId) as SocketTextChannel;
         var message = await channel.GetMessageAsync(messageId);

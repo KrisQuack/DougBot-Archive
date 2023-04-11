@@ -103,8 +103,8 @@ public class PubSub
                 }
 
                 //Quack Cheat
-                var timeRemaining = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime) -
-                                    DateTime.UtcNow;
+                #region QuackCheat
+                var timeRemaining = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime)-DateTime.UtcNow;
                 if (Prediction.Status == PredictionStatus.Active &&
                     new[] { 10, 20, 30, 60 }.Contains((int)timeRemaining.TotalSeconds))
                 {
@@ -136,6 +136,7 @@ public class PubSub
                         .Build();
                     await Scheduler.Quartz.SchedulerInstance.ScheduleJob(cheatSendMessageJob, cheatSendMessageTrigger);
                 }
+                #endregion
 
                 //Check the embed is not empty
                 if (string.IsNullOrEmpty(embed.Title)) return;
@@ -191,7 +192,7 @@ public class PubSub
                 var sendMessageJob = JobBuilder.Create<SendMessageJob>()
                     .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
                     .UsingJobData("guildId", "567141138021089308")
-                    .UsingJobData("channelId", "1070317311505997864")
+                    .UsingJobData("channelId", "1080251555619557445")
                     .UsingJobData("message", "")
                     .UsingJobData("embedBuilders", embedJson)
                     .UsingJobData("ping", "true")

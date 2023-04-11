@@ -118,23 +118,10 @@ public class PubSub
                         cheatEmbed.AddField($"{outCome.Title} - {cheatHighRollers.Sum(c => c.Points):n0}",
                             string.Join("\n", cheatHighRollers.Select(p => $"{p.DisplayName} - {p.Points:n0}")), true);
                     }
-
-                    var cheatEmbedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { cheatEmbed },
-                        new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                    var cheatSendMessageJob = JobBuilder.Create<SendMessageJob>()
-                        .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                        .UsingJobData("guildId", "567141138021089308")
-                        .UsingJobData("channelId", "886548334154760242")
-                        .UsingJobData("message", "")
-                        .UsingJobData("embedBuilders", cheatEmbedJson)
-                        .UsingJobData("ping", "true")
-                        .UsingJobData("attachments", null)
-                        .Build();
-                    var cheatSendMessageTrigger = TriggerBuilder.Create()
-                        .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
-                        .StartNow()
-                        .Build();
-                    await Scheduler.Quartz.SchedulerInstance.ScheduleJob(cheatSendMessageJob, cheatSendMessageTrigger);
+                    var discClient = Program._Client;
+                    var guild = discClient.GetGuild(567141138021089308);
+                    var channel = guild.GetTextChannel(886548334154760242);
+                    await channel.SendMessageAsync("", embed: cheatEmbed.Build());
                 }
                 #endregion
 

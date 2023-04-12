@@ -22,6 +22,9 @@ public class RemoveReactionJob : IJob
         var channel = guild.Channels.FirstOrDefault(c => c.Id == channelId) as SocketTextChannel;
         var message = await channel.GetMessageAsync(messageId);
         var emote = message.Reactions.FirstOrDefault(r => r.Key.Name == emoteName).Key;
+        //check for nulls and return if any are null
+        if (emote == null)
+            return;
         await message.RemoveAllReactionsForEmoteAsync(emote);
     }
 }

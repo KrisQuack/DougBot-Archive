@@ -84,7 +84,7 @@ public static class ForumAi
                         embed.WithColor(Color.Red);
                         embed.WithFields(new EmbedFieldBuilder()
                             .WithName("Error")
-                            .WithValue(response));
+                            .WithValue(response + "\n\n*Saying \"Continue\" should resume from where it stopped.*"));
                     }
                     await responseEmbed.ModifyAsync(m => m.Embeds = new []{embed.Build()});
                 }

@@ -27,7 +27,8 @@ public class CleanForumsJob : IJob
                 foreach (var thread in forumThreads)
                 {
                     var message = await thread.GetMessagesAsync(1).FlattenAsync();
-                    if (message.First().Timestamp.UtcDateTime < DateTime.UtcNow.AddDays(-2) ||
+                    //if the thread has no messages or the last message is older than 2 days, archive the thread
+                    if ((message.Any() && message.First().Timestamp.UtcDateTime < DateTime.UtcNow.AddDays(-2)) ||
                         (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2)))
                     {
                         await thread.ModifyAsync(t => t.Archived = true);

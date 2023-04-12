@@ -80,7 +80,7 @@ public static class ReactionFilter
                             return;
                         //If not, create a new trigger
                         var removeReactionJob = JobBuilder.Create<RemoveReactionJob>()
-                            .WithIdentity($"removeReactionJob-{Guid.NewGuid()}", guild.Id.ToString())
+                            .WithIdentity($"removeReactionJob-{hashString}", guild.Id.ToString())
                             .UsingJobData("guildId", guild.Id.ToString())
                             .UsingJobData("channelId", Reaction.Channel.Id.ToString())
                             .UsingJobData("messageId", Reaction.MessageId.ToString())

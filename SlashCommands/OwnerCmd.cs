@@ -4,10 +4,10 @@ using Quartz.Impl.Matchers;
 
 namespace DougBot.SlashCommands;
 
-[Group("admin", "Admin commands")]
+[Group("owner", "Owner commands")]
 [EnabledInDm(false)]
 [RequireOwner]
-public class AdminCmd : InteractionModuleBase
+public class OwnerCmd : InteractionModuleBase
 {
     [SlashCommand("cleanqueue", "Clean the Quartz Queue")]
     public async Task CleanQueue()
@@ -22,6 +22,6 @@ public class AdminCmd : InteractionModuleBase
                 await Scheduler.Quartz.SchedulerInstance.DeleteJob(jobKey);
             }
         }
-        await ModifyOriginalResponseAsync(m => m.Content = "Done");
+        await ModifyOriginalResponseAsync(m => m.Content = $"Removed {jobKeys.Count} jobs");
     }
 }

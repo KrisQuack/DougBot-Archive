@@ -8,6 +8,7 @@ namespace DougBot.Twitch;
 
 public class Twitch
 {
+    public static TwitchAPI API { get; private set; }
     public static async Task RunClient()
     {
         try
@@ -16,7 +17,7 @@ public class Twitch
             //Load settings
             var settings = (await Guild.GetGuild("567141138021089308")).TwitchSettings;
             //Setup API
-            var API = new TwitchAPI();
+            API = new TwitchAPI();
             var monitor = new LiveStreamMonitorService(API);
             monitor.SetChannelsByName(new List<string> { settings.ChannelName });
             monitor.OnStreamOnline += Monitor_OnStreamOnline;

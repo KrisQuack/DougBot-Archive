@@ -159,6 +159,7 @@ public class PubSub
             var redemption = Redemption.RewardRedeemed.Redemption;
             var reward = redemption.Reward;
             var redeemedUser = redemption.User;
+            //Notify mods of new redemption
             if (redemption.Status == "UNFULFILLED")
             {
                 var embed = new EmbedBuilder()
@@ -190,6 +191,16 @@ public class PubSub
                     .StartNow()
                     .Build();
                 await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                //If it is minecraft, send a message to the user to join discord
+                if (reward.Title == "Get access to the Minecraft Server")
+                {
+                    //Whisper the user
+                    await Twitch.API.Helix.Whispers.SendWhisperAsync(
+                        "853660174",
+                        redeemedUser.Id, 
+                        "You have successfully redeemed Minecraft access, Please ensure you join the discord https://discord.gg/763mpbqxNq and take the Minecraft related roles",
+                        true);
+                }
             }
         });
     }

@@ -10,7 +10,7 @@ namespace DougBot.Twitch;
 public class IRC
 {
     private readonly string[] containsBlock = { "-.", ".-" };
-    private readonly string[] blockedWords = { "a" };
+    private readonly string[] blockedWords = { "cunt" };
     private readonly string[] endsWithBlock = { "ussy" };
     private TwitchAPI API;
     private string BotID;

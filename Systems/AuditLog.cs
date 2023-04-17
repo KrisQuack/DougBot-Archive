@@ -196,7 +196,7 @@ public static class AuditLog
             using var httpClient = new HttpClient();
             //get root path
             var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            foreach (var attachment in message.Value.Attachments)
+            foreach (IAttachment? attachment in message.Value.Attachments)
             {
                 var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
                 var path = Path.Combine(rootPath, attachment.Filename);

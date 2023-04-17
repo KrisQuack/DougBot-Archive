@@ -10,6 +10,7 @@ namespace DougBot.Twitch;
 public class IRC
 {
     private readonly string[] containsBlock = { "-.", ".-" };
+    private readonly string[] blockedWords = { "a" };
     private readonly string[] endsWithBlock = { "ussy" };
     private TwitchAPI API;
     private string BotID;
@@ -52,7 +53,7 @@ public class IRC
             try
             {
                 var msg = Message.ChatMessage.Message.ToLower();
-                //Check for blocked words
+                //Check for blocked contains
                 if (containsBlock.Any(word => msg.Contains(word)) || endsWithBlock.Any(word => msg.EndsWith(word)))
                 {
                     await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
@@ -60,12 +61,25 @@ public class IRC
                     return;
                 }
 
-                //Check for spam
                 var words = msg.Split(' ');
+                //Check for blocked words
+                if (words.Any(word => blockedWords.Contains(word)))
+                {
+                    await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,Message.ChatMessage.Id);
+                    return;
+                }
+
+                //Check for spam
+
                 foreach (var word in words.Distinct())
+                {
                     if (words.Count(w => w == word) > 10)
-                        await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
-                            Message.ChatMessage.Id);
+                    {
+                        await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID, Message.ChatMessage.Id);
+                        return;
+                    }
+                }
+                        
             }
             catch (Exception e)
             {

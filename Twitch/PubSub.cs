@@ -24,7 +24,6 @@ public class PubSub
         //Listeners
         Client.OnPrediction += PubSub_OnPrediction;
         Client.OnChannelPointsRewardRedeemed += PubSub_OnChannelPointsRewardRedeemed;
-
         return Client;
     }
 
@@ -110,7 +109,7 @@ public class PubSub
                 {
                     var cheatEmbed = new EmbedBuilder()
                         .WithCurrentTimestamp()
-                        .WithTitle($"{(int)timeRemaining.TotalSeconds} :Prediction Quack Cheat: {Prediction.Title}")
+                        .WithTitle($"{(int)timeRemaining.TotalSeconds}: {Prediction.Title}")
                         .WithColor(Color.DarkGrey);
                     foreach (var outCome in Prediction.Outcomes)
                     {

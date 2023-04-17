@@ -35,7 +35,8 @@ public static class AuditLog
         {
             //Get guild user
             var guildUser = guild.GetUser(user.Id);
-            ;
+            if(guildUser == null)
+                return;
             //Set Fields with roles
             var fields = new List<EmbedFieldBuilder>
                 { new() { Name = "Roles", Value = string.Join("\n", guildUser.Roles.Select(r => r.Mention)) } };
@@ -241,7 +242,7 @@ public static class AuditLog
         _ = Task.Run(async () =>
         {
             var channelObj = channel as SocketTextChannel;
-            if (before.Value.Content == after.Content || await BlacklistCheck(channelObj))
+            if (!before.HasValue || before.Value.Content == after.Content || await BlacklistCheck(channelObj))
                 return;
             //Set fields
             var fields = new List<EmbedFieldBuilder>

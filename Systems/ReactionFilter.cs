@@ -19,6 +19,7 @@ public static class ReactionFilter
         client.ReactionAdded += ReactionAddedHandler;
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
+        {
             try
             {
                 dbGuilds = await Guild.GetGuilds();
@@ -43,6 +44,7 @@ public static class ReactionFilter
             {
                 Console.WriteLine(ex.ToString());
             }
+        }
     }
 
     private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message,

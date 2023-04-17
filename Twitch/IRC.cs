@@ -1,3 +1,4 @@
+using DougBot.Models;
 using TwitchLib.Api;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
@@ -9,9 +10,10 @@ namespace DougBot.Twitch;
 
 public class IRC
 {
-    private readonly string[] containsBlock = { "-.", ".-" };
-    private readonly string[] blockedWords = { "cunt" };
-    private readonly string[] endsWithBlock = { "ussy" };
+    private string[] containsBlock;
+    private string[] blockedWords;
+    private string[] endsWithBlock;
+    private bool initialized = false;
     private TwitchAPI API;
     private string BotID;
     private string BotName;
@@ -39,14 +41,35 @@ public class IRC
         Client.OnMessageReceived += Client_OnMessageReceived;
 
         Client.Connect();
+        UpdateBlocks();
         return Client;
+    }
+
+    public async Task UpdateBlocks()
+    {
+        Console.WriteLine("ReactionFilter Initialized");
+        while (true)
+        {
+            try
+            {
+                var dbGuild = await Guild.GetGuild("567141138021089308");
+                containsBlock = dbGuild.TwitchSettings.ContainsBlock;
+                blockedWords = dbGuild.TwitchSettings.BlockedWords;
+                endsWithBlock = dbGuild.TwitchSettings.EndsWithBlock;
+                initialized = true;
+                await Task.Delay(60000);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
     }
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
         //Skip mods and broadcaster
-        if (Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
-            Message.ChatMessage.Bits > 0) return;
+        if (!initialized || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||Message.ChatMessage.Bits > 0) return;
         //Process
         _ = Task.Run(async () =>
         {

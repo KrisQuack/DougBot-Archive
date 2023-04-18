@@ -294,7 +294,7 @@ public static class AuditLog
                 .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", GuildId)
                 .StartNow()
                 .Build();
-            await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
         });
         return Task.CompletedTask;
     }

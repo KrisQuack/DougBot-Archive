@@ -10,9 +10,10 @@ namespace DougBot.Scheduler;
 
 public static class Quartz
 {
-    public static IScheduler SchedulerInstance { get; private set; }
+    public static IScheduler PersistentSchedulerInstance { get; private set; }
+    public static IScheduler MemorySchedulerInstance { get; private set; }
     public static List<string> _FailedJobNames { get; set; } = new();
-    public static async Task Initialize()
+    public static async Task InitializePersistent()
     {
         var properties = new NameValueCollection
         {
@@ -33,15 +34,29 @@ public static class Quartz
             .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
             .BuildScheduler();
         //Singleton
-        SchedulerInstance = scheduler;
+        PersistentSchedulerInstance = scheduler;
         //Start
         await scheduler.Start();
     }
-    
+    public static async Task InitializeMemory()
+    {
+        //JobFactory
+        LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+        var properties = new NameValueCollection();
+        var scheduler = await SchedulerBuilder.Create(properties)
+            .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
+            .BuildScheduler();
+        //Singleton
+        MemorySchedulerInstance = scheduler;
+        //Start
+        await scheduler.Start();
+    }
+
+
     public static async Task CoreJobs()
     {
         //Wait for Quartz to start
-        while (SchedulerInstance == null || SchedulerInstance.IsStarted == false)
+        while (PersistentSchedulerInstance == null || PersistentSchedulerInstance.IsStarted == false)
         {
             await Task.Delay(1000);
         }
@@ -54,7 +69,7 @@ public static class Quartz
             .StartNow()
             .WithSimpleSchedule(x => x.WithIntervalInHours(1).RepeatForever())
             .Build();
-        await SchedulerInstance.ScheduleJob(job, trigger);
+        await MemorySchedulerInstance.ScheduleJob(job, trigger);
         //Youtube
         job = JobBuilder.Create<CheckYoutubeJob>()
             .WithIdentity("YoutubeJob", "System")
@@ -64,7 +79,7 @@ public static class Quartz
             .StartNow()
             .WithSimpleSchedule(x => x.WithIntervalInMinutes(10).RepeatForever())
             .Build();
-        await SchedulerInstance.ScheduleJob(job, trigger);
+        await MemorySchedulerInstance.ScheduleJob(job, trigger);
     }
 }
 

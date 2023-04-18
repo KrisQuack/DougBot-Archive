@@ -142,7 +142,7 @@ public class PubSub
                     .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
                     .StartNow()
                     .Build();
-                await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
             }
             catch (Exception ex)
             {
@@ -189,7 +189,7 @@ public class PubSub
                     .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
                     .StartNow()
                     .Build();
-                await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
             }
         });
     }

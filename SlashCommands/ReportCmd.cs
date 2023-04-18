@@ -104,7 +104,7 @@ public class ReportCmd : InteractionModuleBase
                 .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
                 .StartNow()
                 .Build();
-            await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
             await ModifyOriginalResponseAsync(m => m.Content = "Your report has been sent to the mods.");
         }
         catch (Exception e)

@@ -77,7 +77,7 @@ public static class ReactionFilter
                         var hash = SHA1.HashData(Encoding.UTF8.GetBytes($"{Reaction.MessageId}{emote.Name}"));
                         var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
                         //Check if trigger already exists
-                        var trigger = await Scheduler.Quartz.SchedulerInstance.GetTrigger(new TriggerKey($"removeReactionJob-{hashString}", guild.Id.ToString()));
+                        var trigger = await Scheduler.Quartz.MemorySchedulerInstance.GetTrigger(new TriggerKey($"removeReactionJob-{hashString}", guild.Id.ToString()));
                         if (trigger != null)
                             return;
                         //If not, create a new trigger
@@ -99,7 +99,7 @@ public static class ReactionFilter
                             .WithIdentity($"removeReactionJob-{hashString}", guild.Id.ToString())
                             .StartAt(targetTime)
                             .Build();
-                        await Scheduler.Quartz.SchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+                        await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
                     }
             }
             catch (Exception ex)

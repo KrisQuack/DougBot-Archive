@@ -13,13 +13,13 @@ public class OwnerCmd : InteractionModuleBase
     public async Task CleanQueue()
     {
         await RespondAsync("Processing", ephemeral: true);
-        var jobKeys = await Scheduler.Quartz.SchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
+        var jobKeys = await Scheduler.Quartz.PersistentSchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
         foreach (var jobKey in jobKeys)
         {
-            var triggers = await Scheduler.Quartz.SchedulerInstance.GetTriggersOfJob(jobKey);
+            var triggers = await Scheduler.Quartz.PersistentSchedulerInstance.GetTriggersOfJob(jobKey);
             if (triggers.Count == 0)
             {
-                await Scheduler.Quartz.SchedulerInstance.DeleteJob(jobKey);
+                await Scheduler.Quartz.PersistentSchedulerInstance.DeleteJob(jobKey);
             }
         }
         await ModifyOriginalResponseAsync(m => m.Content = $"Removed {jobKeys.Count} jobs");

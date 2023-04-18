@@ -51,7 +51,7 @@ public class CheckYoutubeJob : IJob
                         .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
                         .StartNow()
                         .Build();
-                    await Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                    await Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
                     dbYoutube.LastVideoId = video.Id;
                     await dbGuild.Update();
                 }

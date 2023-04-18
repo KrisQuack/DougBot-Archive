@@ -39,7 +39,7 @@ public class SendDMCMD : InteractionModuleBase
             .WithIdentity($"sendDMTrigger-{Guid.NewGuid()}", Context.Guild.Id.ToString())
             .StartNow()
             .Build();
-        await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
+        await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
         await RespondAsync("DM Queued", ephemeral: true);
     }
 
@@ -69,7 +69,7 @@ public class SendDMCMD : InteractionModuleBase
             .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
             .StartNow()
             .Build();
-        await Scheduler.Quartz.SchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+        await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
         await interaction.Message.DeleteAsync();
         await RespondAsync($"Message Sent to {guildName}");
     }

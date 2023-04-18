@@ -28,7 +28,7 @@ public class BotStatusCmd : InteractionModuleBase
             var threadList = process.Threads.Cast<ProcessThread>().ToList();
             var youngThreads = threadList.Count(t => t.TotalProcessorTime.TotalSeconds < 10);
             // Get job keys
-            var jobKeys = await Scheduler.Quartz.SchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
+            var jobKeys = await Scheduler.Quartz.PersistentSchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
             // Calculate job counts using LINQ
             var totalJobs = jobKeys.Count;
             //Create embed

@@ -50,7 +50,8 @@ public class Program
         {
             _FirstStart = false;
             //Register Plugins
-            Scheduler.Quartz.Initialize();
+            Scheduler.Quartz.InitializePersistent();
+            Scheduler.Quartz.InitializeMemory();
             AuditLog.Monitor();
             Events.Monitor();
             Twitch.Twitch.RunClient();

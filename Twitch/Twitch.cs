@@ -75,7 +75,8 @@ public class Twitch
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error refreshing tokens: {ex}");
+                    Console.WriteLine($"[{DateTime.UtcNow:hh:mm:ss}] Error refreshing tokens: {ex}");
+                    await Task.Delay(60000);
                 }
             }
         }

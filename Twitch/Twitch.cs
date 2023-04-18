@@ -44,32 +44,39 @@ public class Twitch
             //Refresh token when expired
             while (true)
             {
-                Console.WriteLine("Refreshing Tokens");
-                //Refresh tokens
-                botRefresh =
-                    await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret,
-                        settings.ClientId);
-                dougRefresh =
-                    await API.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret,
-                        settings.ClientId);
-                API.Settings.AccessToken = botRefresh.AccessToken;
-                API.Settings.ClientId = settings.ClientId;
-                //Connect IRC
-                irc.Connect();
-                //Update PubSub
-                pubSub.Connect();
-                pubSub.ListenToChannelPoints(settings.ChannelId);
-                pubSub.ListenToPredictions(settings.ChannelId);
-                //Get the lowest refresh time
-                var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn
-                    ? botRefresh.ExpiresIn
-                    : dougRefresh.ExpiresIn;
-                Console.WriteLine(
-                    $"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
-                await Task.Delay((refreshTime - 1800) * 1000);
-                //Disconnected
-                pubSub.Disconnect();
-                irc.Disconnect();
+                try
+                {
+                    Console.WriteLine("Refreshing Tokens");
+                    //Refresh tokens
+                    botRefresh =
+                        await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret,
+                            settings.ClientId);
+                    dougRefresh =
+                        await API.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret,
+                            settings.ClientId);
+                    API.Settings.AccessToken = botRefresh.AccessToken;
+                    API.Settings.ClientId = settings.ClientId;
+                    //Connect IRC
+                    irc.Connect();
+                    //Update PubSub
+                    pubSub.Connect();
+                    pubSub.ListenToChannelPoints(settings.ChannelId);
+                    pubSub.ListenToPredictions(settings.ChannelId);
+                    //Get the lowest refresh time
+                    var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn
+                        ? botRefresh.ExpiresIn
+                        : dougRefresh.ExpiresIn;
+                    Console.WriteLine(
+                        $"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
+                    await Task.Delay((refreshTime - 1800) * 1000);
+                    //Disconnected
+                    pubSub.Disconnect();
+                    irc.Disconnect();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error refreshing tokens: {ex}");
+                }
             }
         }
         catch (Exception e)

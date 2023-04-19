@@ -30,8 +30,6 @@ public class IRC
         Client.OnLog += Client_OnLog;
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
-
-        Client.Connect();
         UpdateBlocks();
         return Client;
     }

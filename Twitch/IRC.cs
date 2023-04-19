@@ -14,19 +14,12 @@ public class IRC
     private string[] blockedWords;
     private string[] endsWithBlock;
     private bool initialized = false;
-    private TwitchAPI API;
     private string BotID;
-    private string BotName;
-    private string ChannelName;
     private TwitchClient Client;
 
-    public TwitchClient Initialize(TwitchAPI api, string botID, string botName, string channelName)
+    public TwitchClient Initialize(string botID)
     {
-        API = api;
         BotID = botID;
-        BotName = botName;
-        ChannelName = channelName;
-        var credentials = new ConnectionCredentials("justinfan7011", "", disableUsernameCheck: true);
         var clientOptions = new ClientOptions
         {
             MessagesAllowedInPeriod = 750,
@@ -34,8 +27,6 @@ public class IRC
         };
         var customClient = new WebSocketClient(clientOptions);
         Client = new TwitchClient(customClient);
-        Client.Initialize(credentials, channelName);
-
         Client.OnLog += Client_OnLog;
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
@@ -79,7 +70,7 @@ public class IRC
                 //Check for blocked contains
                 if (containsBlock.Any(word => msg.Contains(word)) || endsWithBlock.Any(word => msg.EndsWith(word)))
                 {
-                    await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
+                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
                         Message.ChatMessage.Id);
                     return;
                 }
@@ -88,7 +79,7 @@ public class IRC
                 //Check for blocked words
                 if (words.Any(word => blockedWords.Contains(word)))
                 {
-                    await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,Message.ChatMessage.Id);
+                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,Message.ChatMessage.Id);
                     return;
                 }
 
@@ -98,7 +89,7 @@ public class IRC
                 {
                     if (words.Count(w => w == word) > 10)
                     {
-                        await API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID, Message.ChatMessage.Id);
+                        await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID, Message.ChatMessage.Id);
                         return;
                     }
                 }

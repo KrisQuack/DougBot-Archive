@@ -132,6 +132,8 @@ public static class AuditLog
         {
             var fields = new List<EmbedFieldBuilder>();
             var beforeObj = await before.GetOrDownloadAsync();
+            if(beforeObj == null)
+                return;
             //If nickname changed add field
             if (beforeObj.Nickname != after.Nickname)
                 fields.Add(new EmbedFieldBuilder
@@ -192,7 +194,7 @@ public static class AuditLog
         {
             var channelObj = await channel.GetOrDownloadAsync() as SocketTextChannel;
             var messageObj = await message.GetOrDownloadAsync();
-            if (await BlacklistCheck(channelObj))
+            if (messageObj == null || await BlacklistCheck(channelObj))
                 return;
             //Download message attachments from url via httpclient
             var attachments = new List<string>();

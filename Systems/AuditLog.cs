@@ -190,7 +190,7 @@ public static class AuditLog
         _ = Task.Run(async () =>
         {
             var channelObj = await channel.GetOrDownloadAsync() as SocketTextChannel;
-            if (!message.HasValue && await BlacklistCheck(channelObj))
+            if (!message.HasValue || await BlacklistCheck(channelObj))
                 return;
             //Download message attachments from url via httpclient
             var attachments = new List<string>();

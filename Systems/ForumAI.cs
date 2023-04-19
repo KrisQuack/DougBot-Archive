@@ -3,6 +3,7 @@ using Azure.AI.OpenAI;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
+using Microsoft.Extensions.Azure;
 
 namespace DougBot.Systems;
 
@@ -33,7 +34,7 @@ public static class ForumAi
                         .WithDescription("Hmm, let me think about that...")
                         .WithFooter("Powered by OpenAI GPT-4");
                     var responseEmbed = await threadChannel.SendMessageAsync(embeds: new []{embed.Build()});
-                    var messages = await threadChannel.GetMessagesAsync(500).FlattenAsync();
+                    var messages = await threadChannel.GetMessagesAsync(5).FlattenAsync();
                     messages = messages.OrderBy(m => m.CreatedAt);
                     //Setup OpenAI
                     var client = new OpenAIClient(new Uri(dbGuild.OpenAiURL), new AzureKeyCredential(dbGuild.OpenAiToken));
@@ -41,19 +42,31 @@ public static class ForumAi
                     {
                         var chatCompletionsOptions = new ChatCompletionsOptions
                         {
-                            MaxTokens = 2000,
+                            MaxTokens = 1000,
                             Temperature = 0.5f,
                             PresencePenalty = 0.5f,
                             FrequencyPenalty = 0.5f
                         };
                         //Add messages to chat
                         chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.System, 
-                            "You are an AI assistant in a discord server, you must not use more than 4000 characters in a single message."));
+                            "You are an AI assistant in a discord server, you must not use more than 4000 characters or 1000 tokens in a single response." +
+                            "If you believe you need more characters/tokens to finish prompt the user to reply \"continue\" to start a new response"));
                         foreach (var message in messages)
                         {
+                            //Get attached text file
+                            var attachmentString = "";
+                            if (message.Attachments.Count > 0)
+                            {
+                                foreach (var attachment in message.Attachments)
+                                {
+                                    //Download text as string using httpclient
+                                    var httpClient = new HttpClient();
+                                    attachmentString += $"\n{attachment.Filename}```{await httpClient.GetStringAsync(attachment.Url)}```\n";
+                                }
+                            }
                             chatCompletionsOptions.Messages.Add(message.Author.IsBot
                                 ? new ChatMessage(ChatRole.Assistant, message.Embeds.FirstOrDefault()?.Description)
-                                : new ChatMessage(ChatRole.User, message.Content));
+                                : new ChatMessage(ChatRole.User, message.Content + attachmentString));
                         }
                         //Get response
                         var response = await client.GetChatCompletionsStreamingAsync("WahSpeech", chatCompletionsOptions);
@@ -75,12 +88,15 @@ public static class ForumAi
                             }
                         }
                         embed.WithColor(Color.Green);
+                        embed.WithFooter($"Powered by OpenAI GPT-4, {embed.Description.Length}char");
                     }
                     catch (Exception e)
                     {
                         var response = e.Message;
                         if (e.Message.Contains("content management policy."))
-                            response = "Failed to analyse chat: Content is not allowed by Azure's content management policy.";
+                            response = "Failed to respond: Content is not allowed by Azure's content management policy.";
+                        if(e.Message.Contains("This model's maximum context length is"))
+                            response = "Failed to respond: This conversaion breaches the token limit";
                         embed.WithColor(Color.Red);
                         embed.WithFields(new EmbedFieldBuilder()
                             .WithName("Error")

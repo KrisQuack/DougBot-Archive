@@ -131,14 +131,15 @@ public static class AuditLog
         _ = Task.Run(async () =>
         {
             var fields = new List<EmbedFieldBuilder>();
+            var beforeObj = await before.GetOrDownloadAsync();
             //If nickname changed add field
-            if (before.Value.Nickname != after.Nickname)
+            if (beforeObj.Nickname != after.Nickname)
                 fields.Add(new EmbedFieldBuilder
-                    { Name = "Nickname", Value = $"{before.Value.Nickname} -> {after.Nickname}" });
+                    { Name = "Nickname", Value = $"{beforeObj.Nickname} -> {after.Nickname}" });
             //If roles changed add field
-            if (before.Value.Roles.Count != after.Roles.Count)
+            if (beforeObj.Roles.Count != after.Roles.Count)
             {
-                var beforeRoles = before.Value.Roles.Select(r => r.Mention);
+                var beforeRoles = beforeObj.Roles.Select(r => r.Mention);
                 var afterRoles = after.Roles.Select(r => r.Mention);
                 var addedRoles = afterRoles.Except(beforeRoles);
                 var removedRoles = beforeRoles.Except(afterRoles);
@@ -151,14 +152,14 @@ public static class AuditLog
 
             //If guild avatar changed add field
             var attachments = new List<string>();
-            if (before.Value.GuildAvatarId != after.GuildAvatarId)
+            if (beforeObj.GuildAvatarId != after.GuildAvatarId)
             {
                 using var httpClient = new HttpClient();
                 //get root path
                 var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 //old avatar
-                var attachmentBytes = await httpClient.GetByteArrayAsync(before.Value.GetGuildAvatarUrl());
-                var path = Path.Combine(rootPath, $"{before.Value.GuildAvatarId}_before.png");
+                var attachmentBytes = await httpClient.GetByteArrayAsync(beforeObj.GetGuildAvatarUrl());
+                var path = Path.Combine(rootPath, $"{beforeObj.GuildAvatarId}_before.png");
                 await File.WriteAllBytesAsync(path, attachmentBytes);
                 attachments.Add(path);
                 //new avatar
@@ -190,14 +191,15 @@ public static class AuditLog
         _ = Task.Run(async () =>
         {
             var channelObj = await channel.GetOrDownloadAsync() as SocketTextChannel;
-            if (!message.HasValue || await BlacklistCheck(channelObj))
+            var messageObj = await message.GetOrDownloadAsync();
+            if (await BlacklistCheck(channelObj))
                 return;
             //Download message attachments from url via httpclient
             var attachments = new List<string>();
             using var httpClient = new HttpClient();
             //get root path
             var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            foreach (IAttachment? attachment in message.Value.Attachments)
+            foreach (IAttachment? attachment in messageObj.Attachments)
             {
                 var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
                 var path = Path.Combine(rootPath, attachment.Filename);
@@ -211,23 +213,23 @@ public static class AuditLog
                 new()
                 {
                     Name = "Content",
-                    Value = !string.IsNullOrEmpty(message.Value.Content)
-                        ? message.Value.Content
+                    Value = !string.IsNullOrEmpty(messageObj.Content)
+                        ? messageObj.Content
                         : "(Sticker/Embed/Media)"
                 }
             };
             //if message has attachments add field
-            if (message.Value.Attachments.Count > 0)
+            if (messageObj.Attachments.Count > 0)
                 fields.Add(new EmbedFieldBuilder
                 {
-                    Name = "Attachments", Value = string.Join("\n", message.Value.Attachments.Select(a => a.Filename))
+                    Name = "Attachments", Value = string.Join("\n", messageObj.Attachments.Select(a => a.Filename))
                 });
             //Set author
             var author = new EmbedAuthorBuilder
             {
                 Name =
-                    $"{message.Value.Author.Username}#{message.Value.Author.Discriminator} ({message.Value.Author.Id})",
-                IconUrl = message.Value.Author.GetAvatarUrl()
+                    $"{messageObj.Author.Username}#{messageObj.Author.Discriminator} ({messageObj.Author.Id})",
+                IconUrl = messageObj.Author.GetAvatarUrl()
             };
             //Log event
             await LogEvent($"Message Deleted in {(channel.Value as SocketTextChannel).Mention}",
@@ -242,12 +244,13 @@ public static class AuditLog
         _ = Task.Run(async () =>
         {
             var channelObj = channel as SocketTextChannel;
-            if (!before.HasValue || before.Value.Content == after.Content || await BlacklistCheck(channelObj))
+            var beforeObj = await before.GetOrDownloadAsync();
+            if (beforeObj.Content == after.Content || await BlacklistCheck(channelObj))
                 return;
             //Set fields
             var fields = new List<EmbedFieldBuilder>
             {
-                new() { Name = "Before", Value = before.Value.Content },
+                new() { Name = "Before", Value = beforeObj.Content },
                 new() { Name = "After", Value = after.Content }
             };
             //Set author

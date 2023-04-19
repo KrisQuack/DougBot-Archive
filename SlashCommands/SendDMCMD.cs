@@ -8,7 +8,7 @@ using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.SlashCommands;
 
-public class SendDMCMD : InteractionModuleBase
+public class SendDMCmd : InteractionModuleBase
 {
     [SlashCommand("senddm", "Send a DM to the specified user")]
     [EnabledInDm(false)]

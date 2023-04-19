@@ -3,7 +3,7 @@ using Discord.Interactions;
 
 namespace DougBot.SlashCommands;
 
-public class SetSlowModeCMD : InteractionModuleBase
+public class SetSlowModeCmd : InteractionModuleBase
 {
     [SlashCommand("setslowmode", "Set the slow mode of a channel")]
     [EnabledInDm(false)]

@@ -1,6 +1,7 @@
 using DougBot.Models;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
+using TwitchLib.Client.Models;
 
 namespace DougBot.Twitch;
 
@@ -11,12 +12,15 @@ public class IRC
     private string[] endsWithBlock;
     private bool firstRun = true;
     private string BotID = "853660174";
-    public TwitchClient Create()
+    public TwitchClient Create(string channelName)
     {
         var Client = new TwitchClient();
         Client.OnLog += Client_OnLog;
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
+        //Temporary Credentials
+        var credentials = new ConnectionCredentials("justinfan7011", "", disableUsernameCheck: true);
+        Client.Initialize(credentials, channelName);
         UpdateBlocks();
         return Client;
     }
@@ -44,6 +48,11 @@ public class IRC
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
+        if (Message.ChatMessage.Username == "quackersd")
+        {
+            Console.WriteLine($"Quack: {Message.ChatMessage.Message}");
+            //Twitch.API.Helix.Whispers.SendWhisperAsync(BotID,Message.ChatMessage.UserId,Message.ChatMessage.Message,true);
+        }
         //Skip mods and broadcaster
         if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||Message.ChatMessage.Bits > 0) return;
         //Process

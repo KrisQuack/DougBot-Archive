@@ -3,6 +3,7 @@ using TwitchLib.Api;
 using TwitchLib.Api.Auth;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
+using TwitchLib.Client;
 using TwitchLib.Client.Models;
 using TwitchLib.Communication.Interfaces;
 
@@ -11,6 +12,7 @@ namespace DougBot.Twitch;
 public class Twitch
 {
     public static TwitchAPI API { get; private set; }
+    public static TwitchClient IRC { get; private set; }
     public static async Task RunClient()
     {
         try
@@ -42,7 +44,7 @@ public class Twitch
                 Console.WriteLine("PubSub Connected");
             };
             //Setup IRC anonymously
-            var irc = new IRC().Create();
+            IRC = new IRC().Create(settings.ChannelName);
             //Refresh token when expired
             while (true)
             {
@@ -60,9 +62,8 @@ public class Twitch
                     API.Settings.ClientId = settings.ClientId;
                     //Connect IRC
                     var credentials = new ConnectionCredentials(settings.BotName, Twitch.API.Settings.AccessToken, disableUsernameCheck: true);
-                    irc.Initialize(credentials);
-                    irc.Connect();
-                    irc.JoinChannel(settings.ChannelName);
+                    IRC.SetConnectionCredentials(credentials);
+                    IRC.Connect();
                     //Update PubSub
                     pubSub.Connect();
                     pubSub.ListenToChannelPoints(settings.ChannelId);
@@ -76,7 +77,7 @@ public class Twitch
                     await Task.Delay((refreshTime - 1800) * 1000);
                     //Disconnected
                     pubSub.Disconnect();
-                    irc.Disconnect();
+                    IRC.Disconnect();
                 }
                 catch (Exception ex)
                 {

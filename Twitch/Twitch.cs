@@ -29,7 +29,7 @@ public class Twitch
             RefreshResponse dougRefresh = null;
             RefreshResponse botRefresh = null;
             //Setup PubSub
-            var pubSub = new PubSub().Initialize();
+            var pubSub = new PubSub().Create();
             pubSub.OnPubSubServiceConnected += (Sender, e) =>
             {
                 while (dougRefresh == null)
@@ -42,7 +42,7 @@ public class Twitch
                 Console.WriteLine("PubSub Connected");
             };
             //Setup IRC anonymously
-            var irc = new IRC().Initialize("853660174");
+            var irc = new IRC().Create();
             //Refresh token when expired
             while (true)
             {
@@ -60,8 +60,9 @@ public class Twitch
                     API.Settings.ClientId = settings.ClientId;
                     //Connect IRC
                     var credentials = new ConnectionCredentials(settings.BotName, Twitch.API.Settings.AccessToken, disableUsernameCheck: true);
-                    irc.Initialize(credentials, settings.ChannelName);
+                    irc.Initialize(credentials);
                     irc.Connect();
+                    irc.JoinChannel(settings.ChannelName);
                     //Update PubSub
                     pubSub.Connect();
                     pubSub.ListenToChannelPoints(settings.ChannelId);

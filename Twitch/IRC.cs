@@ -1,10 +1,6 @@
 using DougBot.Models;
-using TwitchLib.Api;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
-using TwitchLib.Client.Models;
-using TwitchLib.Communication.Clients;
-using TwitchLib.Communication.Models;
 
 namespace DougBot.Twitch;
 
@@ -13,20 +9,11 @@ public class IRC
     private string[] containsBlock;
     private string[] blockedWords;
     private string[] endsWithBlock;
-    private bool initialized = false;
-    private string BotID;
-    private TwitchClient Client;
-
-    public TwitchClient Initialize(string botID)
+    private bool firstRun = true;
+    private string BotID = "853660174";
+    public TwitchClient Create()
     {
-        BotID = botID;
-        var clientOptions = new ClientOptions
-        {
-            MessagesAllowedInPeriod = 750,
-            ThrottlingPeriod = TimeSpan.FromSeconds(30)
-        };
-        var customClient = new WebSocketClient(clientOptions);
-        Client = new TwitchClient(customClient);
+        var Client = new TwitchClient();
         Client.OnLog += Client_OnLog;
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
@@ -45,7 +32,7 @@ public class IRC
                 containsBlock = dbGuild.TwitchSettings.ContainsBlock;
                 blockedWords = dbGuild.TwitchSettings.BlockedWords;
                 endsWithBlock = dbGuild.TwitchSettings.EndsWithBlock;
-                initialized = true;
+                firstRun = true;
                 await Task.Delay(60000);
             }
             catch (Exception ex)
@@ -58,7 +45,7 @@ public class IRC
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
         //Skip mods and broadcaster
-        if (!initialized || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||Message.ChatMessage.Bits > 0) return;
+        if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||Message.ChatMessage.Bits > 0) return;
         //Process
         _ = Task.Run(async () =>
         {

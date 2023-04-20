@@ -12,11 +12,9 @@ namespace DougBot.Twitch;
 
 public class PubSub
 {
-    private TwitchPubSub Client;
-
-    public TwitchPubSub Initialize()
+    public TwitchPubSub Create()
     {
-        Client = new TwitchPubSub();
+        var Client = new TwitchPubSub();
         //Main events
         Client.OnListenResponse += OnListenResponse;
         Client.OnPubSubServiceClosed += OnPubSubServiceClosed;

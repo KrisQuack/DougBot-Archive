@@ -64,6 +64,7 @@ public class Twitch
                     var credentials = new ConnectionCredentials(settings.BotName, Twitch.API.Settings.AccessToken, disableUsernameCheck: true);
                     IRC.SetConnectionCredentials(credentials);
                     IRC.Connect();
+                    IRC.JoinChannel(settings.ChannelName);
                     //Update PubSub
                     pubSub.Connect();
                     pubSub.ListenToChannelPoints(settings.ChannelId);

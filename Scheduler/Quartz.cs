@@ -56,7 +56,7 @@ public static class Quartz
     public static async Task CoreJobs()
     {
         //Wait for Quartz to start
-        while (PersistentSchedulerInstance == null || PersistentSchedulerInstance.IsStarted == false)
+        while (MemorySchedulerInstance == null || MemorySchedulerInstance.IsStarted == false)
         {
             await Task.Delay(1000);
         }

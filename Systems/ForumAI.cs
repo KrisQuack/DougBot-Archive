@@ -3,7 +3,7 @@ using Azure.AI.OpenAI;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
-using Microsoft.Extensions.Azure;
+using System.Text;
 
 namespace DougBot.Systems;
 
@@ -20,21 +20,17 @@ public static class ForumAi
     {
         _ = Task.Run(async () =>
         {
-            if(!arg.Author.IsBot && arg.Channel.GetType() == typeof(SocketThreadChannel))
+            if (!arg.Author.IsBot && arg.Channel.GetType() == typeof(SocketThreadChannel))
             {
                 var threadMessage = arg as SocketUserMessage;
                 var threadChannel = threadMessage.Channel as SocketThreadChannel;
                 var forumChannel = threadChannel.ParentChannel;
                 var threadGuild = threadChannel.Guild;
                 var dbGuild = await Guild.GetGuild(threadGuild.Id.ToString());
-                if(forumChannel.Id.ToString() == dbGuild.OpenAiChatForum)
+                if (forumChannel.Id.ToString() == dbGuild.OpenAiChatForum)
                 {
-                    var embed = new EmbedBuilder()
-                        .WithColor(Color.Blue)
-                        .WithDescription("Hmm, let me think about that...")
-                        .WithFooter("Powered by OpenAI GPT-4");
-                    var responseEmbed = await threadChannel.SendMessageAsync(embeds: new []{embed.Build()});
-                    var messages = await threadChannel.GetMessagesAsync(5).FlattenAsync();
+                    var initialResponseMessage = await threadChannel.SendMessageAsync("Processing request, this may take some time depending on the request...");
+                    var messages = await threadChannel.GetMessagesAsync(20).FlattenAsync();
                     messages = messages.OrderBy(m => m.CreatedAt);
                     //Setup OpenAI
                     var client = new OpenAIClient(new Uri(dbGuild.OpenAiURL), new AzureKeyCredential(dbGuild.OpenAiToken));
@@ -48,15 +44,16 @@ public static class ForumAi
                         {
                             var chatCompletionsOptions = new ChatCompletionsOptions
                             {
-                                MaxTokens = 1000,
+                                MaxTokens = 2000,
                                 Temperature = 0.5f,
                                 PresencePenalty = 0.5f,
                                 FrequencyPenalty = 0.5f
                             };
                             //Add messages to chat
                             chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.System,
-                                "You are an AI assistant in a discord server, you must not use more than 4000 characters or 1000 tokens in a single response." +
+                                "You are an AI assistant in a discord server, you must not use more 2000 tokens in a single response." +
                                 "If you believe you need more characters/tokens to finish prompt the user to reply \"continue\" to start a new response"));
+                            using var httpClient = new HttpClient();
                             foreach (var message in messages)
                             {
                                 //Get attached text file
@@ -66,39 +63,59 @@ public static class ForumAi
                                     foreach (var attachment in message.Attachments)
                                     {
                                         //Download text as string using httpclient
-                                        var httpClient = new HttpClient();
                                         attachmentString += $"\n{attachment.Filename}```{await httpClient.GetStringAsync(attachment.Url)}```\n";
                                     }
                                 }
                                 chatCompletionsOptions.Messages.Add(message.Author.IsBot
-                                    ? new ChatMessage(ChatRole.Assistant, message.Embeds.FirstOrDefault()?.Description)
+                                    ? new ChatMessage(ChatRole.Assistant, message.Content)
                                     : new ChatMessage(ChatRole.User, message.Content + attachmentString));
                             }
                             //Get response
-                            var response = await client.GetChatCompletionsStreamingAsync(model, chatCompletionsOptions);
-                            using var streamingChatCompletions = response.Value;
-                            //setup embed and variable to update embed every 1 second
-                            var nextSend = DateTime.Now.AddSeconds(1);
-                            embed.WithDescription("");
-                            embed.WithColor(Color.LightOrange);
-                            //Stream response
-                            await foreach (var choice in streamingChatCompletions.GetChoicesStreaming())
+                            var completionResponse = await client.GetChatCompletionsAsync(model, chatCompletionsOptions);
+                            var chatCompletions = completionResponse.Value;
+                            foreach(var message in SplitMessage(chatCompletions.Choices[0].Message.Content))
                             {
-                                await foreach (var message in choice.GetMessageStreaming())
-                                {
-                                    embed.WithDescription(embed.Description + message.Content);
-                                    embed.WithFooter($"Powered by OpenAI GPT-4, {model}, {embed.Description.Length}char");
-                                    //If the timer has passed, update embed
-                                    if (DateTime.Now <= nextSend) continue;
-                                    await responseEmbed.ModifyAsync(m => m.Embeds = new[] { embed.Build() });
-                                    nextSend = DateTime.Now.AddSeconds(1);
-                                }
+                                await threadChannel.SendMessageAsync(message.Replace("\n\n","\n"));
+                                await Task.Delay(1000);
                             }
-                            embed.WithColor(Color.Green);
+                            await initialResponseMessage.DeleteAsync();
+                            //Create fields for audit log
+                            var fields = new List<EmbedFieldBuilder>
+                            {
+                                new EmbedFieldBuilder
+                                {
+                                    Name = "User",
+                                    Value = threadMessage.Author.Mention,
+                                    IsInline = true
+                                },
+                                new EmbedFieldBuilder
+                                {
+                                    Name = "Channel",
+                                    Value = threadChannel.Mention,
+                                    IsInline = true
+                                },
+                                new EmbedFieldBuilder
+                                {
+                                    Name = "Tokens",
+                                    Value = $"Prompt: {chatCompletions.Usage.PromptTokens}\n" +
+                                    $"Completion: {chatCompletions.Usage.CompletionTokens}\n" +
+                                    $"Total: {chatCompletions.Usage.TotalTokens}",
+                                    IsInline = false
+                                }
+                            };
+                            //Author
+                            var author = new EmbedAuthorBuilder
+                            {
+                                Name = threadMessage.Author.Username,
+                                IconUrl = threadMessage.Author.GetAvatarUrl()
+                            };
+                            //Send audit log
+                            await AuditLog.LogEvent("OpenAI", threadGuild.Id.ToString(), Color.Green, fields, author);
                             complete = true;
                         }
                         catch (Exception e)
                         {
+                            Console.WriteLine(e.ToString());
                             var response = e.Message;
                             complete = true;
 
@@ -118,20 +135,74 @@ public static class ForumAi
                                     complete = false; // Allow retry with new model
                                 }
                             }
-
                             if (complete)
                             {
-                                embed.WithColor(Color.Red);
-                                embed.WithFields(new EmbedFieldBuilder()
-                                    .WithName("Error")
-                                    .WithValue(response + "\n\n*Saying \"Continue\" should resume from where it stopped.*"));
+                                await initialResponseMessage.ModifyAsync(m => m.Content = response + "\n\n*Saying \"Continue\" should resume from where it stopped.*");
                             }
                         }
                     }
-                    await responseEmbed.ModifyAsync(m => m.Embeds = new []{embed.Build()});
                 }
             }
         });
         return Task.CompletedTask;
+    }
+
+    private static List<string> SplitMessage(string message)
+    {
+        var splitMessage = message.Split("```");
+        var messages = new List<string>();
+        var isCode = false;
+
+        // Helper function to add a message part with the correct delimiters
+        void AddMessagePart(StringBuilder currentPart, bool isCodePart)
+        {
+            if (currentPart.Length > 0)
+            {
+                messages.Add(isCodePart ? $"```{currentPart}```" : currentPart.ToString());
+                currentPart.Clear();
+            }
+        }
+
+        foreach (var part in splitMessage)
+        {
+            var splitPart = part.Split('\n');
+            var currentPart = new StringBuilder();
+
+            foreach (var line in splitPart)
+            {
+                // If the current part length + line length > 1500, add the current part to the messages
+                if (currentPart.Length + line.Length > 1900)
+                {
+                    AddMessagePart(currentPart, isCode);
+                }
+                currentPart.Append(line).Append('\n');
+            }
+
+            // Add the last part if not empty
+            AddMessagePart(currentPart, isCode);
+
+            isCode = !isCode;
+        }
+
+        // Combine messages that are less than 2000 characters together if the total is still less than 2000 characters
+        var combinedMessages = new List<string>();
+        var currentMessage = new StringBuilder();
+
+        foreach (var part in messages)
+        {
+            if (currentMessage.Length + part.Length > 2000)
+            {
+                combinedMessages.Add(currentMessage.ToString());
+                currentMessage.Clear();
+            }
+            currentMessage.Append(part);
+        }
+        // Add the last message if not empty
+        if (currentMessage.Length > 0)
+        {
+            combinedMessages.Add(currentMessage.ToString());
+        }
+
+        return combinedMessages;
     }
 }

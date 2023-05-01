@@ -7,6 +7,7 @@ using DougBot.Models;
 using DougBot.Systems;
 using DougBot;
 using System.Text;
+using System.Linq;
 
 namespace DougBot.Systems;
 
@@ -68,7 +69,7 @@ public static class ForumAi
                                     }
                                 }
                                 chatCompletionsOptions.Messages.Add(message.Author.IsBot
-                                    ? new ChatMessage(ChatRole.Assistant, message.Content)
+                                    ? new ChatMessage(ChatRole.Assistant, string.Join("\n",message.Embeds.Select(e => e.Description)))
                                     : new ChatMessage(ChatRole.User, message.Content + attachmentString));
                             }
                             //Get response

@@ -8,7 +8,7 @@ using DougBot.Systems;
 using DougBot;
 using System.Text;
 
-namespace DiscordBot.Systems;
+namespace DougBot.Systems;
 
 public static class ForumAi
 {

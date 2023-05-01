@@ -1,11 +1,14 @@
 using Azure;
 using Azure.AI.OpenAI;
+using Common;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
+using DougBot.Systems;
+using DougBot;
 using System.Text;
 
-namespace DougBot.Systems;
+namespace DiscordBot.Systems;
 
 public static class ForumAi
 {
@@ -50,9 +53,7 @@ public static class ForumAi
                                 FrequencyPenalty = 0.5f
                             };
                             //Add messages to chat
-                            chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.System,
-                                "You are an AI assistant in a discord server, you must not use more 2000 tokens in a single response." +
-                                "If you believe you need more characters/tokens to finish prompt the user to reply \"continue\" to start a new response"));
+                            chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.System,"You are an AI assistant in a discord server, you have no maximum character limit."));
                             using var httpClient = new HttpClient();
                             foreach (var message in messages)
                             {
@@ -73,11 +74,7 @@ public static class ForumAi
                             //Get response
                             var completionResponse = await client.GetChatCompletionsAsync(model, chatCompletionsOptions);
                             var chatCompletions = completionResponse.Value;
-                            foreach(var message in SplitMessage(chatCompletions.Choices[0].Message.Content))
-                            {
-                                await threadChannel.SendMessageAsync(message.Replace("\n\n","\n"));
-                                await Task.Delay(1000);
-                            }
+                            await threadChannel.SendMessageAsync(embeds: SplitMessage(chatCompletions.Choices[0].Message.Content).ToArray());
                             await initialResponseMessage.DeleteAsync();
                             //Create fields for audit log
                             var fields = new List<EmbedFieldBuilder>
@@ -147,7 +144,7 @@ public static class ForumAi
         return Task.CompletedTask;
     }
 
-    private static List<string> SplitMessage(string message)
+    private static List<Embed> SplitMessage(string message)
     {
         var splitMessage = message.Split("```");
         var messages = new List<string>();
@@ -170,8 +167,8 @@ public static class ForumAi
 
             foreach (var line in splitPart)
             {
-                // If the current part length + line length > 1500, add the current part to the messages
-                if (currentPart.Length + line.Length > 1900)
+                // If the current part length + line length > 4000, add the current part to the messages
+                if (currentPart.Length + line.Length > 4000)
                 {
                     AddMessagePart(currentPart, isCode);
                 }
@@ -184,13 +181,13 @@ public static class ForumAi
             isCode = !isCode;
         }
 
-        // Combine messages that are less than 2000 characters together if the total is still less than 2000 characters
+        // Combine messages that are less than 4000 characters together if the total is still less than 2000 characters
         var combinedMessages = new List<string>();
         var currentMessage = new StringBuilder();
 
         foreach (var part in messages)
         {
-            if (currentMessage.Length + part.Length > 2000)
+            if (currentMessage.Length + part.Length > 4000)
             {
                 combinedMessages.Add(currentMessage.ToString());
                 currentMessage.Clear();
@@ -202,7 +199,16 @@ public static class ForumAi
         {
             combinedMessages.Add(currentMessage.ToString());
         }
+        //Add all the messages to a list of embeds
+        var embeds = new List<Embed>();
+        foreach (var msg in combinedMessages)
+        {
+            embeds.Add(new EmbedBuilder
+            {
+                Description = msg
+            }.Build());
+        }
 
-        return combinedMessages;
+        return embeds;
     }
 }

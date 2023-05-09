@@ -100,27 +100,7 @@ public class PubSub
                 }
 
                 //Quack Cheat
-                #region QuackCheat
-                var timeRemaining = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime)-DateTime.UtcNow;
-                if (Prediction.Status == PredictionStatus.Active &&
-                    new[] { 10, 20, 30, 60 }.Contains((int)timeRemaining.TotalSeconds))
-                {
-                    var cheatEmbed = new EmbedBuilder()
-                        .WithCurrentTimestamp()
-                        .WithTitle($"{(int)timeRemaining.TotalSeconds}: {Prediction.Title}")
-                        .WithColor(Color.DarkGrey);
-                    foreach (var outCome in Prediction.Outcomes)
-                    {
-                        var cheatHighRollers = outCome.TopPredictors.OrderByDescending(p => p.Points).ToList();
-                        cheatEmbed.AddField($"{outCome.Title} - {cheatHighRollers.Sum(c => c.Points):n0}",
-                            string.Join("\n", cheatHighRollers.Select(p => $"{p.DisplayName} - {p.Points:n0}")), true);
-                    }
-                    var discClient = Program._Client;
-                    var guild = discClient.GetGuild(567141138021089308);
-                    var channel = guild.GetTextChannel(886548334154760242);
-                    await channel.SendMessageAsync("", embed: cheatEmbed.Build());
-                }
-                #endregion
+                await QuackCheat(Prediction);
 
                 //Check the embed is not empty
                 if (string.IsNullOrEmpty(embed.Title)) return;
@@ -147,6 +127,42 @@ public class PubSub
                 Console.WriteLine(ex);
             }
         });
+
+        static async Task QuackCheat(OnPredictionArgs Prediction)
+        {
+            var endTime = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime);
+            var timeRemaining = endTime - DateTime.UtcNow;
+            if (Prediction.Status == PredictionStatus.Active &&
+                new[] { 10, 20, 30, 60 }.Contains((int)timeRemaining.TotalSeconds))
+            {
+                var cheatEmbed = new EmbedBuilder()
+                    .WithCurrentTimestamp()
+                    .WithTitle($"{(int)timeRemaining.TotalSeconds}: {Prediction.Title}")
+                    .WithColor(Color.DarkGrey);
+                foreach (var outCome in Prediction.Outcomes)
+                {
+                    var cheatHighRollers = outCome.TopPredictors.OrderByDescending(p => p.Points).ToList();
+                    cheatEmbed.AddField($"{outCome.Title} - {cheatHighRollers.Sum(c => c.Points):n0}",
+                        string.Join("\n", cheatHighRollers.Select(p => $"{p.DisplayName} - {p.Points:n0}")), true);
+                }
+                var discClient = Program._Client;
+                var guild = discClient.GetGuild(567141138021089308);
+                var channel = guild.GetTextChannel(886548334154760242);
+                var message = await channel.SendMessageAsync("", embed: cheatEmbed.Build());
+                //Schedule message removal
+                var deleteMessageJob = JobBuilder.Create<DeleteMessageJob>()
+                    .WithIdentity($"deleteMessageJob-{Guid.NewGuid()}", "567141138021089308")
+                    .UsingJobData("guildId", "567141138021089308")
+                    .UsingJobData("channelId", message.Channel.Id)
+                    .UsingJobData("messageId", message.Id)
+                    .Build();
+                var deleteMessageTrigger = TriggerBuilder.Create()
+                    .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                    .StartAt(endTime)
+                    .Build();
+                await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
+            }
+        }
     }
 
     private void PubSub_OnChannelPointsRewardRedeemed(object sender, OnChannelPointsRewardRedeemedArgs Redemption)

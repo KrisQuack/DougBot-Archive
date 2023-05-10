@@ -1,5 +1,5 @@
-using System.Linq;
 using System.Text.Json;
+using System.Xml.Linq;
 using Discord;
 using DougBot.Models;
 using Quartz;
@@ -15,30 +15,43 @@ public class CheckYoutubeJob : IJob
     {
         try
         {
-            var youtube = new YoutubeClient();
             var dbGuilds = await Guild.GetGuilds();
+            using var httpClient = new HttpClient();
             foreach (var dbGuild in dbGuilds)
             {
-                if(dbGuild.YoutubeSettings == null) continue;
+                if (dbGuild.YoutubeSettings == null) continue;
                 foreach (var dbYoutube in dbGuild.YoutubeSettings)
-                {
                     try
                     {
-                        var ytChannel = await youtube.Channels.GetAsync(dbYoutube.Id);
-                        var video = (await youtube.Channels.GetUploadsAsync(dbYoutube.Id)).FirstOrDefault();
-
-                        if (video.Id.ToString() == dbYoutube.LastVideoId) continue;
+                        var ytFeed = await httpClient.GetStringAsync("https://www.youtube.com/feeds/videos.xml?channel_id=" + dbYoutube.Id);
+                        XDocument xDoc = XDocument.Parse(ytFeed);
+                        XNamespace atom = "http://www.w3.org/2005/Atom";
+                        XNamespace media = "http://search.yahoo.com/mrss/";
+                        XNamespace yt = "http://www.youtube.com/xml/schemas/2015";
+                        
+                        var channel = xDoc.Descendants(atom + "author").First();
+                        var channelName = channel.Element(atom + "name").Value;
+                        var channelUrl = channel.Element(atom + "uri").Value;
+                        var latestVideo = xDoc.Descendants(atom + "entry")
+                            .OrderByDescending(e => DateTime.Parse(e.Element(atom + "published").Value))
+                            .First();
+                        var videoTitle = latestVideo.Element(atom + "title").Value;
+                        var videoThumbnail = latestVideo.Descendants(media + "thumbnail").First().Attribute("url").Value;
+                        var videoID = latestVideo.Element(yt + "videoId").Value;
+                        var videoUrl = latestVideo.Element(atom + "link").Attribute("href").Value;
+                        
+                        if (videoID == dbYoutube.LastVideoId) continue;
 
                         var mentionRole = "";
-                        if (dbYoutube.Id == "UCzL0SBEypNk4slpzSbxo01g" && !video.Title.Contains("VOD"))
+                        if (dbYoutube.Id == "UCzL0SBEypNk4slpzSbxo01g" && !videoTitle.Contains("VOD"))
                             mentionRole = "<@&812501073289805884>";
-                        else if (video.Duration.Value.TotalMinutes > 2) mentionRole = $"<@&{dbYoutube.MentionRole}>";
+                        else mentionRole = $"<@&{dbYoutube.MentionRole}>";
 
                         var embed = new EmbedBuilder()
-                            .WithAuthor(ytChannel.Title, ytChannel.Thumbnails[0].Url, ytChannel.Url)
-                            .WithTitle(video.Title)
-                            .WithImageUrl(video.Thumbnails.OrderByDescending(t => t.Resolution.Area).First().Url)
-                            .WithUrl(video.Url);
+                            .WithAuthor(channelName, "", channelUrl)
+                            .WithTitle(videoTitle)
+                            .WithImageUrl(videoThumbnail)
+                            .WithUrl(videoUrl);
                         var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                             new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
 
@@ -56,7 +69,7 @@ public class CheckYoutubeJob : IJob
                             .StartNow()
                             .Build();
                         await Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
-                        dbYoutube.LastVideoId = video.Id;
+                        dbYoutube.LastVideoId = videoID;
                         await dbGuild.Update();
                     }
                     catch (Exception ex)
@@ -64,7 +77,6 @@ public class CheckYoutubeJob : IJob
                         Console.WriteLine(ex);
                         throw;
                     }
-                }
             }
         }
         catch (Exception ex)

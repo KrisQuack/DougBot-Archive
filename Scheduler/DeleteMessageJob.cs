@@ -1,4 +1,5 @@
 using Quartz;
+
 namespace DougBot.Scheduler;
 
 public class DeleteMessageJob : IJob

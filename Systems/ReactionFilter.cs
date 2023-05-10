@@ -19,7 +19,6 @@ public static class ReactionFilter
         client.ReactionAdded += ReactionAddedHandler;
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
-        {
             try
             {
                 dbGuilds = await Guild.GetGuilds();
@@ -44,7 +43,6 @@ public static class ReactionFilter
             {
                 Console.WriteLine(ex.ToString());
             }
-        }
     }
 
     private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message,
@@ -77,7 +75,9 @@ public static class ReactionFilter
                         var hash = SHA1.HashData(Encoding.UTF8.GetBytes($"{Reaction.MessageId}{emote.Name}"));
                         var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
                         //Check if trigger already exists
-                        var trigger = await Scheduler.Quartz.MemorySchedulerInstance.GetTrigger(new TriggerKey($"removeReactionJob-{hashString}", guild.Id.ToString()));
+                        var trigger =
+                            await Scheduler.Quartz.MemorySchedulerInstance.GetTrigger(
+                                new TriggerKey($"removeReactionJob-{hashString}", guild.Id.ToString()));
                         if (trigger != null)
                             return;
                         //If not, create a new trigger
@@ -91,15 +91,13 @@ public static class ReactionFilter
                         //Set target time
                         var targetTime = realMessage.Timestamp.AddMinutes(1).UtcDateTime;
                         var minTargetTime = DateTime.UtcNow.AddSeconds(10);
-                        if (targetTime < minTargetTime)
-                        {
-                            targetTime = minTargetTime;
-                        }
+                        if (targetTime < minTargetTime) targetTime = minTargetTime;
                         var removeReactionTrigger = TriggerBuilder.Create()
                             .WithIdentity($"removeReactionJob-{hashString}", guild.Id.ToString())
                             .StartAt(targetTime)
                             .Build();
-                        await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+                        await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob,
+                            removeReactionTrigger);
                     }
             }
             catch (Exception ex)

@@ -43,7 +43,7 @@ public class SendDMCmd : InteractionModuleBase
         await RespondAsync("DM Queued", ephemeral: true);
     }
 
-    [ComponentInteraction("dmRecieved:*:*",true)]
+    [ComponentInteraction("dmRecieved:*:*", true)]
     public async Task DMProcess(string guildId, string guildName)
     {
         var interaction = Context.Interaction as IComponentInteraction;

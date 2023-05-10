@@ -128,7 +128,7 @@ public class PubSub
             }
         });
 
-        static async Task QuackCheat(OnPredictionArgs Prediction)
+        async Task QuackCheat(OnPredictionArgs Prediction)
         {
             var endTime = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime);
             var timeRemaining = endTime - DateTime.UtcNow;
@@ -145,6 +145,7 @@ public class PubSub
                     cheatEmbed.AddField($"{outCome.Title} - {cheatHighRollers.Sum(c => c.Points):n0}",
                         string.Join("\n", cheatHighRollers.Select(p => $"{p.DisplayName} - {p.Points:n0}")), true);
                 }
+
                 var discClient = Program._Client;
                 var guild = discClient.GetGuild(567141138021089308);
                 var channel = guild.GetTextChannel(886548334154760242);

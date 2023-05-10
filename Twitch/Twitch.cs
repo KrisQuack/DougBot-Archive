@@ -3,16 +3,15 @@ using TwitchLib.Api;
 using TwitchLib.Api.Auth;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
-using TwitchLib.Client;
 using TwitchLib.Client.Models;
-using TwitchLib.Communication.Interfaces;
 
 namespace DougBot.Twitch;
 
 public class Twitch
 {
     public static TwitchAPI API { get; private set; }
-    public static async Task RunClient()
+
+    public async Task RunClient()
     {
         try
         {
@@ -43,14 +42,10 @@ public class Twitch
                 Console.WriteLine("PubSub Connected");
             };
             //Setup IRC anonymously
-            var irc  = new IRC().Create(settings.ChannelName);
-            irc.OnConnected +=  (Sender, e) =>
-            {
-                irc.JoinChannel(settings.ChannelName);
-            };
+            var irc = new IRC().Create(settings.ChannelName);
+            irc.OnConnected += (Sender, e) => { irc.JoinChannel(settings.ChannelName); };
             //Refresh token when expired
             while (true)
-            {
                 try
                 {
                     Console.WriteLine("Refreshing Tokens");
@@ -64,7 +59,8 @@ public class Twitch
                     API.Settings.AccessToken = botRefresh.AccessToken;
                     API.Settings.ClientId = settings.ClientId;
                     //Connect IRC
-                    var credentials = new ConnectionCredentials(settings.BotName, Twitch.API.Settings.AccessToken, disableUsernameCheck: true);
+                    var credentials = new ConnectionCredentials(settings.BotName, API.Settings.AccessToken,
+                        disableUsernameCheck: true);
                     irc.SetConnectionCredentials(credentials);
                     irc.Connect();
                     //Update PubSub
@@ -87,7 +83,6 @@ public class Twitch
                     Console.WriteLine($"[{DateTime.UtcNow:hh:mm:ss}] Error refreshing tokens: {ex}");
                     await Task.Delay(60000);
                 }
-            }
         }
         catch (Exception e)
         {
@@ -95,13 +90,13 @@ public class Twitch
         }
     }
 
-    private static void Monitor_OnStreamOnline(object? sender, OnStreamOnlineArgs Stream)
+    private void Monitor_OnStreamOnline(object? sender, OnStreamOnlineArgs Stream)
     {
         Console.WriteLine($"Stream Online: {Stream.Channel}");
         //Automate online ticker, ping, perhaps twitch things like disable emote only mode
     }
 
-    private static void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs Stream)
+    private void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs Stream)
     {
         Console.WriteLine($"Stream Offline: {Stream.Channel}");
         //Automate delete ticker, perhaps twitch things like enable emote only mode for offline chat

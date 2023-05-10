@@ -3,9 +3,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Scheduler;
 using DougBot.Systems;
-using Quartz;
 
 namespace DougBot;
 
@@ -14,10 +12,10 @@ public class Program
     //Main Variables
     private static InteractionService _Service;
     private static IServiceProvider _ServiceProvider;
-    public static DiscordSocketClient _Client { get; private set; }
-    public static Random Random {get; private set; } = new Random();
 
     private bool _FirstStart = true;
+    public static DiscordSocketClient _Client { get; private set; }
+    public static Random Random { get; private set; } = new();
 
     private static Task Main()
     {
@@ -54,7 +52,7 @@ public class Program
             Scheduler.Quartz.InitializeMemory();
             AuditLog.Monitor();
             Events.Monitor();
-            Twitch.Twitch.RunClient();
+            new Twitch.Twitch().RunClient();
             ReactionFilter.Monitor();
             ForumAi.Monitor();
             Scheduler.Quartz.CoreJobs();

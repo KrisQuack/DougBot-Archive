@@ -2,7 +2,6 @@ using System.Collections.Specialized;
 using Microsoft.Azure.Cosmos;
 using Quartz;
 using Quartz.Impl;
-using Quartz.Impl.Matchers;
 using Quartz.Logging;
 using Quartz.Spi.CosmosDbJobStore;
 
@@ -13,17 +12,20 @@ public static class Quartz
     public static IScheduler PersistentSchedulerInstance { get; private set; }
     public static IScheduler MemorySchedulerInstance { get; private set; }
     public static List<string> _FailedJobNames { get; set; } = new();
+
     public static async Task InitializePersistent()
     {
         var properties = new NameValueCollection
         {
             [StdSchedulerFactory.PropertySchedulerInstanceName] = "QuartzScheduler",
-            [StdSchedulerFactory.PropertySchedulerInstanceId] = $"DougBot",
+            [StdSchedulerFactory.PropertySchedulerInstanceId] = "DougBot",
             [StdSchedulerFactory.PropertyJobStoreType] = typeof(CosmosDbJobStore).AssemblyQualifiedName,
             [$"{StdSchedulerFactory.PropertyObjectSerializer}.type"] = "json",
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Endpoint"] = Environment.GetEnvironmentVariable("ACCOUNT_ENDPOINT"),
+            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Endpoint"] =
+                Environment.GetEnvironmentVariable("ACCOUNT_ENDPOINT"),
             [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Key"] = Environment.GetEnvironmentVariable("ACCOUNT_KEY"),
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.DatabaseId"] = Environment.GetEnvironmentVariable("DATABASE_NAME"),
+            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.DatabaseId"] =
+                Environment.GetEnvironmentVariable("DATABASE_NAME"),
             [$"{StdSchedulerFactory.PropertyJobStorePrefix}.CollectionId"] = "Quartz",
             [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Clustered"] = "true",
             [$"{StdSchedulerFactory.PropertyJobStorePrefix}.ConnectionMode"] = ((int)ConnectionMode.Gateway).ToString()
@@ -38,6 +40,7 @@ public static class Quartz
         //Start
         await scheduler.Start();
     }
+
     public static async Task InitializeMemory()
     {
         //JobFactory
@@ -56,10 +59,7 @@ public static class Quartz
     public static async Task CoreJobs()
     {
         //Wait for Quartz to start
-        while (MemorySchedulerInstance == null || MemorySchedulerInstance.IsStarted == false)
-        {
-            await Task.Delay(1000);
-        }
+        while (MemorySchedulerInstance == null || MemorySchedulerInstance.IsStarted == false) await Task.Delay(1000);
         //Clean Forums
         var job = JobBuilder.Create<CleanForumsJob>()
             .WithIdentity("CleanForumsJob", "System")
@@ -89,15 +89,14 @@ internal class ConsoleLogProvider : ILogProvider
     {
         return (level, func, exception, parameters) =>
         {
-            if (level >= LogLevel.Info && func != null )
-            {
+            if (level >= LogLevel.Info && func != null)
                 Console.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + level + "] " + func(), parameters);
-            }
             if (exception != null)
             {
                 Console.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + level + "] " + exception);
                 Quartz._FailedJobNames.Add(func().Split(' ')[1].Split(".")[1]);
             }
+
             return true;
         };
     }
@@ -112,4 +111,3 @@ internal class ConsoleLogProvider : ILogProvider
         throw new NotImplementedException();
     }
 }
- 

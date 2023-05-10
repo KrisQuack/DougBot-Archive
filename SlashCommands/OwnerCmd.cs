@@ -17,11 +17,9 @@ public class OwnerCmd : InteractionModuleBase
         foreach (var jobKey in jobKeys)
         {
             var triggers = await Scheduler.Quartz.PersistentSchedulerInstance.GetTriggersOfJob(jobKey);
-            if (triggers.Count == 0)
-            {
-                await Scheduler.Quartz.PersistentSchedulerInstance.DeleteJob(jobKey);
-            }
+            if (triggers.Count == 0) await Scheduler.Quartz.PersistentSchedulerInstance.DeleteJob(jobKey);
         }
+
         await ModifyOriginalResponseAsync(m => m.Content = $"Removed {jobKeys.Count} jobs");
     }
 }

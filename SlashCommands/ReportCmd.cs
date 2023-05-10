@@ -9,6 +9,7 @@ using Quartz;
 using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.SlashCommands;
+
 public class ReportCmd : InteractionModuleBase
 {
     [MessageCommand("Report Message")]
@@ -26,7 +27,7 @@ public class ReportCmd : InteractionModuleBase
         await RespondWithModalAsync<reportModal>($"report:0:{user.Id}");
     }
 
-    [ModalInteraction("report:*:*",true)]
+    [ModalInteraction("report:*:*", true)]
     public async Task ReportProcess(string messageID, string userID, reportModal modal)
     {
         await RespondAsync("Submitting...", ephemeral: true);

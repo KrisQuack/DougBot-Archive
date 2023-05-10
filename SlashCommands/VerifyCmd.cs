@@ -2,11 +2,11 @@ using Discord;
 using Discord.Interactions;
 
 namespace DougBot.SlashCommands;
+
 [Group("verify", "Verify you are not a bot")]
 [EnabledInDm(false)]
 public class VerifyCmd : InteractionModuleBase
 {
-    
     [SlashCommand("setup", "setup the verification system")]
     [DefaultMemberPermissions(GuildPermission.Administrator)]
     public async Task Setup()
@@ -14,17 +14,18 @@ public class VerifyCmd : InteractionModuleBase
         //Create an embed explaining the system
         var embed = new EmbedBuilder()
             .WithTitle("Verification System")
-            .WithDescription("To verify you are not a bot please click the **Verify** button below. You will be sent an image with a random number of bell peppers. Click the **Submit** button under the image and enter the number of bell peppers you saw in the image. If you are not a bot you will be verified.")
+            .WithDescription(
+                "To verify you are not a bot please click the **Verify** button below. You will be sent an image with a random number of bell peppers. Click the **Submit** button under the image and enter the number of bell peppers you saw in the image. If you are not a bot you will be verified.")
             .Build();
         //create component to verify
         var component = new ComponentBuilder()
             .WithButton("Verify", "verifyrequest")
             .Build();
         //Send the embed
-        await ReplyAsync(embed:embed, components: component);
+        await ReplyAsync(embed: embed, components: component);
     }
-    
-    [ComponentInteraction("verifyrequest",true)]
+
+    [ComponentInteraction("verifyrequest", true)]
     public async Task VerifyRequest()
     {
         //Get a random file from the Media folder
@@ -36,27 +37,23 @@ public class VerifyCmd : InteractionModuleBase
         var component = new ComponentBuilder()
             .WithButton("Submit", $"verifyresponse:{fileName}")
             .Build();
-        await RespondWithFileAsync(file,fileName:$"verify{Context.User.Id.ToString()}",components: component,ephemeral:true);
+        await RespondWithFileAsync(file, $"verify{Context.User.Id.ToString()}", components: component, ephemeral: true);
     }
-    
-    [ComponentInteraction("verifyresponse:*",true)]
+
+    [ComponentInteraction("verifyresponse:*", true)]
     public async Task VerifyResponse(string fileName)
     {
         //Show the verification modal
         await RespondWithModalAsync<verifyModal>($"verifymodal:{fileName}");
     }
 
-    [ModalInteraction("verifymodal:*",true)]
+    [ModalInteraction("verifymodal:*", true)]
     public async Task VerifyProcess(string fileName, verifyModal modal)
     {
         if (modal.Peppers == fileName)
-        {
             await RespondAsync("You are not a bot!", ephemeral: true);
-        }
         else
-        {
             await RespondAsync("You are a bot!", ephemeral: true);
-        }
     }
 }
 

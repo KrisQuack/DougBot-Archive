@@ -1,6 +1,5 @@
 using Discord;
 using Discord.WebSocket;
-using DougBot.Models;
 using Fernandezja.ColorHashSharp;
 
 namespace DougBot.Systems;
@@ -11,7 +10,8 @@ public static class Events
 
     public static async Task Monitor()
     {
-        _Client = Program._Client;;
+        _Client = Program._Client;
+        ;
         _Client.MessageReceived += MessageReceivedHandler;
         _Client.UserJoined += UserJoinedHandler;
         Console.WriteLine("EventHandler Initialized");

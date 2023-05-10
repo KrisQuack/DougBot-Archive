@@ -1,6 +1,4 @@
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
@@ -35,7 +33,7 @@ public static class AuditLog
         {
             //Get guild user
             var guildUser = guild.GetUser(user.Id);
-            if(guildUser == null)
+            if (guildUser == null)
                 return;
             //Set Fields with roles
             var fields = new List<EmbedFieldBuilder>
@@ -132,7 +130,7 @@ public static class AuditLog
         {
             var fields = new List<EmbedFieldBuilder>();
             var beforeObj = await before.GetOrDownloadAsync();
-            if(beforeObj == null)
+            if (beforeObj == null)
                 return;
             //If nickname changed add field
             if (beforeObj.Nickname != after.Nickname)
@@ -201,7 +199,7 @@ public static class AuditLog
             using var httpClient = new HttpClient();
             //get root path
             var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            foreach (IAttachment? attachment in messageObj.Attachments)
+            foreach (var attachment in messageObj.Attachments)
             {
                 var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
                 var path = Path.Combine(rootPath, attachment.Filename);

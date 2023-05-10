@@ -9,7 +9,8 @@ public class SetSlowModeCmd : InteractionModuleBase
     [EnabledInDm(false)]
     [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
     public async Task SetSlowMode(
-        [Summary(description: "Channel to update (This Channel)")] ITextChannel channel = null,
+        [Summary(description: "Channel to update (This Channel)")]
+        ITextChannel channel = null,
         [Summary(description: "Slow mode in seconds (5)")] [MaxValue(21600)]
         int seconds = 5)
     {

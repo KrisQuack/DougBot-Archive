@@ -23,7 +23,7 @@ public class SendMessageJob : IJob
         //check for nulls and return if any are null
         if (guildId == 0 || channelId == 0 || message == null)
             return;
-        
+
         // Get the guild and channel
         var guild = Program._Client.GetGuild(guildId);
         var channel = guild.Channels.FirstOrDefault(x => x.Id == channelId) as SocketTextChannel;
@@ -44,9 +44,7 @@ public class SendMessageJob : IJob
         // Deserialize and process components (if any)
         ComponentBuilder componentBuilderObj = null;
         if (!string.IsNullOrEmpty(componentBuilder))
-        {
             componentBuilderObj = JsonSerializer.Deserialize<ComponentBuilder>(componentBuilder);
-        }
 
         // Send the message with embeds and components (if any)
         await channel.SendMessageAsync(message,

@@ -1,7 +1,6 @@
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
-using DougBot.Systems;
 using Quartz;
 
 namespace DougBot.Scheduler;
@@ -30,9 +29,7 @@ public class CleanForumsJob : IJob
                     //if the thread has no messages or the last message is older than 2 days, archive the thread
                     if ((message.Any() && message.First().Timestamp.UtcDateTime < DateTime.UtcNow.AddDays(-2)) ||
                         (!message.Any() && thread.CreatedAt.UtcDateTime < DateTime.UtcNow.AddDays(-2)))
-                    {
                         await thread.ModifyAsync(t => t.Archived = true);
-                    }
                 }
             }
         }

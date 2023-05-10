@@ -7,11 +7,12 @@ namespace DougBot.Twitch;
 
 public class IRC
 {
-    private string[] containsBlock;
     private string[] blockedWords;
+    private readonly string BotID = "853660174";
+    private string[] containsBlock;
     private string[] endsWithBlock;
     private bool firstRun = true;
-    private string BotID = "853660174";
+
     public TwitchClient Create(string channelName)
     {
         var Client = new TwitchClient();
@@ -29,7 +30,6 @@ public class IRC
     {
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
-        {
             try
             {
                 var dbGuild = await Guild.GetGuild("567141138021089308");
@@ -43,18 +43,15 @@ public class IRC
             {
                 Console.WriteLine(ex.ToString());
             }
-        }
     }
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
-        if (Message.ChatMessage.Username == "quackersd")
-        {
-            Console.WriteLine($"Quack: {Message.ChatMessage.Message}");
-            //Twitch.API.Helix.Whispers.SendWhisperAsync(BotID,Message.ChatMessage.UserId,Message.ChatMessage.Message,true);
-        }
+        if (Message.ChatMessage.Username == "quackersd") Console.WriteLine($"Quack: {Message.ChatMessage.Message}");
+        //Twitch.API.Helix.Whispers.SendWhisperAsync(BotID,Message.ChatMessage.UserId,Message.ChatMessage.Message,true);
         //Skip mods and broadcaster
-        if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||Message.ChatMessage.Bits > 0) return;
+        if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
+            Message.ChatMessage.Bits > 0) return;
         //Process
         _ = Task.Run(async () =>
         {
@@ -73,21 +70,20 @@ public class IRC
                 //Check for blocked words
                 if (words.Any(word => blockedWords.Contains(word)))
                 {
-                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,Message.ChatMessage.Id);
+                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
+                        Message.ChatMessage.Id);
                     return;
                 }
 
                 //Check for spam
 
                 foreach (var word in words.Distinct())
-                {
                     if (words.Count(w => w == word) > 10)
                     {
-                        await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID, Message.ChatMessage.Id);
+                        await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
+                            Message.ChatMessage.Id);
                         return;
                     }
-                }
-                        
             }
             catch (Exception e)
             {

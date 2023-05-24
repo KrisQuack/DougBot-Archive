@@ -51,11 +51,6 @@ public class IRC
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
-        if (Message.ChatMessage.Username == "quackersd")
-        {
-            Twitch.API.Helix.Whispers.SendWhisperAsync(BotID, Message.ChatMessage.UserId, Message.ChatMessage.Message, true);
-        }
-
         //Skip mods and broadcaster
         if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
             Message.ChatMessage.Bits > 0) return;

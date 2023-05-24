@@ -179,7 +179,7 @@ public class PubSub
                 if (reward.Title.Contains("Minecraft Server"))
                 {
                     await Twitch.API.Helix.Whispers.SendWhisperAsync("853660174", redeemedUser.Id, 
-                        "Thank you for redeeming Minecraft access. Please make sure you have joined the Discord server https://discord.gg/763mpbqxNq"
+                        "Thank you for redeeming Minecraft access. Please make sure you have joined the Discord server https://discord.gg/763mpbqxNq and reply here with your Discord username"
                         , true);
                     var embed = new EmbedBuilder()
                         .WithTitle($"New Redemption: {reward.Title}")

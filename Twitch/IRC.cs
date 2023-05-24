@@ -1,7 +1,12 @@
+using System.Text.Json;
+using Discord;
 using DougBot.Models;
+using DougBot.Scheduler;
+using Quartz;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Twitch;
 
@@ -18,13 +23,13 @@ public class IRC
         var Client = new TwitchClient();
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
+        Client.OnWhisperReceived += Client_OnWhisperReceived;
         //Temporary Credentials
         var credentials = new ConnectionCredentials("", "", disableUsernameCheck: true);
         Client.Initialize(credentials, channelName);
         UpdateBlocks();
         return Client;
     }
-
     public async Task UpdateBlocks()
     {
         Console.WriteLine("ReactionFilter Initialized");
@@ -79,18 +84,53 @@ public class IRC
 
                 //Check for spam
 
-                foreach (var word in words.Distinct())
-                    if (words.Count(w => w == word) > 10)
-                    {
-                        await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
-                            Message.ChatMessage.Id);
-                        return;
-                    }
+                if (words.Distinct().Any(word => words.Count(w => w == word) > 10))
+                {
+                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
+                        Message.ChatMessage.Id);
+                    return;
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
+        });
+    }
+    
+    private void Client_OnWhisperReceived(object? sender, OnWhisperReceivedArgs whisper)
+    {
+        _ = Task.Run(async () =>
+        {
+            var embed = new EmbedBuilder()
+                .WithTitle($"New Twitch DM from {whisper.WhisperMessage.DisplayName}")
+                .WithColor(Color.Orange)
+                .WithFields(
+                    new EmbedFieldBuilder()
+                        .WithName("Redeemed By")
+                        .WithValue(whisper.WhisperMessage.DisplayName)
+                        .WithIsInline(true),
+                    new EmbedFieldBuilder()
+                        .WithName("Message")
+                        .WithValue(whisper.WhisperMessage.Message)
+                        .WithIsInline(true))
+                .WithCurrentTimestamp();
+            var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
+                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
+                .UsingJobData("guildId", "567141138021089308")
+                .UsingJobData("channelId", "1080251555619557445")
+                .UsingJobData("message", "")
+                .UsingJobData("embedBuilders", embedJson)
+                .UsingJobData("ping", "true")
+                .UsingJobData("attachments", null)
+                .Build();
+            var sendMessageTrigger = TriggerBuilder.Create()
+                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                .StartNow()
+                .Build();
+            await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
         });
     }
 

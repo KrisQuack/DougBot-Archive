@@ -104,16 +104,8 @@ public class IRC
         {
             var embed = new EmbedBuilder()
                 .WithTitle($"New Twitch DM from {whisper.WhisperMessage.DisplayName}")
-                .WithColor(Color.Orange)
-                .WithFields(
-                    new EmbedFieldBuilder()
-                        .WithName("Redeemed By")
-                        .WithValue(whisper.WhisperMessage.DisplayName)
-                        .WithIsInline(true),
-                    new EmbedFieldBuilder()
-                        .WithName("Message")
-                        .WithValue(whisper.WhisperMessage.Message)
-                        .WithIsInline(true))
+                .WithDescription(whisper.WhisperMessage.Message)
+                .WithColor(Color.Purple)
                 .WithCurrentTimestamp();
             var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
                 new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });

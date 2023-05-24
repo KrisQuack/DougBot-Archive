@@ -34,12 +34,10 @@ public class Twitch
             {
                 while (dougRefresh == null)
                 {
-                    Console.WriteLine("Waiting for tokens");
                     Task.Delay(1000);
                 }
-
                 pubSub.SendTopics(dougRefresh.AccessToken);
-                Console.WriteLine("PubSub Connected");
+                Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} PubSub Connected");
             };
             //Setup IRC anonymously
             var irc = new IRC().Create(settings.ChannelName);
@@ -48,7 +46,6 @@ public class Twitch
             while (true)
                 try
                 {
-                    Console.WriteLine("Refreshing Tokens");
                     //Refresh tokens
                     botRefresh =
                         await API.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret,
@@ -72,7 +69,7 @@ public class Twitch
                         ? botRefresh.ExpiresIn
                         : dougRefresh.ExpiresIn;
                     Console.WriteLine(
-                        $"Refreshed Tokens in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
+                        $"[General/Info] {DateTime.UtcNow:HH:mm:ss} Next Twitch refresh in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
                     await Task.Delay((refreshTime - 1800) * 1000);
                     //Disconnected
                     pubSub.Disconnect();
@@ -80,7 +77,7 @@ public class Twitch
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[{DateTime.UtcNow:hh:mm:ss}] Error refreshing tokens: {ex}");
+                    Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} Error refreshing tokens: {ex}");
                     await Task.Delay(60000);
                 }
         }

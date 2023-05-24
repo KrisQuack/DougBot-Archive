@@ -154,11 +154,11 @@ public class PubSub
                 var deleteMessageJob = JobBuilder.Create<DeleteMessageJob>()
                     .WithIdentity($"deleteMessageJob-{Guid.NewGuid()}", "567141138021089308")
                     .UsingJobData("guildId", "567141138021089308")
-                    .UsingJobData("channelId", message.Channel.Id)
-                    .UsingJobData("messageId", message.Id)
+                    .UsingJobData("channelId", message.Channel.Id.ToString())
+                    .UsingJobData("messageId", message.Id.ToString())
                     .Build();
                 var deleteMessageTrigger = TriggerBuilder.Create()
-                    .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                    .WithIdentity($"deleteMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
                     .StartAt(endTime)
                     .Build();
                 await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);

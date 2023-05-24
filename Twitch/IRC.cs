@@ -16,11 +16,10 @@ public class IRC
     public TwitchClient Create(string channelName)
     {
         var Client = new TwitchClient();
-        Client.OnLog += Client_OnLog;
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
         //Temporary Credentials
-        var credentials = new ConnectionCredentials("justinfan7011", "", disableUsernameCheck: true);
+        var credentials = new ConnectionCredentials("", "", disableUsernameCheck: true);
         Client.Initialize(credentials, channelName);
         UpdateBlocks();
         return Client;
@@ -47,8 +46,11 @@ public class IRC
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
-        if (Message.ChatMessage.Username == "quackersd") Console.WriteLine($"Quack: {Message.ChatMessage.Message}");
-        //Twitch.API.Helix.Whispers.SendWhisperAsync(BotID,Message.ChatMessage.UserId,Message.ChatMessage.Message,true);
+        if (Message.ChatMessage.Username == "quackersd")
+        {
+            Twitch.API.Helix.Whispers.SendWhisperAsync(BotID, Message.ChatMessage.UserId, Message.ChatMessage.Message, true);
+        }
+
         //Skip mods and broadcaster
         if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
             Message.ChatMessage.Bits > 0) return;
@@ -92,17 +94,8 @@ public class IRC
         });
     }
 
-    private void Client_OnLog(object sender, OnLogArgs e)
-    {
-        var keywords = new List<string>
-            { "PRIVMSG", "CLEARMSG", "USERNOTICE", "CLEARCHAT", "PART", "JOIN", "PING", "PONG" };
-
-        if (!keywords.Any(keyword => e.Data.Contains(keyword)))
-            Console.WriteLine($"{DateTime.UtcNow:u} {e.Data}");
-    }
-
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs Channel)
     {
-        Console.WriteLine($"Joined {Channel.Channel}");
+        Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} IRC Joined {Channel.Channel}");
     }
 }

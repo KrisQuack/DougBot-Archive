@@ -74,14 +74,13 @@ public class CheckYoutubeJob : IJob
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
-                        throw;
+                        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} YoutubeChannel {dbYoutube.Id} {ex}");
                     }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} CheckYoutubeJob {ex}");
         }
     }
 }

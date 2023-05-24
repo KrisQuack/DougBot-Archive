@@ -176,35 +176,41 @@ public class PubSub
             //Notify mods of new redemption
             if (redemption.Status == "UNFULFILLED")
             {
-                var embed = new EmbedBuilder()
-                    .WithTitle($"New Redemption: {reward.Title}")
-                    .WithColor(Color.Orange)
-                    .WithFields(
-                        new EmbedFieldBuilder()
-                            .WithName("Redeemed By")
-                            .WithValue(redeemedUser.DisplayName)
-                            .WithIsInline(true),
-                        new EmbedFieldBuilder()
-                            .WithName("Message")
-                            .WithValue(redemption.UserInput ?? "No Message")
-                            .WithIsInline(true))
-                    .WithCurrentTimestamp();
-                var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-                    new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                    .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                    .UsingJobData("guildId", "567141138021089308")
-                    .UsingJobData("channelId", "1080251555619557445")
-                    .UsingJobData("message", "")
-                    .UsingJobData("embedBuilders", embedJson)
-                    .UsingJobData("ping", "true")
-                    .UsingJobData("attachments", null)
-                    .Build();
-                var sendMessageTrigger = TriggerBuilder.Create()
-                    .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
-                    .StartNow()
-                    .Build();
-                await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                if (reward.Title.Contains("Minecraft Server"))
+                {
+                    await Twitch.API.Helix.Whispers.SendWhisperAsync("853660174", redeemedUser.Id, 
+                        "Thank you for redeeming Minecraft access. Please make sure you have joined the Discord server https://discord.gg/763mpbqxNq"
+                        , true);
+                    var embed = new EmbedBuilder()
+                        .WithTitle($"New Redemption: {reward.Title}")
+                        .WithColor(Color.Orange)
+                        .WithFields(
+                            new EmbedFieldBuilder()
+                                .WithName("Redeemed By")
+                                .WithValue(redeemedUser.DisplayName)
+                                .WithIsInline(true),
+                            new EmbedFieldBuilder()
+                                .WithName("Message")
+                                .WithValue(redemption.UserInput ?? "No Message")
+                                .WithIsInline(true))
+                        .WithCurrentTimestamp();
+                    var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
+                        new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+                    var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                        .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
+                        .UsingJobData("guildId", "567141138021089308")
+                        .UsingJobData("channelId", "1080251555619557445")
+                        .UsingJobData("message", "")
+                        .UsingJobData("embedBuilders", embedJson)
+                        .UsingJobData("ping", "true")
+                        .UsingJobData("attachments", null)
+                        .Build();
+                    var sendMessageTrigger = TriggerBuilder.Create()
+                        .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
+                        .StartNow()
+                        .Build();
+                    await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                }
             }
         });
     }

@@ -37,7 +37,7 @@ public class AIChatCmd : InteractionModuleBase
                 Tone = BingChatTone.Creative,
             });
             var chatMessage =
-@"Act as a discord assistant, analyze the conversation and provide a summary of its topic and any rule violations. Suggest an action based on these violations. Consider these rules:
+@"Act as a discord assistant by the name of Wahaha, analyze the conversation and provide a summary of its topic and any rule violations. Suggest an action based on these violations. Consider these rules:
 1) Follow Discord's Terms of Service and Community Guidelines.
 2) Obey Moderation and Common Sense; disputes should be made in a ticket.
 3) No Offensive Speech or harassment.

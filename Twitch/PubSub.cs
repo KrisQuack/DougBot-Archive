@@ -120,9 +120,7 @@ public class PubSub
             if (redemption.Status == "UNFULFILLED")
                 if (reward.Title.Contains("Minecraft Server"))
                 {
-                    await Twitch.API.Helix.Whispers.SendWhisperAsync("853660174", redeemedUser.Id,
-                        "Thank you for redeeming Minecraft access. Please make sure you have joined the Discord server https://discord.gg/763mpbqxNq and reply here with your Discord username"
-                        , true);
+                    Twitch.IRC.SendMessage("dougdoug", $"@{redeemedUser.DisplayName} Thanks for redeeming Minecraft access, Please join the discord and complete this form https://forms.gle/oouvNweqqBFZ8DtD9");
                     var embed = new EmbedBuilder()
                         .WithTitle($"New Redemption: {reward.Title}")
                         .WithColor(Color.Orange)
@@ -136,8 +134,8 @@ public class PubSub
                                 .WithValue(redemption.UserInput ?? "No Message")
                                 .WithIsInline(true))
                         .WithCurrentTimestamp();
-                    await SendMessageJob.Queue("567141138021089308", "1080251555619557445",
-                        new List<EmbedBuilder> { embed }, DateTime.UtcNow);
+                    // await SendMessageJob.Queue("567141138021089308", "1080251555619557445",
+                    //     new List<EmbedBuilder> { embed }, DateTime.UtcNow);
                 }
         });
     }

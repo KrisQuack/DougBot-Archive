@@ -3,6 +3,7 @@ using TwitchLib.Api;
 using TwitchLib.Api.Auth;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
+using TwitchLib.Client;
 using TwitchLib.Client.Models;
 
 namespace DougBot.Twitch;
@@ -10,6 +11,7 @@ namespace DougBot.Twitch;
 public class Twitch
 {
     public static TwitchAPI API { get; private set; }
+    public static TwitchClient IRC { get; private set; }
 
     public async Task RunClient()
     {
@@ -37,8 +39,8 @@ public class Twitch
                 Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} PubSub Connected");
             };
             //Setup IRC anonymously
-            var irc = new IRC().Create(settings.ChannelName);
-            irc.OnConnected += (Sender, e) => { irc.JoinChannel(settings.ChannelName); };
+            IRC = new IRC().Create(settings.ChannelName);
+            IRC.OnConnected += (Sender, e) => { IRC.JoinChannel(settings.ChannelName); };
             //Refresh token when expired
             while (true)
                 try
@@ -55,8 +57,8 @@ public class Twitch
                     //Connect IRC
                     var credentials = new ConnectionCredentials(settings.BotName, API.Settings.AccessToken,
                         disableUsernameCheck: true);
-                    irc.SetConnectionCredentials(credentials);
-                    irc.Connect();
+                    IRC.SetConnectionCredentials(credentials);
+                    IRC.Connect();
                     //Update PubSub
                     pubSub.Connect();
                     pubSub.ListenToChannelPoints(settings.ChannelId);
@@ -70,7 +72,7 @@ public class Twitch
                     await Task.Delay((refreshTime - 1800) * 1000);
                     //Disconnected
                     pubSub.Disconnect();
-                    irc.Disconnect();
+                    IRC.Disconnect();
                 }
                 catch (Exception ex)
                 {

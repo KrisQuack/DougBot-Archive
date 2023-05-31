@@ -4,6 +4,7 @@ using DougBot.Scheduler;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
+using TwitchLib.Communication.Events;
 
 namespace DougBot.Twitch;
 
@@ -21,6 +22,7 @@ public class IRC
         Client.OnJoinedChannel += Client_OnJoinedChannel;
         Client.OnMessageReceived += Client_OnMessageReceived;
         Client.OnWhisperReceived += Client_OnWhisperReceived;
+        Client.OnError += Client_OnError;
         //Temporary Credentials
         var credentials = new ConnectionCredentials("", "", disableUsernameCheck: true);
         Client.Initialize(credentials, channelName);
@@ -107,5 +109,10 @@ public class IRC
     private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs Channel)
     {
         Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} IRC Joined {Channel.Channel}");
+    }
+    
+    private void Client_OnError(object? sender, OnErrorEventArgs e)
+    {
+        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} TwitchIRC {e}");
     }
 }

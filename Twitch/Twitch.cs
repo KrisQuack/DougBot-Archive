@@ -5,6 +5,7 @@ using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
 using TwitchLib.Client;
 using TwitchLib.Client.Models;
+using TwitchLib.PubSub;
 
 namespace DougBot.Twitch;
 
@@ -12,6 +13,7 @@ public class Twitch
 {
     public static TwitchAPI API { get; private set; }
     public static TwitchClient IRC { get; private set; }
+    private static TwitchPubSub PubSub { get; set; }
 
     public async Task RunClient()
     {
@@ -31,11 +33,11 @@ public class Twitch
             RefreshResponse dougRefresh = null;
             RefreshResponse botRefresh = null;
             //Setup PubSub
-            var pubSub = new PubSub().Create();
-            pubSub.OnPubSubServiceConnected += (Sender, e) =>
+            PubSub = new PubSub().Create();
+            PubSub.OnPubSubServiceConnected += (Sender, e) =>
             {
                 while (dougRefresh == null) Task.Delay(1000);
-                pubSub.SendTopics(dougRefresh.AccessToken);
+                PubSub.SendTopics(dougRefresh.AccessToken);
                 Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} PubSub Connected");
             };
             //Setup IRC anonymously
@@ -60,9 +62,9 @@ public class Twitch
                     IRC.SetConnectionCredentials(credentials);
                     IRC.Connect();
                     //Update PubSub
-                    pubSub.Connect();
-                    pubSub.ListenToChannelPoints(settings.ChannelId);
-                    pubSub.ListenToPredictions(settings.ChannelId);
+                    PubSub.Connect();
+                    PubSub.ListenToChannelPoints(settings.ChannelId);
+                    PubSub.ListenToPredictions(settings.ChannelId);
                     //Get the lowest refresh time
                     var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn
                         ? botRefresh.ExpiresIn
@@ -71,7 +73,7 @@ public class Twitch
                         $"[General/Info] {DateTime.UtcNow:HH:mm:ss} Next Twitch refresh in {refreshTime} seconds at {DateTime.UtcNow.AddSeconds(refreshTime):HH:mm}");
                     await Task.Delay((refreshTime - 1800) * 1000);
                     //Disconnected
-                    pubSub.Disconnect();
+                    PubSub.Disconnect();
                     IRC.Disconnect();
                 }
                 catch (Exception ex)

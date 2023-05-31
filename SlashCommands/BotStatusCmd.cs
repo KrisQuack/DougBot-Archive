@@ -40,6 +40,10 @@ public class BotStatusCmd : InteractionModuleBase
                 .AddField("Quartz Job Data", "*These stats are since the bots last reboot*")
                 .AddField("Total Persistent Jobs", persistentKeys.Count, true)
                 .AddField("Total Memory Jobs", memoryKeys.Count, true)
+                .AddField("Twitch Bot", "*Details about the twitch connection*")
+                .AddField("IRC Initialized", Twitch.Twitch.IRC.IsInitialized ? "Yes" : "No", true)
+                .AddField("IRC Connected", Twitch.Twitch.IRC.IsConnected ? "Yes" : "No", true)
+                .AddField("IRC Channels", Twitch.Twitch.IRC.JoinedChannels.Count, true)
                 .Build();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed });
             await ModifyOriginalResponseAsync(m => m.Content = " ");

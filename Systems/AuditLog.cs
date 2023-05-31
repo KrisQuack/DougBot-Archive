@@ -280,7 +280,7 @@ public static class AuditLog
                 embed.WithAuthor(Author);
 
             await SendMessageJob.Queue(dbGuild.Id, dbGuild.LogChannel, new List<EmbedBuilder> { embed },
-                DateTime.UtcNow);
+                DateTime.UtcNow, attachments: attachments);
         });
         return Task.CompletedTask;
     }

@@ -1,6 +1,7 @@
 using BingChat;
 using Discord;
 using Discord.Interactions;
+using DougBot.Scheduler;
 
 namespace DougBot.SlashCommands;
 
@@ -54,6 +55,87 @@ Conversation:{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
+        }
+        catch (Exception e)
+        {
+            var response = "Failed to analyse chat, Please try again: " + e.Message;
+            embed.WithDescription(response);
+            await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
+        }
+    }
+    
+    [SlashCommand("ask", "Ask Bing a question")]
+    public async Task Ask(string question)
+    {
+        //Initial response
+        var embed = new EmbedBuilder()
+            .WithColor(Color.Blue)
+            .WithTitle("Ask Bing")
+            .WithDescription("Processing, This may take a minute");
+        await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
+        //Send to API
+        try
+        {
+            //get random number as string
+            var randomString = Program.Random.Next(100000000, 999999999).ToString();
+            var client = new BingChatClient(new BingChatClientOptions
+            {
+                CookieU = randomString,
+                Tone = BingChatTone.Precise
+            });
+            var response = await client.AskAsync(question);
+            embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
+            await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
+        }
+        catch (Exception e)
+        {
+            var response = "Failed to chat, Please try again: " + e.Message;
+            embed.WithDescription(response);
+            await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
+        }
+    }
+    
+    [SlashCommand("chat", "Respond to messages in chat")]
+    public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
+    {
+        if (Context.Guild.Id == 567141138021089308 && Context.User.Id != 130062174918934528)
+        {
+            await RespondAsync("This command is disabled in this server", ephemeral: true);
+            return;
+        }
+        //Initial response
+        var embed = new EmbedBuilder()
+            .WithColor(Color.Blue)
+            .WithTitle("AI Chatting")
+            .WithDescription("Processing, This may take a minute");
+        await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
+        //Get values
+        var channel = Context.Channel as ITextChannel;
+        var messages = await channel.GetMessagesAsync(200).FlattenAsync();
+        //Filter messages to ignore, select number to read, and order by date
+        var messageString = messages.Where(m =>
+                !string.IsNullOrWhiteSpace(m.Content) &&
+                !m.Author.IsBot
+            ).Take(read).OrderBy(m => m.CreatedAt)
+            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.CleanContent}");
+        //Send to API
+        try
+        {
+            //get random number as string
+            var randomString = Program.Random.Next(100000000, 999999999).ToString();
+            var client = new BingChatClient(new BingChatClientOptions
+            {
+                CookieU = randomString,
+                Tone = BingChatTone.Creative
+            });
+            var chatMessage =$"Act as a discord user named Wah and reply to this conversation.\n{messageString}".Trim();
+            var response = await client.AskAsync(chatMessage);
+            response = response.Replace("Wah:", "");
+            embed.WithDescription(response);
+            if(!response.Contains("<Disengaged>"))
+                await SendMessageJob.Queue(Context.Guild.Id.ToString(), Context.Channel.Id.ToString(), new List<EmbedBuilder>(), DateTime.UtcNow, response);
+            else
+                await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
         catch (Exception e)
         {

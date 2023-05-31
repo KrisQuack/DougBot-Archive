@@ -58,12 +58,8 @@ public class SendMessageJob : IJob
             if (!string.IsNullOrEmpty(attachments) && attachments != "null")
             {
                 var attachList = JsonSerializer.Deserialize<List<string>>(attachments);
-                foreach (var attachment in attachList)
-                {
-                    await channel.SendFileAsync(attachment, attachment.Split('/').LastOrDefault(x => x.Contains('.')));
-                    // Delete file
-                    File.Delete(attachment);
-                }
+                var fileAttachments = attachList.Select(attachment => new FileAttachment(attachment)).AsEnumerable();
+                await channel.SendFilesAsync(fileAttachments, "***Attachment(s)***");
             }
         }
         catch (Exception e)

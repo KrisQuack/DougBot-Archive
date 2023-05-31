@@ -10,8 +10,8 @@ namespace DougBot;
 public class Program
 {
     //Main Variables
-    private static InteractionService _Service;
-    private static IServiceProvider _ServiceProvider;
+    public static InteractionService _Service { get; private set; }
+    public static IServiceProvider _ServiceProvider { get; private set; }
 
     private bool _FirstStart = true;
     public static DiscordSocketClient _Client { get; private set; }

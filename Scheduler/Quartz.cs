@@ -15,46 +15,60 @@ public static class Quartz
 
     public static async Task InitializePersistent()
     {
-        var properties = new NameValueCollection
+        try
         {
-            [StdSchedulerFactory.PropertySchedulerInstanceName] = "QuartzScheduler",
-            [StdSchedulerFactory.PropertySchedulerInstanceId] = "DougBot",
-            [StdSchedulerFactory.PropertyJobStoreType] = typeof(CosmosDbJobStore).AssemblyQualifiedName,
-            [$"{StdSchedulerFactory.PropertyObjectSerializer}.type"] = "json",
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Endpoint"] =
-                Environment.GetEnvironmentVariable("ACCOUNT_ENDPOINT"),
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Key"] = Environment.GetEnvironmentVariable("ACCOUNT_KEY"),
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.DatabaseId"] =
-                Environment.GetEnvironmentVariable("DATABASE_NAME"),
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.CollectionId"] = "Quartz",
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Clustered"] = "true",
-            [$"{StdSchedulerFactory.PropertyJobStorePrefix}.ConnectionMode"] = ((int)ConnectionMode.Gateway).ToString()
-        };
-        //JobFactory
-        LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
-        var scheduler = await SchedulerBuilder.Create(properties)
-            .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
-            .BuildScheduler();
-        //Singleton
-        PersistentSchedulerInstance = scheduler;
-        //Start
-        await scheduler.Start();
+            var properties = new NameValueCollection
+            {
+                [StdSchedulerFactory.PropertySchedulerInstanceName] = "QuartsPersistent",
+                [StdSchedulerFactory.PropertySchedulerInstanceId] = "DougBot",
+                [StdSchedulerFactory.PropertyJobStoreType] = typeof(CosmosDbJobStore).AssemblyQualifiedName,
+                [$"{StdSchedulerFactory.PropertyObjectSerializer}.type"] = "json",
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Endpoint"] =
+                    Environment.GetEnvironmentVariable("ACCOUNT_ENDPOINT"),
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Key"] = Environment.GetEnvironmentVariable("ACCOUNT_KEY"),
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.DatabaseId"] =
+                    Environment.GetEnvironmentVariable("DATABASE_NAME"),
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.CollectionId"] = "Quartz",
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Clustered"] = "true",
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.ConnectionMode"] = ((int)ConnectionMode.Gateway).ToString()
+            };
+            //JobFactory
+            LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+            var scheduler = await SchedulerBuilder.Create(properties)
+                .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
+                .BuildScheduler();
+            //Singleton
+            PersistentSchedulerInstance = scheduler;
+            //Start
+            await scheduler.Start();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} PersistentScheduler {e}");
+        }
     }
 
     public static async Task InitializeMemory()
     {
-        //JobFactory
-        LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
-        var properties = new NameValueCollection();
-        var scheduler = await SchedulerBuilder.Create(properties)
-            .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
-            .BuildScheduler();
-        //Singleton
-        MemorySchedulerInstance = scheduler;
-        //Start
-        await scheduler.Start();
+        try
+        {
+            //JobFactory
+            LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+            var properties = new NameValueCollection();
+            var scheduler = await SchedulerBuilder.Create(properties)
+                .WithName("QuartzMemory")
+                .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
+                .BuildScheduler();
+            //Singleton
+            MemorySchedulerInstance = scheduler;
+            //Start
+            await scheduler.Start();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} MemoryScheduler {e}");
+        }
     }
-
 
     public static async Task CoreJobs()
     {
@@ -90,10 +104,10 @@ internal class ConsoleLogProvider : ILogProvider
         return (level, func, exception, parameters) =>
         {
             if (level >= LogLevel.Info && func != null)
-                Console.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + level + "] " + func(), parameters);
+                Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} {func()}", parameters);
             if (exception != null)
             {
-                Console.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + level + "] " + exception);
+                Console.WriteLine("[" + DateTime.UtcNow.ToLongTimeString() + "] [" + level + "] " + exception);
                 Quartz._FailedJobNames.Add(func().Split(' ')[1].Split(".")[1]);
             }
 

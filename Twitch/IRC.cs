@@ -1,19 +1,16 @@
-using System.Text.Json;
 using Discord;
 using DougBot.Models;
 using DougBot.Scheduler;
-using Quartz;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
-using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Twitch;
 
 public class IRC
 {
-    private string[] blockedWords;
     private readonly string BotID = "853660174";
+    private string[] blockedWords;
     private string[] containsBlock;
     private string[] endsWithBlock;
     private bool firstRun = true;
@@ -30,6 +27,7 @@ public class IRC
         UpdateBlocks();
         return Client;
     }
+
     public async Task UpdateBlocks()
     {
         Console.WriteLine("ReactionFilter Initialized");
@@ -83,7 +81,6 @@ public class IRC
                 {
                     await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
                         Message.ChatMessage.Id);
-                    return;
                 }
             }
             catch (Exception e)
@@ -92,7 +89,7 @@ public class IRC
             }
         });
     }
-    
+
     private void Client_OnWhisperReceived(object? sender, OnWhisperReceivedArgs whisper)
     {
         _ = Task.Run(async () =>
@@ -102,22 +99,8 @@ public class IRC
                 .WithDescription(whisper.WhisperMessage.Message)
                 .WithColor(Color.Purple)
                 .WithCurrentTimestamp();
-            var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                .UsingJobData("guildId", "567141138021089308")
-                .UsingJobData("channelId", "1080251555619557445")
-                .UsingJobData("message", "")
-                .UsingJobData("embedBuilders", embedJson)
-                .UsingJobData("ping", "true")
-                .UsingJobData("attachments", null)
-                .Build();
-            var sendMessageTrigger = TriggerBuilder.Create()
-                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
-                .StartNow()
-                .Build();
-            await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            await SendMessageJob.Queue("567141138021089308", "1080251555619557445", new List<EmbedBuilder> { embed },
+                DateTime.UtcNow);
         });
     }
 

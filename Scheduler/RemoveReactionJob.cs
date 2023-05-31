@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Discord.WebSocket;
 using Quartz;
 
@@ -32,6 +34,40 @@ public class RemoveReactionJob : IJob
         catch (Exception e)
         {
             Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} RemoveReactionJob {e}");
+        }
+    }
+
+    public static async Task Queue(string guildId, string channelId, string messageId, string emoteName,
+        DateTime schedule)
+    {
+        try
+        {
+            //Create a Sha1 hash from the message id and emote name
+            var hash = SHA1.HashData(Encoding.UTF8.GetBytes($"{messageId}{emoteName}"));
+            var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            //Check if trigger already exists
+            var trigger =
+                await Quartz.MemorySchedulerInstance.GetTrigger(
+                    new TriggerKey($"removeReactionJob-{hashString}", guildId));
+            if (trigger != null)
+                return;
+            //If not, create a new trigger
+            var removeReactionJob = JobBuilder.Create<RemoveReactionJob>()
+                .WithIdentity($"removeReactionJob-{hashString}", guildId)
+                .UsingJobData("guildId", guildId)
+                .UsingJobData("channelId", channelId)
+                .UsingJobData("messageId", messageId)
+                .UsingJobData("emoteName", emoteName)
+                .Build();
+            var removeReactionTrigger = TriggerBuilder.Create()
+                .WithIdentity($"removeReactionJob-{hashString}", guildId)
+                .StartAt(schedule)
+                .Build();
+            await Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} RemoveReactionQueue {e}");
         }
     }
 }

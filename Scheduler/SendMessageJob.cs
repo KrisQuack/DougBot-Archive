@@ -55,7 +55,7 @@ public class SendMessageJob : IJob
                 allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
 
             // Send attachments (if any)
-            if (!string.IsNullOrEmpty(attachments))
+            if (!string.IsNullOrEmpty(attachments) && attachments != "null")
             {
                 var attachList = JsonSerializer.Deserialize<List<string>>(attachments);
                 foreach (var attachment in attachList)
@@ -69,6 +69,35 @@ public class SendMessageJob : IJob
         catch (Exception e)
         {
             Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} SendMessageJob {e}");
+        }
+    }
+
+    public static async Task Queue(string guildId, string channelId, List<EmbedBuilder> embeds, DateTime schedule,
+        string message = "", bool ping = false, List<string>? attachments = null)
+    {
+        try
+        {
+            var embedJson = JsonSerializer.Serialize(embeds,
+                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+            var attachmentsJson = JsonSerializer.Serialize(attachments);
+            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
+                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", guildId)
+                .UsingJobData("guildId", guildId)
+                .UsingJobData("channelId", channelId)
+                .UsingJobData("message", message)
+                .UsingJobData("embedBuilders", embedJson)
+                .UsingJobData("ping", ping)
+                .UsingJobData("attachments", attachmentsJson)
+                .Build();
+            var sendMessageTrigger = TriggerBuilder.Create()
+                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", guildId)
+                .StartAt(schedule)
+                .Build();
+            await Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} SendMessageQueue {e}");
         }
     }
 }

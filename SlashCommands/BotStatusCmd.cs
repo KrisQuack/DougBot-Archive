@@ -27,10 +27,8 @@ public class BotStatusCmd : InteractionModuleBase
             var threadList = process.Threads.Cast<ProcessThread>().ToList();
             var youngThreads = threadList.Count(t => t.TotalProcessorTime.TotalSeconds < 10);
             // Get job keys
-            var jobKeys =
-                await Scheduler.Quartz.PersistentSchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
-            // Calculate job counts using LINQ
-            var totalJobs = jobKeys.Count;
+            var persistentKeys = await Scheduler.Quartz.PersistentSchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
+            var memoryKeys = await Scheduler.Quartz.MemorySchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
             //Create embed
             var embed = new EmbedBuilder()
                 .WithTitle("Bot Status")
@@ -40,7 +38,8 @@ public class BotStatusCmd : InteractionModuleBase
                 .AddField("Threads", $"{currentAppThreadsCount}", true)
                 .AddField("Young Threads (<10s)", $"{youngThreads}", true)
                 .AddField("Quartz Job Data", "*These stats are since the bots last reboot*")
-                .AddField("Total Jobs", totalJobs, true)
+                .AddField("Total Persistent Jobs", persistentKeys.Count, true)
+                .AddField("Total Memory Jobs", memoryKeys.Count, true)
                 .Build();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed });
             await ModifyOriginalResponseAsync(m => m.Content = " ");

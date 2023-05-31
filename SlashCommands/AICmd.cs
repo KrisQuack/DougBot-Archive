@@ -1,6 +1,6 @@
+using BingChat;
 using Discord;
 using Discord.Interactions;
-using BingChat;
 
 namespace DougBot.SlashCommands;
 
@@ -16,8 +16,7 @@ public class AIChatCmd : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithColor(Color.Blue)
             .WithTitle("Chat Analysis")
-            .WithDescription("Processing")
-            .WithFooter("Powered by OpenAI GPT-4");
+            .WithDescription("Processing, This may take a minute");
         await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
         //Get values
         var channel = Context.Channel as ITextChannel;
@@ -27,35 +26,38 @@ public class AIChatCmd : InteractionModuleBase
                 !string.IsNullOrWhiteSpace(m.Content) &&
                 !m.Author.IsBot
             ).Take(read).OrderBy(m => m.CreatedAt)
-            .Aggregate("", (current, message) => current + $"{message.Author.Username}: {message.CleanContent}\n");
+            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.CleanContent}");
         //Send to API
         try
         {
+            //get random number as string
+            var randomString = Program.Random.Next(100000000, 999999999).ToString();
             var client = new BingChatClient(new BingChatClientOptions
             {
-                CookieU = "null",
-                Tone = BingChatTone.Creative,
+                CookieU = randomString,
+                Tone = BingChatTone.Precise
             });
             var chatMessage =
-@"Act as a discord assistant by the name of Wahaha, analyze the conversation and provide a summary of its topic and any rule violations. Suggest an action based on these violations. Consider these rules:
-1) Follow Discord's Terms of Service and Community Guidelines.
-2) Obey Moderation and Common Sense; disputes should be made in a ticket.
-3) No Offensive Speech or harassment.
-4) Be Kind; discourteous messages will be removed.
-5) No Spam or Shitposting; follow channel rules.
-6) English-Only conversations.
-7) No Alt Accounts or Impersonation.
-8) No Political Discussion; keep it light-hearted.
-9) No Sexual Topics; occasional mature jokes allowed.
-10) No Extremely Distressing topics; seek professional help for mental health issues.";
-            chatMessage += $"\n\n{messageString}";
+                $@"You are an assistant who's job is to analyze a given conversation and provide a summary of what it is about and if any rules have been broken.
+Consider the following rules for the conversation:
+0) Follow Discord's Terms of Service and Community Guidelines.
+1) Obey Moderation and Common Sense; disputes should be made in a ticket.
+2) No Offensive Speech or harassment.
+3) Be Kind; discourteous messages will be removed.
+4) No Spam or Shitposting; follow channel rules.
+5) English-Only conversations.
+6) No Alt Accounts or Impersonation.
+7) No Political Discussion; keep it light-hearted.
+8) No Sexual Topics; occasional mature jokes allowed.
+9) No Extremely Distressing topics; seek professional help for mental health issues.
+Conversation:{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
-            embed.WithDescription(response);
+            embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
         catch (Exception e)
         {
-            var response = "Failed to analyse chat: " + e.Message;
+            var response = "Failed to analyse chat, Please try again: " + e.Message;
             embed.WithDescription(response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }

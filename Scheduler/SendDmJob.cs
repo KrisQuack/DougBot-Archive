@@ -68,4 +68,30 @@ public class SendDmJob : IJob
             Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} SendDmJob {e}");
         }
     }
+
+    public static async Task Queue(string recieverId, string senderId, string guildId, List<EmbedBuilder> embeds,
+        DateTime schedule)
+    {
+        try
+        {
+            var embedJson = JsonSerializer.Serialize(embeds,
+                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
+            var sendDmJob = JobBuilder.Create<SendDmJob>()
+                .WithIdentity($"sendDMJob-{Guid.NewGuid()}", guildId)
+                .UsingJobData("guildId", guildId)
+                .UsingJobData("userId", recieverId)
+                .UsingJobData("embedBuilders", embedJson)
+                .UsingJobData("senderId", senderId)
+                .Build();
+            var sendDmTrigger = TriggerBuilder.Create()
+                .WithIdentity($"sendDMTrigger-{Guid.NewGuid()}", guildId)
+                .StartAt(schedule)
+                .Build();
+            await Quartz.MemorySchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} SendDmQueue {e}");
+        }
+    }
 }

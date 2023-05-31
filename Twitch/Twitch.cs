@@ -32,10 +32,7 @@ public class Twitch
             var pubSub = new PubSub().Create();
             pubSub.OnPubSubServiceConnected += (Sender, e) =>
             {
-                while (dougRefresh == null)
-                {
-                    Task.Delay(1000);
-                }
+                while (dougRefresh == null) Task.Delay(1000);
                 pubSub.SendTopics(dougRefresh.AccessToken);
                 Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} PubSub Connected");
             };

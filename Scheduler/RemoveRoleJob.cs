@@ -28,4 +28,26 @@ public class RemoveRoleJob : IJob
             Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} RemoveRoleJob {e}");
         }
     }
+
+    public static async Task Queue(string guildId, string userId, string roleId, DateTime schedule)
+    {
+        try
+        {
+            var deleteMessageJob = JobBuilder.Create<RemoveRoleJob>()
+                .WithIdentity($"removeRoleJob-{Guid.NewGuid()}", guildId)
+                .UsingJobData("guildId", guildId)
+                .UsingJobData("userId", userId)
+                .UsingJobData("roleId", roleId)
+                .Build();
+            var deleteMessageTrigger = TriggerBuilder.Create()
+                .WithIdentity($"removeRoleTrigger-{Guid.NewGuid()}", guildId)
+                .StartAt(schedule)
+                .Build();
+            await Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} RemoveRoleQueue {e}");
+        }
+    }
 }

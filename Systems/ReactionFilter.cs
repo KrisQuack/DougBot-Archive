@@ -1,10 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Scheduler;
-using Quartz;
 
 namespace DougBot.Systems;
 
@@ -71,33 +68,12 @@ public static class ReactionFilter
                             realMessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
                         else
                             realMessage = Message.Value;
-                        //Create a Sha1 hash from the message id and emote name
-                        var hash = SHA1.HashData(Encoding.UTF8.GetBytes($"{Reaction.MessageId}{emote.Name}"));
-                        var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
-                        //Check if trigger already exists
-                        var trigger =
-                            await Scheduler.Quartz.MemorySchedulerInstance.GetTrigger(
-                                new TriggerKey($"removeReactionJob-{hashString}", guild.Id.ToString()));
-                        if (trigger != null)
-                            return;
-                        //If not, create a new trigger
-                        var removeReactionJob = JobBuilder.Create<RemoveReactionJob>()
-                            .WithIdentity($"removeReactionJob-{hashString}", guild.Id.ToString())
-                            .UsingJobData("guildId", guild.Id.ToString())
-                            .UsingJobData("channelId", Reaction.Channel.Id.ToString())
-                            .UsingJobData("messageId", Reaction.MessageId.ToString())
-                            .UsingJobData("emoteName", Reaction.Emote.Name)
-                            .Build();
                         //Set target time
                         var targetTime = realMessage.Timestamp.AddMinutes(1).UtcDateTime;
                         var minTargetTime = DateTime.UtcNow.AddSeconds(10);
                         if (targetTime < minTargetTime) targetTime = minTargetTime;
-                        var removeReactionTrigger = TriggerBuilder.Create()
-                            .WithIdentity($"removeReactionJob-{hashString}", guild.Id.ToString())
-                            .StartAt(targetTime)
-                            .Build();
-                        await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob,
-                            removeReactionTrigger);
+                        await RemoveReactionJob.Queue(guild.Id.ToString(), Reaction.Channel.Id.ToString(),
+                            Reaction.MessageId.ToString(), emote.Name, targetTime);
                     }
             }
             catch (Exception ex)

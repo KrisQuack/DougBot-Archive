@@ -1,11 +1,7 @@
-using System.Text.Json;
 using System.Xml.Linq;
 using Discord;
 using DougBot.Models;
 using Quartz;
-using YoutubeExplode;
-using YoutubeExplode.Common;
-using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Scheduler;
 
@@ -23,12 +19,14 @@ public class CheckYoutubeJob : IJob
                 foreach (var dbYoutube in dbGuild.YoutubeSettings)
                     try
                     {
-                        var ytFeed = await httpClient.GetStringAsync("https://www.youtube.com/feeds/videos.xml?channel_id=" + dbYoutube.Id);
-                        XDocument xDoc = XDocument.Parse(ytFeed);
+                        var ytFeed =
+                            await httpClient.GetStringAsync("https://www.youtube.com/feeds/videos.xml?channel_id=" +
+                                                            dbYoutube.Id);
+                        var xDoc = XDocument.Parse(ytFeed);
                         XNamespace atom = "http://www.w3.org/2005/Atom";
                         XNamespace media = "http://search.yahoo.com/mrss/";
                         XNamespace yt = "http://www.youtube.com/xml/schemas/2015";
-                        
+
                         var channel = xDoc.Descendants(atom + "author").First();
                         var channelName = channel.Element(atom + "name").Value;
                         var channelUrl = channel.Element(atom + "uri").Value;
@@ -36,10 +34,11 @@ public class CheckYoutubeJob : IJob
                             .OrderByDescending(e => DateTime.Parse(e.Element(atom + "published").Value))
                             .First();
                         var videoTitle = latestVideo.Element(atom + "title").Value;
-                        var videoThumbnail = latestVideo.Descendants(media + "thumbnail").First().Attribute("url").Value;
+                        var videoThumbnail =
+                            latestVideo.Descendants(media + "thumbnail").First().Attribute("url").Value;
                         var videoID = latestVideo.Element(yt + "videoId").Value;
                         var videoUrl = latestVideo.Element(atom + "link").Attribute("href").Value;
-                        
+
                         if (videoID == dbYoutube.LastVideoId) continue;
 
                         var mentionRole = "";
@@ -52,29 +51,15 @@ public class CheckYoutubeJob : IJob
                             .WithTitle(videoTitle)
                             .WithImageUrl(videoThumbnail)
                             .WithUrl(videoUrl);
-                        var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-                            new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-
-                        var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                            .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", dbGuild.Id)
-                            .UsingJobData("guildId", dbGuild.Id)
-                            .UsingJobData("channelId", dbYoutube.PostChannel)
-                            .UsingJobData("message", mentionRole)
-                            .UsingJobData("embedBuilders", embedJson)
-                            .UsingJobData("ping", "true")
-                            .UsingJobData("attachments", null)
-                            .Build();
-                        var sendMessageTrigger = TriggerBuilder.Create()
-                            .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
-                            .StartNow()
-                            .Build();
-                        await Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                        await SendMessageJob.Queue(dbGuild.Id, dbYoutube.PostChannel, new List<EmbedBuilder> { embed },
+                            DateTime.UtcNow, mentionRole, true);
                         dbYoutube.LastVideoId = videoID;
                         await dbGuild.Update();
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} YoutubeChannel {dbYoutube.Id} {ex}");
+                        Console.WriteLine(
+                            $"[General/Warning] {DateTime.UtcNow:HH:mm:ss} YoutubeChannel {dbYoutube.Id} {ex}");
                     }
             }
         }

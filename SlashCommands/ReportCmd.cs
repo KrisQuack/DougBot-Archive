@@ -1,12 +1,9 @@
-using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Scheduler;
 using Fernandezja.ColorHashSharp;
-using Quartz;
-using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.SlashCommands;
 
@@ -90,22 +87,7 @@ public class ReportCmd : InteractionModuleBase
                         .WithUrl(attachment.Url)));
             }
 
-            var embedJson = JsonSerializer.Serialize(embeds,
-                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", dbGuild.Id)
-                .UsingJobData("guildId", dbGuild.Id)
-                .UsingJobData("channelId", dbGuild.ReportChannel)
-                .UsingJobData("message", "")
-                .UsingJobData("embedBuilders", embedJson)
-                .UsingJobData("ping", "false")
-                .UsingJobData("attachments", null)
-                .Build();
-            var sendMessageTrigger = TriggerBuilder.Create()
-                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", dbGuild.Id)
-                .StartNow()
-                .Build();
-            await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            await SendMessageJob.Queue(dbGuild.Id, dbGuild.ReportChannel, embeds, DateTime.UtcNow);
             await ModifyOriginalResponseAsync(m => m.Content = "Your report has been sent to the mods.");
         }
         catch (Exception e)

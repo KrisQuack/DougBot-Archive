@@ -1,12 +1,8 @@
-using System.Text.Json;
 using Discord;
-using DougBot.Models;
 using DougBot.Scheduler;
-using Quartz;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
-using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Twitch;
 
@@ -99,72 +95,19 @@ public class PubSub
                     }
                 }
 
-                //Quack Cheat
-                await QuackCheat(Prediction);
-
                 //Check the embed is not empty
                 if (string.IsNullOrEmpty(embed.Title)) return;
                 //Send message
-                var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-                    new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                    .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                    .UsingJobData("guildId", "567141138021089308")
-                    .UsingJobData("channelId", "1070317311505997864")
-                    .UsingJobData("message", messageContent)
-                    .UsingJobData("embedBuilders", embedJson)
-                    .UsingJobData("ping", "true")
-                    .UsingJobData("attachments", null)
-                    .Build();
-                var sendMessageTrigger = TriggerBuilder.Create()
-                    .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
-                    .StartNow()
-                    .Build();
-                await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                await SendMessageJob.Queue("567141138021089308", "1070317311505997864",
+                    new List<EmbedBuilder> { embed }, DateTime.UtcNow, messageContent, true);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
         });
-
-        async Task QuackCheat(OnPredictionArgs Prediction)
-        {
-            var endTime = Prediction.CreatedAt.Value.ToUniversalTime().AddSeconds(Prediction.PredictionTime);
-            var timeRemaining = endTime - DateTime.UtcNow;
-            if (Prediction.Status == PredictionStatus.Active &&
-                new[] { 10, 20, 30, 60 }.Contains((int)timeRemaining.TotalSeconds))
-            {
-                var cheatEmbed = new EmbedBuilder()
-                    .WithCurrentTimestamp()
-                    .WithTitle($"{(int)timeRemaining.TotalSeconds}: {Prediction.Title}")
-                    .WithColor(Color.DarkGrey);
-                foreach (var outCome in Prediction.Outcomes)
-                {
-                    var cheatHighRollers = outCome.TopPredictors.OrderByDescending(p => p.Points).ToList();
-                    cheatEmbed.AddField($"{outCome.Title} - {cheatHighRollers.Sum(c => c.Points):n0}",
-                        string.Join("\n", cheatHighRollers.Select(p => $"{p.DisplayName} - {p.Points:n0}")), true);
-                }
-
-                var discClient = Program._Client;
-                var guild = discClient.GetGuild(567141138021089308);
-                var channel = guild.GetTextChannel(886548334154760242);
-                var message = await channel.SendMessageAsync("", embed: cheatEmbed.Build());
-                //Schedule message removal
-                var deleteMessageJob = JobBuilder.Create<DeleteMessageJob>()
-                    .WithIdentity($"deleteMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                    .UsingJobData("guildId", "567141138021089308")
-                    .UsingJobData("channelId", message.Channel.Id.ToString())
-                    .UsingJobData("messageId", message.Id.ToString())
-                    .Build();
-                var deleteMessageTrigger = TriggerBuilder.Create()
-                    .WithIdentity($"deleteMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
-                    .StartAt(endTime)
-                    .Build();
-                await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
-            }
-        }
     }
+
 
     private void PubSub_OnChannelPointsRewardRedeemed(object sender, OnChannelPointsRewardRedeemedArgs Redemption)
     {
@@ -175,10 +118,9 @@ public class PubSub
             var redeemedUser = redemption.User;
             //Notify mods of new redemption
             if (redemption.Status == "UNFULFILLED")
-            {
                 if (reward.Title.Contains("Minecraft Server"))
                 {
-                    await Twitch.API.Helix.Whispers.SendWhisperAsync("853660174", redeemedUser.Id, 
+                    await Twitch.API.Helix.Whispers.SendWhisperAsync("853660174", redeemedUser.Id,
                         "Thank you for redeeming Minecraft access. Please make sure you have joined the Discord server https://discord.gg/763mpbqxNq and reply here with your Discord username"
                         , true);
                     var embed = new EmbedBuilder()
@@ -194,39 +136,24 @@ public class PubSub
                                 .WithValue(redemption.UserInput ?? "No Message")
                                 .WithIsInline(true))
                         .WithCurrentTimestamp();
-                    var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-                        new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-                    var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                        .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", "567141138021089308")
-                        .UsingJobData("guildId", "567141138021089308")
-                        .UsingJobData("channelId", "1080251555619557445")
-                        .UsingJobData("message", "")
-                        .UsingJobData("embedBuilders", embedJson)
-                        .UsingJobData("ping", "true")
-                        .UsingJobData("attachments", null)
-                        .Build();
-                    var sendMessageTrigger = TriggerBuilder.Create()
-                        .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", "567141138021089308")
-                        .StartNow()
-                        .Build();
-                    await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+                    await SendMessageJob.Queue("567141138021089308", "1070317311505997864",
+                        new List<EmbedBuilder> { embed }, DateTime.UtcNow);
                 }
-            }
         });
     }
 
     private void OnPubSubServiceError(object sender, OnPubSubServiceErrorArgs e)
     {
-        Console.WriteLine($"{e.Exception.Message}");
+        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} PubSub {e}");
     }
 
     private void OnPubSubServiceClosed(object sender, EventArgs e)
     {
-        Console.WriteLine("Connection closed to pubsub server");
+        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} PubSub Closed");
     }
 
     private void OnListenResponse(object sender, OnListenResponseArgs e)
     {
-        if (!e.Successful) Console.WriteLine($"Failed to listen! {e.Topic} {e.Response.Error}");
+        if (!e.Successful) Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} PubSub {e}");
     }
 }

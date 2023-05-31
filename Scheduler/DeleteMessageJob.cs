@@ -23,4 +23,26 @@ public class DeleteMessageJob : IJob
             Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} DeleteMessageJob {e}");
         }
     }
+
+    public static async Task Queue(string guildId, string channelId, string messageId, DateTime schedule)
+    {
+        try
+        {
+            var deleteMessageJob = JobBuilder.Create<DeleteMessageJob>()
+                .WithIdentity($"deleteMessageJob-{Guid.NewGuid()}", guildId)
+                .UsingJobData("guildId", guildId)
+                .UsingJobData("channelId", channelId)
+                .UsingJobData("messageId", messageId)
+                .Build();
+            var deleteMessageTrigger = TriggerBuilder.Create()
+                .WithIdentity($"deleteMessageTrigger-{Guid.NewGuid()}", guildId)
+                .StartAt(schedule)
+                .Build();
+            await Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} DeleteMessageQueue {e}");
+        }
+    }
 }

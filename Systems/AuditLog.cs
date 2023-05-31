@@ -1,11 +1,8 @@
 using System.Reflection;
-using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Scheduler;
-using Quartz;
-using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace DougBot.Systems;
 
@@ -282,22 +279,8 @@ public static class AuditLog
             if (Author != null)
                 embed.WithAuthor(Author);
 
-            var embedJson = JsonSerializer.Serialize(new List<EmbedBuilder> { embed },
-                new JsonSerializerOptions { Converters = { new ColorJsonConverter() } });
-            var sendMessageJob = JobBuilder.Create<SendMessageJob>()
-                .WithIdentity($"sendMessageJob-{Guid.NewGuid()}", GuildId)
-                .UsingJobData("guildId", GuildId)
-                .UsingJobData("channelId", dbGuild.LogChannel)
-                .UsingJobData("message", "")
-                .UsingJobData("embedBuilders", embedJson)
-                .UsingJobData("ping", "true")
-                .UsingJobData("attachments", null)
-                .Build();
-            var sendMessageTrigger = TriggerBuilder.Create()
-                .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", GuildId)
-                .StartNow()
-                .Build();
-            await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            await SendMessageJob.Queue(dbGuild.Id, dbGuild.LogChannel, new List<EmbedBuilder> { embed },
+                DateTime.UtcNow);
         });
         return Task.CompletedTask;
     }

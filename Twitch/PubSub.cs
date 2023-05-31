@@ -134,8 +134,8 @@ public class PubSub
                                 .WithValue(redemption.UserInput ?? "No Message")
                                 .WithIsInline(true))
                         .WithCurrentTimestamp();
-                    // await SendMessageJob.Queue("567141138021089308", "1080251555619557445",
-                    //     new List<EmbedBuilder> { embed }, DateTime.UtcNow);
+                    await SendMessageJob.Queue("567141138021089308", "1080251555619557445",
+                         new List<EmbedBuilder> { embed }, DateTime.UtcNow);
                 }
         });
     }

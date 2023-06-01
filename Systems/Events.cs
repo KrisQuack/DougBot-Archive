@@ -44,7 +44,12 @@ public static class Events
                 //Attachment embeds
                 embeds.AddRange(message.Attachments.Select(attachment =>
                     new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
-                        .WithUrl(attachment.Url)));
+                        .WithColor((Color)color)
+                        .WithAuthor(new EmbedAuthorBuilder()
+                            .WithName($"{message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id})")
+                            .WithIconUrl(message.Author.GetAvatarUrl()))
+                        .WithUrl(attachment.Url)
+                        .WithCurrentTimestamp()));
                 //Confirm message and where to send
                 var builder = new ComponentBuilder();
                 builder.WithButton("CANCEL", "dmRecieved:cancel:cancel", ButtonStyle.Danger);

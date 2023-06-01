@@ -27,7 +27,7 @@ public class AIChatCmd : InteractionModuleBase
                 !string.IsNullOrWhiteSpace(m.Content) &&
                 !m.Author.IsBot
             ).Take(read).OrderBy(m => m.CreatedAt)
-            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.CleanContent}");
+            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.Content}");
         //Send to API
         try
         {
@@ -117,7 +117,7 @@ Conversation:{messageString}".Trim();
                 !string.IsNullOrWhiteSpace(m.Content) &&
                 !m.Author.IsBot
             ).Take(read).OrderBy(m => m.CreatedAt)
-            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.CleanContent}");
+            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.Content}");
         //Send to API
         try
         {

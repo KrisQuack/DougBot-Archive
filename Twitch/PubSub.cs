@@ -142,7 +142,7 @@ public class PubSub
 
     private void OnPubSubServiceError(object sender, OnPubSubServiceErrorArgs e)
     {
-        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} PubSub {e}");
+        Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} PubSub {e.Exception}");
     }
 
     private void OnPubSubServiceClosed(object sender, EventArgs e)

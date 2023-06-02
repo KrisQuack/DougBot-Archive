@@ -121,14 +121,11 @@ Conversation:{messageString}".Trim();
         //Send to API
         try
         {
-            //get random number as string
-            var randomString = Program.Random.Next(100000000, 999999999).ToString();
             var client = new BingChatClient(new BingChatClientOptions
             {
-                CookieU = randomString,
                 Tone = BingChatTone.Creative
             });
-            var chatMessage =$"Act as a discord user named Wah and reply to this conversation.\n{messageString}".Trim();
+            var chatMessage =$"Act as a discord user named Wah and reply to this conversation with one sentence.\n{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
             response = response.Replace("Wah:", "");
             embed.WithDescription(response);

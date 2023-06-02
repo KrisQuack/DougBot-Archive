@@ -51,6 +51,10 @@ public class IRC
 
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
+        if (Message.ChatMessage.IsModerator && Message.ChatMessage.Message.ToLower().Contains("wah, you up?"))
+        {
+            Twitch.IRC.SendMessage(Message.ChatMessage.Channel, $"@{Message.ChatMessage.Username} Let me sleep, I'm tired");
+        }
         //Skip mods and broadcaster
         if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
             Message.ChatMessage.Bits > 0) return;

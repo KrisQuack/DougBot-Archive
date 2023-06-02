@@ -136,7 +136,7 @@ Conversation:{messageString}".Trim();
         }
         catch (Exception e)
         {
-            var response = "Failed to analyse chat, Please try again: " + e.Message;
+            var response = "Failed to chat, Please try again: " + e.Message;
             embed.WithDescription(response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }

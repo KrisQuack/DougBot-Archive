@@ -95,7 +95,7 @@ public class TimeStampCmd : InteractionModuleBase
 
     [SlashCommand("timestamp", "Converts a timeestamp into discord tiemcodes")]
     [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
     public async Task TimeStamp(
         [Summary(description: "The time to convert in format 12:00 GMT or 01 Jan 2022 12:00 GMT")]
         string dateString)

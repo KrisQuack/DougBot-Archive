@@ -8,7 +8,7 @@ public class HelpCmd : InteractionModuleBase
 {
     [SlashCommand("help", "Help Command")]
     [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
     public async Task Help()
     {
         var embeds = new List<Embed>();

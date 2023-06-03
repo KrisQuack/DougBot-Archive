@@ -10,7 +10,7 @@ public class BotStatusCmd : InteractionModuleBase
 {
     [SlashCommand("botstatus", "Displays the current status of the bot")]
     [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
     public async Task BotStatus()
     {
         if (Context.Guild != null)

@@ -7,7 +7,7 @@ namespace DougBot.SlashCommands;
 
 [Group("ai", "AI based commands")]
 [EnabledInDm(false)]
-[DefaultMemberPermissions(GuildPermission.ModerateMembers)]
+[RequireUserPermission(GuildPermission.ModerateMembers)]
 public class AIChatCmd : InteractionModuleBase
 {
     [SlashCommand("analyse", "Analyses the current chat")]
@@ -96,13 +96,9 @@ Conversation:{messageString}".Trim();
     }
     
     [SlashCommand("chat", "Respond to messages in chat")]
+    [RequireUserPermission(GuildPermission.Administrator)]
     public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
     {
-        if (Context.Guild.Id == 567141138021089308 && Context.User.Id != 130062174918934528)
-        {
-            await RespondAsync("This command is disabled in this server", ephemeral: true);
-            return;
-        }
         //Initial response
         var embed = new EmbedBuilder()
             .WithColor(Color.Blue)

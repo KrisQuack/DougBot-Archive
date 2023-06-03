@@ -9,7 +9,7 @@ public class SendDMCmd : InteractionModuleBase
 {
     [SlashCommand("senddm", "Send a DM to the specified user")]
     [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
     public async Task SendDM([Summary(description: "User to DM")] IGuildUser user,
         [Summary(description: "Message to send")]
         string message)

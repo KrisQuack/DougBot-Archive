@@ -8,7 +8,7 @@ namespace DougBot.SlashCommands;
 public class VerifyCmd : InteractionModuleBase
 {
     [SlashCommand("setup", "setup the verification system")]
-    [DefaultMemberPermissions(GuildPermission.Administrator)]
+    [RequireUserPermission(GuildPermission.Administrator)]
     public async Task Setup()
     {
         //Create an embed explaining the system

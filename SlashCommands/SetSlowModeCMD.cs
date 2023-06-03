@@ -7,7 +7,7 @@ public class SetSlowModeCmd : InteractionModuleBase
 {
     [SlashCommand("setslowmode", "Set the slow mode of a channel")]
     [EnabledInDm(false)]
-    [DefaultMemberPermissions(GuildPermission.ModerateMembers)]
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
     public async Task SetSlowMode(
         [Summary(description: "Channel to update (This Channel)")]
         ITextChannel channel = null,

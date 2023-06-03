@@ -133,7 +133,7 @@ Conversation:{messageString}".Trim();
             });
             var chatMessage =$"Act as a discord user named <@1037302561058848799> nicknamed Wah and reply to this conversation with one sentence.\n{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
-            response = response.Split(':')[1];
+            response = response.Replace("<@1037302561058848799>:", "").Replace("<@!1037302561058848799>:", "");
             embed.WithDescription(response);
             if(!response.Contains("<Disengaged>"))
                 await SendMessageJob.Queue(Context.Guild.Id.ToString(), Context.Channel.Id.ToString(), new List<EmbedBuilder>(), DateTime.UtcNow, response);

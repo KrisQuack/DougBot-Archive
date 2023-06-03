@@ -1,3 +1,4 @@
+using System.Text;
 using BingChat;
 using Discord;
 using Discord.Interactions;
@@ -109,11 +110,20 @@ Conversation:{messageString}".Trim();
         var channel = Context.Channel as ITextChannel;
         var messages = await channel.GetMessagesAsync(200).FlattenAsync();
         //Filter messages to ignore, select number to read, and order by date
-        var messageString = messages.Where(m =>
-                !string.IsNullOrWhiteSpace(m.Content) &&
-                !m.Author.IsBot
-            ).Take(read).OrderBy(m => m.CreatedAt)
-            .Aggregate("", (current, message) => current + $"\n{message.Author.Username}: {message.Content}");
+        messages = messages.Where(m => !string.IsNullOrWhiteSpace(m.Content))
+            .Take(read)
+            .OrderBy(m => m.CreatedAt);
+        var messageString = new StringBuilder();
+        foreach (var message in messages)
+        {
+            messageString.Append($"{message.Author.Mention}: ");
+            if (message.Reference != null)
+            {
+                var referencedMessage = await channel.GetMessageAsync((ulong)message.Reference.MessageId);
+                messageString.Append($"{referencedMessage.Author.Mention}, ");
+            }
+            messageString.AppendLine(message.Content);
+        }
         //Send to API
         try
         {
@@ -121,7 +131,7 @@ Conversation:{messageString}".Trim();
             {
                 Tone = BingChatTone.Creative
             });
-            var chatMessage =$"Act as a discord user named Wah and reply to this conversation with one sentence.\n{messageString}".Trim();
+            var chatMessage =$"Act as a discord user named <@1037302561058848799> and reply to this conversation with one sentence.\n{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
             response = response.Replace("Wah:", "");
             embed.WithDescription(response);

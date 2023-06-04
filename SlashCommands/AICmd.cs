@@ -1,7 +1,9 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using BingChat;
 using Discord;
 using Discord.Interactions;
+using DougBot.Models;
 using DougBot.Scheduler;
 
 namespace DougBot.SlashCommands;
@@ -97,7 +99,7 @@ Conversation:{messageString}".Trim();
     }
     
     [SlashCommand("chat", "Respond to messages in chat")]
-    [RequireUserPermission(GuildPermission.Administrator)]
+    [RequireOwnerOrUserPermission(GuildPermission.Administrator)]
     public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
     {
         //Initial response
@@ -116,13 +118,13 @@ Conversation:{messageString}".Trim();
         var messageString = new StringBuilder();
         foreach (var message in messages)
         {
-            messageString.Append($"{message.Author.Mention}: ");
+            messageString.Append($"{message.Author.Username}: ");
             if (message.Reference != null)
             {
                 var referencedMessage = await channel.GetMessageAsync((ulong)message.Reference.MessageId);
-                messageString.Append($"{referencedMessage.Author.Mention}, ");
+                messageString.Append($"{referencedMessage.Author.Username}, ");
             }
-            messageString.AppendLine(message.Content);
+            messageString.AppendLine(message.CleanContent.Replace("@",""));
         }
         //Send to API
         try
@@ -131,9 +133,14 @@ Conversation:{messageString}".Trim();
             {
                 Tone = BingChatTone.Creative
             });
-            var chatMessage =$"Act as a discord user named <@1037302561058848799> nicknamed Wah and reply to this conversation with one sentence.\n{messageString}".Trim();
+            var chatMessage =$"Act as a discord user named WAHAHA and reply to this conversation with one sentence.\n{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
-            response = response.Replace("<@1037302561058848799>:", "").Replace("<@!1037302561058848799>:", "");
+            //Remove name
+            response = response.Replace("WAHAHA:", "");
+            //Remove lines that contain "]: http", "Searching the web for:", or are empty
+            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "", RegexOptions.Multiline);
+            response = response.Trim();
+            //Send Response
             embed.WithDescription(response);
             if(!response.Contains("<Disengaged>"))
                 await SendMessageJob.Queue(Context.Guild.Id.ToString(), Context.Channel.Id.ToString(), new List<EmbedBuilder>(), DateTime.UtcNow, response);

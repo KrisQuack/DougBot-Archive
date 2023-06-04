@@ -23,10 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include=".github\workflows\publish.yml" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="Media\*.jpeg">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

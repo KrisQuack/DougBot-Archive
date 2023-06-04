@@ -120,7 +120,8 @@ public class PubSub
             if (redemption.Status == "UNFULFILLED")
                 if (reward.Title.Contains("Minecraft Server"))
                 {
-                    Twitch.IRC.SendMessage("dougdoug", $"@{redeemedUser.DisplayName} Thanks for redeeming Minecraft access, Please join the discord and complete this form https://forms.gle/oouvNweqqBFZ8DtD9");
+                    Twitch.IRC.SendMessage("dougdoug",
+                        $"@{redeemedUser.DisplayName} Thanks for redeeming Minecraft access, Please join the discord and complete this form https://forms.gle/oouvNweqqBFZ8DtD9");
                     var embed = new EmbedBuilder()
                         .WithTitle($"New Redemption: {reward.Title}")
                         .WithColor(Color.Orange)
@@ -135,7 +136,7 @@ public class PubSub
                                 .WithIsInline(true))
                         .WithCurrentTimestamp();
                     await SendMessageJob.Queue("567141138021089308", "1080251555619557445",
-                         new List<EmbedBuilder> { embed }, DateTime.UtcNow);
+                        new List<EmbedBuilder> { embed }, DateTime.UtcNow);
                 }
         });
     }

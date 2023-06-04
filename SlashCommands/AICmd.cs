@@ -66,7 +66,7 @@ Conversation:{messageString}".Trim();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
     }
-    
+
     [SlashCommand("ask", "Ask Bing a question")]
     public async Task Ask(string question)
     {
@@ -97,7 +97,7 @@ Conversation:{messageString}".Trim();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
     }
-    
+
     [SlashCommand("chat", "Respond to messages in chat")]
     [RequireOwnerOrUserPermission(GuildPermission.Administrator)]
     public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
@@ -124,8 +124,10 @@ Conversation:{messageString}".Trim();
                 var referencedMessage = await channel.GetMessageAsync((ulong)message.Reference.MessageId);
                 messageString.Append($"{referencedMessage.Author.Username}, ");
             }
-            messageString.AppendLine(message.CleanContent.Replace("@",""));
+
+            messageString.AppendLine(message.CleanContent.Replace("@", ""));
         }
+
         //Send to API
         try
         {
@@ -133,17 +135,21 @@ Conversation:{messageString}".Trim();
             {
                 Tone = BingChatTone.Creative
             });
-            var chatMessage =$"Act as a discord user named WAHAHA and reply to this conversation with one sentence.\n{messageString}".Trim();
+            var chatMessage =
+                $"Act as a discord user named WAHAHA and reply to this conversation with one sentence.\n{messageString}"
+                    .Trim();
             var response = await client.AskAsync(chatMessage);
             //Remove name
             response = response.Replace("WAHAHA:", "");
             //Remove lines that contain "]: http", "Searching the web for:", or are empty
-            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "", RegexOptions.Multiline);
+            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "",
+                RegexOptions.Multiline);
             response = response.Trim();
             //Send Response
             embed.WithDescription(response);
-            if(!response.Contains("<Disengaged>"))
-                await SendMessageJob.Queue(Context.Guild.Id.ToString(), Context.Channel.Id.ToString(), new List<EmbedBuilder>(), DateTime.UtcNow, response);
+            if (!response.Contains("<Disengaged>"))
+                await SendMessageJob.Queue(Context.Guild.Id.ToString(), Context.Channel.Id.ToString(),
+                    new List<EmbedBuilder>(), DateTime.UtcNow, response);
             else
                 await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }

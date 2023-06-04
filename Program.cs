@@ -9,11 +9,11 @@ namespace DougBot;
 
 public class Program
 {
+    private bool _FirstStart = true;
+
     //Main Variables
     public static InteractionService _Service { get; private set; }
-    public static IServiceProvider _ServiceProvider { get; private set; }
-
-    private bool _FirstStart = true;
+    public static IServiceProvider _ServiceProvider { get; }
     public static DiscordSocketClient _Client { get; private set; }
     public static Random Random { get; private set; } = new();
 

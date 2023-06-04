@@ -52,9 +52,8 @@ public class IRC
     private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
     {
         if (Message.ChatMessage.IsModerator && Message.ChatMessage.Message.ToLower().Contains("wah, you up?"))
-        {
-            Twitch.IRC.SendMessage(Message.ChatMessage.Channel, $"@{Message.ChatMessage.Username} Let me sleep, I'm tired");
-        }
+            Twitch.IRC.SendMessage(Message.ChatMessage.Channel,
+                $"@{Message.ChatMessage.Username} Let me sleep, I'm tired");
         //Skip mods and broadcaster
         if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
             Message.ChatMessage.Bits > 0) return;
@@ -84,10 +83,8 @@ public class IRC
                 //Check for spam
 
                 if (words.Distinct().Any(word => words.Count(w => w == word) > 10))
-                {
                     await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
                         Message.ChatMessage.Id);
-                }
             }
             catch (Exception e)
             {
@@ -114,7 +111,7 @@ public class IRC
     {
         Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} IRC Joined {Channel.Channel}");
     }
-    
+
     private void Client_OnError(object? sender, OnErrorEventArgs e)
     {
         Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} TwitchIRC {e}");

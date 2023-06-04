@@ -25,12 +25,14 @@ public static class Quartz
                 [$"{StdSchedulerFactory.PropertyObjectSerializer}.type"] = "json",
                 [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Endpoint"] =
                     Environment.GetEnvironmentVariable("ACCOUNT_ENDPOINT"),
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Key"] = Environment.GetEnvironmentVariable("ACCOUNT_KEY"),
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Key"] =
+                    Environment.GetEnvironmentVariable("ACCOUNT_KEY"),
                 [$"{StdSchedulerFactory.PropertyJobStorePrefix}.DatabaseId"] =
                     Environment.GetEnvironmentVariable("DATABASE_NAME"),
                 [$"{StdSchedulerFactory.PropertyJobStorePrefix}.CollectionId"] = "Quartz",
                 [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Clustered"] = "true",
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.ConnectionMode"] = ((int)ConnectionMode.Gateway).ToString()
+                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.ConnectionMode"] =
+                    ((int)ConnectionMode.Gateway).ToString()
             };
             //JobFactory
             LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());

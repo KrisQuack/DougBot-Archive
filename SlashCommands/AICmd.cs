@@ -136,14 +136,15 @@ Conversation:{messageString}".Trim();
                 Tone = BingChatTone.Creative
             });
             var chatMessage =
-                $"Act as a discord user named WAHAHA and reply to this conversation with one sentence.\n{messageString}"
-                    .Trim();
+                $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}".Trim();
             var response = await client.AskAsync(chatMessage);
-            //Remove name
+            //Clean up response
             response = response.Replace("WAHAHA:", "");
+            response = response.Replace("Generating answers for you...", "");
             //Remove lines that contain "]: http", "Searching the web for:", or are empty
-            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "",
-                RegexOptions.Multiline);
+            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "", RegexOptions.Multiline);
+            //Remove [^1^], [^2^], etc
+            response = Regex.Replace(response, @"\[\^\d+\^\]", "");
             response = response.Trim();
             //Send Response
             embed.WithDescription(response);

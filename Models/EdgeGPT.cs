@@ -10,12 +10,9 @@ public class EdgeGPT
         try
         {
             var responseJson = RunCommand("python3", $"Models/EdgeGPTPython.py \"{style}\" \"{message}\"");
-            if (!responseJson.Contains("EdgeGPT.exceptions"))
-            {
-                var response = JsonSerializer.Deserialize<EdgeGPTResponse>(responseJson);
-                return response;
-            }
-            throw new Exception(responseJson);
+            if (!responseJson.StartsWith("{")) throw new Exception(responseJson);
+            var response = JsonSerializer.Deserialize<EdgeGPTResponse>(responseJson);
+            return response;
         }
         catch (Exception e)
         {

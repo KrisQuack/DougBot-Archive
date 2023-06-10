@@ -4,7 +4,6 @@ using Discord;
 using Discord.Interactions;
 using DougBot.Models;
 using DougBot.Scheduler;
-using DougBot.Systems;
 
 namespace DougBot.SlashCommands;
 
@@ -48,10 +47,8 @@ Consider the following rules for the conversation:
 8) No Sexual Topics; occasional mature jokes allowed.
 9) No Extremely Distressing topics; seek professional help for mental health issues.
 Conversation:{messageString}".Trim();
-            var response = EdgeGPT.Run(chatMessage, "precise");
-            var responseStr = response.text;
-            LogResponse(Context,response);
-            embed.WithDescription(responseStr.Contains("<Disengaged>") ? "Bing refused to respond" : responseStr);
+            var response = EdgeGPT.Run(chatMessage, "precise").text;
+            embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
         catch (Exception e)
@@ -74,10 +71,8 @@ Conversation:{messageString}".Trim();
         //Send to API
         try
         {
-            var response = EdgeGPT.Run(question, "precise");
-            var responseStr = response.adaptive_text;
-            LogResponse(Context,response);
-            embed.WithDescription(responseStr.Contains("<Disengaged>") ? "Bing refused to respond" : responseStr);
+            var response = EdgeGPT.Run(question, "precise").adaptive_text;
+            embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
         catch (Exception e)
@@ -123,19 +118,20 @@ Conversation:{messageString}".Trim();
         {
             var chatMessage =
                 $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}".Trim();
-            var response = EdgeGPT.Run(chatMessage, "creative");
-            var responseStr = response.text;
-            LogResponse(Context,response);
+            var response = EdgeGPT.Run(chatMessage, "creative").text;
             //Clean up response
-            responseStr = responseStr.Replace("WAHAHA:", "");
+            response = response.Replace("WAHAHA:", "");
+            response = response.Replace("Generating answers for you...", "");
+            //Remove lines that contain "]: http", "Searching the web for:", or are empty
+            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "", RegexOptions.Multiline);
             //Remove [^1^], [^2^], etc
-            responseStr = Regex.Replace(responseStr, @"\[\^\d+\^\]", "");
-            responseStr = responseStr.Trim();
+            response = Regex.Replace(response, @"\[\^\d+\^\]", "");
+            response = response.Trim();
             //Send Response
-            embed.WithDescription(responseStr);
-            if (!responseStr.Contains("<Disengaged>"))
+            embed.WithDescription(response);
+            if (!response.Contains("<Disengaged>"))
                 await SendMessageJob.Queue(Context.Guild.Id.ToString(), Context.Channel.Id.ToString(),
-                    new List<EmbedBuilder>(), DateTime.UtcNow, responseStr);
+                    new List<EmbedBuilder>(), DateTime.UtcNow, response);
             else
                 await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -145,30 +141,5 @@ Conversation:{messageString}".Trim();
             embed.WithDescription(response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
-    }
-
-    private async void LogResponse(IInteractionContext context, EdgeGPT.EdgeGPTResponse response)
-    {
-        var fields = new List<EmbedFieldBuilder>
-        {
-            new()
-            {
-                Name = "Response",
-                Value = $"Text: {response.text}\n" +
-                        $"Adaptive Text: {response.adaptive_text}\n" +
-                        $"Author: {response.author}\n" +
-                        $"Sources Text: {response.sources_text}\n" +
-                        $"Messages Left: {response.messages_left}\n",
-                IsInline = false
-            }
-        };
-        //Author
-        var author = new EmbedAuthorBuilder
-        {
-            Name = context.User.Username,
-            IconUrl = context.User.GetAvatarUrl()
-        };
-        //Send audit log
-        await AuditLog.LogEvent("OpenAI", context.Guild.Id.ToString(), Color.Green, fields, author);
     }
 }

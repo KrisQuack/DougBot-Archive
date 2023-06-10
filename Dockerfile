@@ -1,6 +1,9 @@
 ﻿FROM mcr.microsoft.com/dotnet/runtime:7.0 AS base
 WORKDIR /app
 
+RUN apt-get update -y && apt-get install -y python3 python3-pip
+RUN python3 -m pip install EdgeGPT --upgrade
+
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["DougBot.csproj", "."]

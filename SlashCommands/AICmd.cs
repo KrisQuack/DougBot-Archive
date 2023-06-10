@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using BingChat;
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
@@ -34,13 +33,6 @@ public class AIChatCmd : InteractionModuleBase
         //Send to API
         try
         {
-            //get random number as string
-            var randomString = Program.Random.Next(100000000, 999999999).ToString();
-            var client = new BingChatClient(new BingChatClientOptions
-            {
-                CookieU = randomString,
-                Tone = BingChatTone.Precise
-            });
             var chatMessage =
                 $@"You are an assistant who's job is to analyze a given conversation and provide a summary of what it is about and if any rules have been broken.
 Consider the following rules for the conversation:
@@ -55,7 +47,7 @@ Consider the following rules for the conversation:
 8) No Sexual Topics; occasional mature jokes allowed.
 9) No Extremely Distressing topics; seek professional help for mental health issues.
 Conversation:{messageString}".Trim();
-            var response = await client.AskAsync(chatMessage);
+            var response = EdgeGPT.Run(chatMessage, "precise").text;
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -79,14 +71,7 @@ Conversation:{messageString}".Trim();
         //Send to API
         try
         {
-            //get random number as string
-            var randomString = Program.Random.Next(100000000, 999999999).ToString();
-            var client = new BingChatClient(new BingChatClientOptions
-            {
-                CookieU = randomString,
-                Tone = BingChatTone.Precise
-            });
-            var response = await client.AskAsync(question);
+            var response = EdgeGPT.Run(question, "precise").adaptive_text;
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -131,13 +116,9 @@ Conversation:{messageString}".Trim();
         //Send to API
         try
         {
-            var client = new BingChatClient(new BingChatClientOptions
-            {
-                Tone = BingChatTone.Creative
-            });
             var chatMessage =
                 $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}".Trim();
-            var response = await client.AskAsync(chatMessage);
+            var response = EdgeGPT.Run(chatMessage, "creative").text;
             //Clean up response
             response = response.Replace("WAHAHA:", "");
             response = response.Replace("Generating answers for you...", "");

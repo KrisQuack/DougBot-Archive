@@ -3,6 +3,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using DougBot.Models;
 using DougBot.Systems;
 
 namespace DougBot;

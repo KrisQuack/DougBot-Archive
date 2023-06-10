@@ -122,21 +122,6 @@ public class PubSub
                 {
                     Twitch.IRC.SendMessage("dougdoug",
                         $"@{redeemedUser.DisplayName} Thanks for redeeming Minecraft access, Please join the discord and complete this form https://forms.gle/oouvNweqqBFZ8DtD9");
-                    var embed = new EmbedBuilder()
-                        .WithTitle($"New Redemption: {reward.Title}")
-                        .WithColor(Color.Orange)
-                        .WithFields(
-                            new EmbedFieldBuilder()
-                                .WithName("Redeemed By")
-                                .WithValue(redeemedUser.DisplayName)
-                                .WithIsInline(true),
-                            new EmbedFieldBuilder()
-                                .WithName("Message")
-                                .WithValue(redemption.UserInput ?? "No Message")
-                                .WithIsInline(true))
-                        .WithCurrentTimestamp();
-                    await SendMessageJob.Queue("567141138021089308", "1080251555619557445",
-                        new List<EmbedBuilder> { embed }, DateTime.UtcNow);
                 }
         });
     }

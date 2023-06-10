@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.Json;
 
 namespace DougBot.Models;
 
@@ -6,13 +7,21 @@ public class EdgeGPT
 {
     public static EdgeGPTResponse Run(string message, string style)
     {
-        var responseJson = RunCommand("python3", $"Models/EdgeGPTPython.py \"{style}\" \"{message}\"");
-        if (!responseJson.Contains("EdgeGPT.exceptions"))
+        try
         {
-            var response = System.Text.Json.JsonSerializer.Deserialize<EdgeGPTResponse>(responseJson);
-            return response;
+            var responseJson = RunCommand("python3", $"Models/EdgeGPTPython.py \"{style}\" \"{message}\"");
+            if (!responseJson.Contains("EdgeGPT.exceptions"))
+            {
+                var response = JsonSerializer.Deserialize<EdgeGPTResponse>(responseJson);
+                return response;
+            }
+            throw new Exception(responseJson);
         }
-        throw new Exception(responseJson);
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     private static string RunCommand(string command, string args)

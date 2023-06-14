@@ -8,26 +8,26 @@ using TwitchLib.Communication.Events;
 
 namespace DougBot.Twitch;
 
-public class IRC
+public class Irc
 {
-    private readonly string BotID = "853660174";
-    private string[] blockedWords;
-    private string[] containsBlock;
-    private string[] endsWithBlock;
-    private bool firstRun = true;
+    private readonly string _botId = "853660174";
+    private string[] _blockedWords;
+    private string[] _containsBlock;
+    private string[] _endsWithBlock;
+    private bool _firstRun = true;
 
     public TwitchClient Create(string channelName)
     {
-        var Client = new TwitchClient();
-        Client.OnJoinedChannel += Client_OnJoinedChannel;
-        Client.OnMessageReceived += Client_OnMessageReceived;
-        Client.OnWhisperReceived += Client_OnWhisperReceived;
-        Client.OnError += Client_OnError;
+        var client = new TwitchClient();
+        client.OnJoinedChannel += Client_OnJoinedChannel;
+        client.OnMessageReceived += Client_OnMessageReceived;
+        client.OnWhisperReceived += Client_OnWhisperReceived;
+        client.OnError += Client_OnError;
         //Temporary Credentials
         var credentials = new ConnectionCredentials("", "", disableUsernameCheck: true);
-        Client.Initialize(credentials, channelName);
+        client.Initialize(credentials, channelName);
         UpdateBlocks();
-        return Client;
+        return client;
     }
 
     public async Task UpdateBlocks()
@@ -37,10 +37,10 @@ public class IRC
             try
             {
                 var dbGuild = await Guild.GetGuild("567141138021089308");
-                containsBlock = dbGuild.TwitchSettings.ContainsBlock;
-                blockedWords = dbGuild.TwitchSettings.BlockedWords;
-                endsWithBlock = dbGuild.TwitchSettings.EndsWithBlock;
-                firstRun = true;
+                _containsBlock = dbGuild.TwitchSettings.ContainsBlock;
+                _blockedWords = dbGuild.TwitchSettings.BlockedWords;
+                _endsWithBlock = dbGuild.TwitchSettings.EndsWithBlock;
+                _firstRun = true;
                 await Task.Delay(60000);
             }
             catch (Exception ex)
@@ -49,42 +49,42 @@ public class IRC
             }
     }
 
-    private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs Message)
+    private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs message)
     {
-        if (Message.ChatMessage.IsModerator && Message.ChatMessage.Message.ToLower().Contains("wah, you up?"))
-            Twitch.IRC.SendMessage(Message.ChatMessage.Channel,
-                $"@{Message.ChatMessage.Username} Let me sleep, I'm tired");
+        if (message.ChatMessage.IsModerator && message.ChatMessage.Message.ToLower().Contains("wah, you up?"))
+            Twitch.Irc.SendMessage(message.ChatMessage.Channel,
+                $"@{message.ChatMessage.Username} Let me sleep, I'm tired");
         //Skip mods and broadcaster
-        if (firstRun || Message.ChatMessage.IsModerator || Message.ChatMessage.IsBroadcaster ||
-            Message.ChatMessage.Bits > 0) return;
+        if (_firstRun || message.ChatMessage.IsModerator || message.ChatMessage.IsBroadcaster ||
+            message.ChatMessage.Bits > 0) return;
         //Process
         _ = Task.Run(async () =>
         {
             try
             {
-                var msg = Message.ChatMessage.Message.ToLower();
+                var msg = message.ChatMessage.Message.ToLower();
                 //Check for blocked contains
-                if (containsBlock.Any(word => msg.Contains(word)) || endsWithBlock.Any(word => msg.EndsWith(word)))
+                if (_containsBlock.Any(word => msg.Contains(word)) || _endsWithBlock.Any(word => msg.EndsWith(word)))
                 {
-                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
-                        Message.ChatMessage.Id);
+                    await Twitch.Api.Helix.Moderation.DeleteChatMessagesAsync(message.ChatMessage.RoomId, _botId,
+                        message.ChatMessage.Id);
                     return;
                 }
 
                 var words = msg.Split(' ');
                 //Check for blocked words
-                if (words.Any(word => blockedWords.Contains(word)))
+                if (words.Any(word => _blockedWords.Contains(word)))
                 {
-                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
-                        Message.ChatMessage.Id);
+                    await Twitch.Api.Helix.Moderation.DeleteChatMessagesAsync(message.ChatMessage.RoomId, _botId,
+                        message.ChatMessage.Id);
                     return;
                 }
 
                 //Check for spam
 
                 if (words.Distinct().Any(word => words.Count(w => w == word) > 10))
-                    await Twitch.API.Helix.Moderation.DeleteChatMessagesAsync(Message.ChatMessage.RoomId, BotID,
-                        Message.ChatMessage.Id);
+                    await Twitch.Api.Helix.Moderation.DeleteChatMessagesAsync(message.ChatMessage.RoomId, _botId,
+                        message.ChatMessage.Id);
             }
             catch (Exception e)
             {
@@ -107,9 +107,9 @@ public class IRC
         });
     }
 
-    private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs Channel)
+    private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs channel)
     {
-        Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} IRC Joined {Channel.Channel}");
+        Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} IRC Joined {channel.Channel}");
     }
 
     private void Client_OnError(object? sender, OnErrorEventArgs e)

@@ -5,12 +5,12 @@ using DougBot.Scheduler;
 
 namespace DougBot.SlashCommands;
 
-public class SendDMCmd : InteractionModuleBase
+public class SendDmCmd : InteractionModuleBase
 {
     [SlashCommand("senddm", "Send a DM to the specified user")]
     [EnabledInDm(false)]
     [RequireUserPermission(GuildPermission.ModerateMembers)]
-    public async Task SendDM([Summary(description: "User to DM")] IGuildUser user,
+    public async Task SendDm([Summary(description: "User to DM")] IGuildUser user,
         [Summary(description: "Message to send")]
         string message)
     {
@@ -29,7 +29,7 @@ public class SendDMCmd : InteractionModuleBase
     }
 
     [ComponentInteraction("dmRecieved:*:*", true)]
-    public async Task DMProcess(string guildId, string guildName)
+    public async Task DmProcess(string guildId, string guildName)
     {
         var interaction = Context.Interaction as IComponentInteraction;
         var dbGuild = await Guild.GetGuild(guildId);

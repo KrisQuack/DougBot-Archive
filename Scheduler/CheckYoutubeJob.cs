@@ -36,10 +36,10 @@ public class CheckYoutubeJob : IJob
                         var videoTitle = latestVideo.Element(atom + "title").Value;
                         var videoThumbnail =
                             latestVideo.Descendants(media + "thumbnail").First().Attribute("url").Value;
-                        var videoID = latestVideo.Element(yt + "videoId").Value;
+                        var videoId = latestVideo.Element(yt + "videoId").Value;
                         var videoUrl = latestVideo.Element(atom + "link").Attribute("href").Value;
 
-                        if (videoID == dbYoutube.LastVideoId) continue;
+                        if (videoId == dbYoutube.LastVideoId) continue;
 
                         var mentionRole = "";
                         if (dbYoutube.Id == "UCzL0SBEypNk4slpzSbxo01g" && !videoTitle.Contains("VOD"))
@@ -53,7 +53,7 @@ public class CheckYoutubeJob : IJob
                             .WithUrl(videoUrl);
                         await SendMessageJob.Queue(dbGuild.Id, dbYoutube.PostChannel, new List<EmbedBuilder> { embed },
                             DateTime.UtcNow, mentionRole, true);
-                        dbYoutube.LastVideoId = videoID;
+                        dbYoutube.LastVideoId = videoId;
                         await dbGuild.Update();
                     }
                     catch (Exception ex)

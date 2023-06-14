@@ -11,7 +11,7 @@ public static class Quartz
 {
     public static IScheduler PersistentSchedulerInstance { get; private set; }
     public static IScheduler MemorySchedulerInstance { get; private set; }
-    public static List<string> _FailedJobNames { get; set; } = new();
+    public static List<string> FailedJobNames { get; set; } = new();
 
     public static async Task InitializePersistent()
     {
@@ -110,7 +110,7 @@ internal class ConsoleLogProvider : ILogProvider
             if (exception != null)
             {
                 Console.WriteLine("[" + DateTime.UtcNow.ToLongTimeString() + "] [" + level + "] " + exception);
-                Quartz._FailedJobNames.Add(func().Split(' ')[1].Split(".")[1]);
+                Quartz.FailedJobNames.Add(func().Split(' ')[1].Split(".")[1]);
             }
 
             return true;

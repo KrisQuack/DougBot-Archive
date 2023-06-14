@@ -13,7 +13,7 @@ public class DeleteMessageJob : IJob
             var channelId = Convert.ToUInt64(dataMap.GetString("channelId"));
             var messageId = Convert.ToUInt64(dataMap.GetString("messageId"));
 
-            var client = Program._Client;
+            var client = Program.Client;
             var guild = client.GetGuild(guildId);
             var channel = guild.GetTextChannel(channelId);
             await channel.DeleteMessageAsync(messageId);
@@ -38,7 +38,10 @@ public class DeleteMessageJob : IJob
                 .WithIdentity($"deleteMessageTrigger-{Guid.NewGuid()}", guildId)
                 .StartAt(schedule)
                 .Build();
-            await Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
+            if (schedule > DateTime.UtcNow.AddMinutes(10))
+                await Quartz.PersistentSchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
+            else
+                await Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
         }
         catch (Exception e)
         {

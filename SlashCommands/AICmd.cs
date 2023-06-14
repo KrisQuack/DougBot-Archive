@@ -10,7 +10,7 @@ namespace DougBot.SlashCommands;
 [Group("ai", "AI based commands")]
 [EnabledInDm(false)]
 [RequireUserPermission(GuildPermission.ModerateMembers)]
-public class AIChatCmd : InteractionModuleBase
+public class AiChatCmd : InteractionModuleBase
 {
     [SlashCommand("analyse", "Analyses the current chat")]
     public async Task Analyze([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
@@ -47,7 +47,7 @@ Consider the following rules for the conversation:
 8) No Sexual Topics; occasional mature jokes allowed.
 9) No Extremely Distressing topics; seek professional help for mental health issues.
 Conversation:{messageString}".Trim();
-            var response = EdgeGPT.Run(chatMessage, "precise").text;
+            var response = EdgeGpt.Run(chatMessage, "precise").Text;
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -71,7 +71,7 @@ Conversation:{messageString}".Trim();
         //Send to API
         try
         {
-            var response = EdgeGPT.Run(question, "precise").adaptive_text;
+            var response = EdgeGpt.Run(question, "precise").AdaptiveText;
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -118,7 +118,7 @@ Conversation:{messageString}".Trim();
         {
             var chatMessage =
                 $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}".Trim();
-            var response = EdgeGPT.Run(chatMessage, "creative").text;
+            var response = EdgeGpt.Run(chatMessage, "creative").Text;
             //Clean up response
             response = response.Replace("WAHAHA:", "");
             response = response.Replace("Generating answers for you...", "");

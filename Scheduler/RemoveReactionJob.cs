@@ -12,7 +12,7 @@ public class RemoveReactionJob : IJob
         try
         {
             var dataMap = context.JobDetail.JobDataMap;
-            var client = Program._Client;
+            var client = Program.Client;
             var guildId = Convert.ToUInt64(dataMap.GetString("guildId"));
             var channelId = Convert.ToUInt64(dataMap.GetString("channelId"));
             var messageId = Convert.ToUInt64(dataMap.GetString("messageId"));
@@ -63,7 +63,10 @@ public class RemoveReactionJob : IJob
                 .WithIdentity($"removeReactionJob-{hashString}", guildId)
                 .StartAt(schedule)
                 .Build();
-            await Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+            if (schedule > DateTime.UtcNow.AddMinutes(10))
+                await Quartz.PersistentSchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+            else
+                await Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
         }
         catch (Exception e)
         {

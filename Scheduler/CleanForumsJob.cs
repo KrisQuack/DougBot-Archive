@@ -12,7 +12,7 @@ public class CleanForumsJob : IJob
         try
         {
             var dbGuilds = await Guild.GetGuilds();
-            var client = Program._Client;
+            var client = Program.Client;
 
             foreach (var dbGuild in dbGuilds)
             {

@@ -27,7 +27,7 @@ public class SendMessageJob : IJob
                 return;
 
             // Get the guild and channel
-            var guild = Program._Client.GetGuild(guildId);
+            var guild = Program.Client.GetGuild(guildId);
             var channel = guild.Channels.FirstOrDefault(x => x.Id == channelId) as SocketTextChannel;
 
             // Deserialize and process embeds (if any)
@@ -89,7 +89,10 @@ public class SendMessageJob : IJob
                 .WithIdentity($"sendMessageTrigger-{Guid.NewGuid()}", guildId)
                 .StartAt(schedule)
                 .Build();
-            await Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            if (schedule > DateTime.UtcNow.AddMinutes(10))
+                await Quartz.PersistentSchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
+            else
+                await Quartz.MemorySchedulerInstance.ScheduleJob(sendMessageJob, sendMessageTrigger);
         }
         catch (Exception e)
         {

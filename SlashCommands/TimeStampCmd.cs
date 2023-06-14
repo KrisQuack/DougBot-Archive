@@ -6,7 +6,7 @@ namespace DougBot.SlashCommands;
 
 public class TimeStampCmd : InteractionModuleBase
 {
-    private static readonly Dictionary<string, string> s_timeZoneOffsets = new()
+    private static readonly Dictionary<string, string> STimeZoneOffsets = new()
     {
         { "ACDT", "+10:30" },
         { "ACST", "+09:30" },
@@ -103,7 +103,7 @@ public class TimeStampCmd : InteractionModuleBase
         var timeZonePos = dateString.LastIndexOf(' ') + 1;
         var tz = dateString.Substring(timeZonePos);
         dateString = dateString.Substring(0, dateString.Length - tz.Length);
-        dateString += s_timeZoneOffsets[tz];
+        dateString += STimeZoneOffsets[tz];
         //Try to parse the date and if it fails try to parse the time
         var parsedTime = DateTime.UtcNow;
         if (!DateTime.TryParseExact(dateString, "dd MMM yyyy HH:mm zzz", CultureInfo.InvariantCulture,

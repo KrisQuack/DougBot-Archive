@@ -17,10 +17,10 @@ public class HelpCmd : InteractionModuleBase
         var commandsEmbed = new EmbedBuilder()
             .WithTitle("Commands")
             .WithColor(Color.DarkBlue);
-        foreach (var module in Program._Service.Modules)
+        foreach (var module in Program.Service.Modules)
         foreach (var command in module.SlashCommands)
         {
-            var result = await command.CheckPreconditionsAsync(Context, Program._ServiceProvider);
+            var result = await command.CheckPreconditionsAsync(Context, Program.ServiceProvider);
             if (result.IsSuccess)
                 commandsEmbed.Fields.Add(new EmbedFieldBuilder
                 {

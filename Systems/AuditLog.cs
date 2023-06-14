@@ -10,7 +10,7 @@ public static class AuditLog
 {
     public static async Task Monitor()
     {
-        var client = Program._Client;
+        var client = Program.Client;
         client.MessageUpdated += MessageUpdatedHandler;
         client.MessageDeleted += MessageDeletedHandler;
         client.GuildMemberUpdated += GuildMemberUpdatedHandler;
@@ -104,9 +104,6 @@ public static class AuditLog
             if (before.Username != after.Username)
                 fields.Add(new EmbedFieldBuilder
                     { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
-            //If guild avatar changed add field
-            var attachments = new List<string>();
-
             //Set author
             var author = new EmbedAuthorBuilder
             {
@@ -116,7 +113,7 @@ public static class AuditLog
             //Log event for each mutual guild
             if (fields.Count > 0)
                 foreach (var guild in after.MutualGuilds)
-                    await LogEvent("User Updated", guild.Id.ToString(), Color.LightOrange, fields, author, attachments);
+                    await LogEvent("User Updated", guild.Id.ToString(), Color.LightOrange, fields, author);
         });
         return Task.CompletedTask;
     }
@@ -263,21 +260,21 @@ public static class AuditLog
         return Task.CompletedTask;
     }
 
-    public static Task LogEvent(string Content, string GuildId, Color EmbedColor,
-        List<EmbedFieldBuilder> Fields = null, EmbedAuthorBuilder Author = null, List<string> attachments = null)
+    public static Task LogEvent(string content, string guildId, Color embedColor,
+        List<EmbedFieldBuilder> fields = null, EmbedAuthorBuilder author = null, List<string> attachments = null)
     {
         _ = Task.Run(async () =>
         {
-            var dbGuild = await Guild.GetGuild(GuildId);
+            var dbGuild = await Guild.GetGuild(guildId);
             var embed = new EmbedBuilder()
-                .WithDescription(Content)
-                .WithColor(EmbedColor)
+                .WithDescription(content)
+                .WithColor(embedColor)
                 .WithCurrentTimestamp();
-            if (Fields != null)
-                foreach (var field in Fields.Where(f => f.Name != "null"))
+            if (fields != null)
+                foreach (var field in fields.Where(f => f.Name != "null"))
                     embed.AddField(field);
-            if (Author != null)
-                embed.WithAuthor(Author);
+            if (author != null)
+                embed.WithAuthor(author);
 
             await SendMessageJob.Queue(dbGuild.Id, dbGuild.LogChannel, new List<EmbedBuilder> { embed },
                 DateTime.UtcNow, attachments: attachments);

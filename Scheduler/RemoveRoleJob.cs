@@ -9,7 +9,7 @@ public class RemoveRoleJob : IJob
         try
         {
             var dataMap = context.JobDetail.JobDataMap;
-            var client = Program._Client;
+            var client = Program.Client;
             var guildId = Convert.ToUInt64(dataMap.GetString("guildId"));
             var userId = Convert.ToUInt64(dataMap.GetString("userId"));
             var roleId = Convert.ToUInt64(dataMap.GetString("roleId"));
@@ -33,17 +33,20 @@ public class RemoveRoleJob : IJob
     {
         try
         {
-            var deleteMessageJob = JobBuilder.Create<RemoveRoleJob>()
+            var removeRoleJob = JobBuilder.Create<RemoveRoleJob>()
                 .WithIdentity($"removeRoleJob-{Guid.NewGuid()}", guildId)
                 .UsingJobData("guildId", guildId)
                 .UsingJobData("userId", userId)
                 .UsingJobData("roleId", roleId)
                 .Build();
-            var deleteMessageTrigger = TriggerBuilder.Create()
+            var removeRoleTrigger = TriggerBuilder.Create()
                 .WithIdentity($"removeRoleTrigger-{Guid.NewGuid()}", guildId)
                 .StartAt(schedule)
                 .Build();
-            await Quartz.MemorySchedulerInstance.ScheduleJob(deleteMessageJob, deleteMessageTrigger);
+            if (schedule > DateTime.UtcNow.AddMinutes(10))
+                await Quartz.PersistentSchedulerInstance.ScheduleJob(removeRoleJob, removeRoleTrigger);
+            else
+                await Quartz.MemorySchedulerInstance.ScheduleJob(removeRoleJob, removeRoleTrigger);
         }
         catch (Exception e)
         {

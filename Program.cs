@@ -1,21 +1,20 @@
-﻿using System.Reflection;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Models;
 using DougBot.Systems;
+using System.Reflection;
 
 namespace DougBot;
 
 public class Program
 {
-    private bool _FirstStart = true;
+    private bool _firstStart = true;
 
     //Main Variables
-    public static InteractionService _Service { get; private set; }
-    public static IServiceProvider _ServiceProvider { get; }
-    public static DiscordSocketClient _Client { get; private set; }
+    public static InteractionService Service { get; private set; }
+    public static IServiceProvider ServiceProvider { get; }
+    public static DiscordSocketClient Client { get; private set; }
     public static Random Random { get; private set; } = new();
 
     private static Task Main()
@@ -34,42 +33,42 @@ public class Program
             LogLevel = LogSeverity.Info,
             MessageCacheSize = 1000
         };
-        _Client = new DiscordSocketClient(config);
-        _Client.Log += Log;
-        _Client.Ready += Ready;
-        await _Client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN"));
-        await _Client.StartAsync();
+        Client = new DiscordSocketClient(config);
+        Client.Log += Log;
+        Client.Ready += Ready;
+        await Client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN"));
+        await Client.StartAsync();
         //Block Task
         await Task.Delay(-1);
     }
 
     private async Task Ready()
     {
-        if (_FirstStart)
+        if (_firstStart)
         {
-            _FirstStart = false;
+            _firstStart = false;
             //Register Plugins
-            Scheduler.Quartz.InitializePersistent();
-            Scheduler.Quartz.InitializeMemory();
-            AuditLog.Monitor();
-            Events.Monitor();
-            new Twitch.Twitch().RunClient();
-            ReactionFilter.Monitor();
-            ForumAi.Monitor();
-            Scheduler.Quartz.CoreJobs();
+            _ = Scheduler.Quartz.InitializePersistent();
+            _ = Scheduler.Quartz.InitializeMemory();
+            _ = AuditLog.Monitor();
+            _ = Events.Monitor();
+            _ = new Twitch.Twitch().RunClient();
+            _ = ReactionFilter.Monitor();
+            _ = ForumAi.Monitor();
+            _ = Scheduler.Quartz.CoreJobs();
             //Set status
-            await _Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
+            await Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
             //Register Commands
-            _Service = new InteractionService(_Client.Rest);
-            _Service.Log += Log;
-            await _Service.AddModulesAsync(Assembly.GetEntryAssembly(), _ServiceProvider);
-            await _Service.RegisterCommandsGloballyAsync();
-            _Client.InteractionCreated += async interaction =>
+            Service = new InteractionService(Client.Rest);
+            Service.Log += Log;
+            await Service.AddModulesAsync(Assembly.GetEntryAssembly(), ServiceProvider);
+            await Service.RegisterCommandsGloballyAsync();
+            Client.InteractionCreated += async interaction =>
             {
-                var ctx = new SocketInteractionContext(_Client, interaction);
-                await _Service.ExecuteCommandAsync(ctx, _ServiceProvider);
+                var ctx = new SocketInteractionContext(Client, interaction);
+                await Service.ExecuteCommandAsync(ctx, ServiceProvider);
             };
-            _Service.SlashCommandExecuted += async (command, context, result) =>
+            Service.SlashCommandExecuted += async (command, context, result) =>
             {
                 var data = context.Interaction.Data as SocketSlashCommandData;
                 var auditFields = new List<EmbedFieldBuilder>
@@ -119,11 +118,12 @@ public class Program
                             IsInline = true
                         }
                 };
-                AuditLog.LogEvent("***Command Ran***", context.Guild.Id.ToString(),
+                await AuditLog.LogEvent("***Command Ran***", context.Guild.Id.ToString(),
                     result.IsSuccess ? Color.Green : Color.Red, auditFields);
                 if (!result.IsSuccess)
                 {
-                    if (result.ErrorReason.Contains("was not present in the dictionary.") &&
+                    if (result.ErrorReason != null &&
+                        result.ErrorReason.Contains("was not present in the dictionary.") &&
                         command.Name == "timestamp")
                     {
                         await context.Interaction.RespondAsync(
@@ -143,7 +143,7 @@ public class Program
         }
 
         //Status
-        await _Client.SetStatusAsync(UserStatus.DoNotDisturb);
+        await Client.SetStatusAsync(UserStatus.DoNotDisturb);
     }
 
     private static Task Log(LogMessage msg)

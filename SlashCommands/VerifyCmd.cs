@@ -44,11 +44,11 @@ public class VerifyCmd : InteractionModuleBase
     public async Task VerifyResponse(string fileName)
     {
         //Show the verification modal
-        await RespondWithModalAsync<verifyModal>($"verifymodal:{fileName}");
+        await RespondWithModalAsync<VerifyModal>($"verifymodal:{fileName}");
     }
 
     [ModalInteraction("verifymodal:*", true)]
-    public async Task VerifyProcess(string fileName, verifyModal modal)
+    public async Task VerifyProcess(string fileName, VerifyModal modal)
     {
         if (modal.Peppers == fileName)
             await RespondAsync("You are not a bot!", ephemeral: true);
@@ -57,7 +57,7 @@ public class VerifyCmd : InteractionModuleBase
     }
 }
 
-public class verifyModal : IModal
+public class VerifyModal : IModal
 {
     [ModalTextInput("peppers", TextInputStyle.Short,
         "Please enter the amount of bell peppers you saw in the image")]

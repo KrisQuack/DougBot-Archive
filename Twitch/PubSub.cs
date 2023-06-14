@@ -3,6 +3,7 @@ using DougBot.Scheduler;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
+using TwitchLib.PubSub.Models.Responses.Messages.Redemption;
 
 namespace DougBot.Twitch;
 
@@ -10,18 +11,18 @@ public class PubSub
 {
     public TwitchPubSub Create()
     {
-        var Client = new TwitchPubSub();
+        var client = new TwitchPubSub();
         //Main events
-        Client.OnListenResponse += OnListenResponse;
-        Client.OnPubSubServiceClosed += OnPubSubServiceClosed;
-        Client.OnPubSubServiceError += OnPubSubServiceError;
+        client.OnListenResponse += OnListenResponse;
+        client.OnPubSubServiceClosed += OnPubSubServiceClosed;
+        client.OnPubSubServiceError += OnPubSubServiceError;
         //Listeners
-        Client.OnPrediction += PubSub_OnPrediction;
-        Client.OnChannelPointsRewardRedeemed += PubSub_OnChannelPointsRewardRedeemed;
-        return Client;
+        client.OnPrediction += PubSub_OnPrediction;
+        client.OnChannelPointsRewardRedeemed += PubSub_OnChannelPointsRewardRedeemed;
+        return client;
     }
 
-    private void PubSub_OnPrediction(object? sender, OnPredictionArgs Prediction)
+    private void PubSub_OnPrediction(object? sender, OnPredictionArgs prediction)
     {
         _ = Task.Run(async () =>
         {
@@ -32,38 +33,38 @@ public class PubSub
                     .WithCurrentTimestamp();
                 var messageContent = "";
                 //New
-                if (Prediction.Type == PredictionType.EventCreated)
+                if (prediction.Type == PredictionType.EventCreated)
                 {
-                    var endDate = Prediction.CreatedAt.Value.AddSeconds(Prediction.PredictionTime);
+                    var endDate = prediction.CreatedAt.Value.AddSeconds(prediction.PredictionTime);
                     var endDateOffset = new DateTimeOffset(endDate).ToUniversalTime().ToUnixTimeSeconds();
                     messageContent = "<@&1080237787174948936>";
-                    embed.WithTitle($"Prediction Created: {Prediction.Title}");
+                    embed.WithTitle($"Prediction Created: {prediction.Title}");
                     embed.WithDescription($"Voting ends: <t:{endDateOffset}:R>");
                     embed.WithColor(Color.Green);
-                    embed.AddField("Outcomes", string.Join("\n", Prediction.Outcomes.Select(p => $"{p.Title}")));
+                    embed.AddField("Outcomes", string.Join("\n", prediction.Outcomes.Select(p => $"{p.Title}")));
                 }
                 //Canceled
-                else if (Prediction.Type == PredictionType.EventUpdated &&
-                         Prediction.Status == PredictionStatus.Canceled)
+                else if (prediction.Type == PredictionType.EventUpdated &&
+                         prediction.Status == PredictionStatus.Canceled)
                 {
-                    embed.WithTitle($"Prediction Canceled: {Prediction.Title}");
+                    embed.WithTitle($"Prediction Canceled: {prediction.Title}");
                     embed.WithColor(Color.Red);
                 }
                 //Locked or Resolved
-                else if (Prediction.Type == PredictionType.EventUpdated &&
-                         (Prediction.Status == PredictionStatus.Locked ||
-                          Prediction.Status == PredictionStatus.Resolved))
+                else if (prediction.Type == PredictionType.EventUpdated &&
+                         (prediction.Status == PredictionStatus.Locked ||
+                          prediction.Status == PredictionStatus.Resolved))
                 {
-                    var isResolved = Prediction.Status == PredictionStatus.Resolved;
-                    embed.WithTitle($"Prediction {(isResolved ? "Ended" : "Locked")}: {Prediction.Title}");
+                    var isResolved = prediction.Status == PredictionStatus.Resolved;
+                    embed.WithTitle($"Prediction {(isResolved ? "Ended" : "Locked")}: {prediction.Title}");
                     embed.WithColor(isResolved ? Color.Orange : Color.Blue);
-                    var winOutcome = Prediction.Outcomes.FirstOrDefault(p => p.Id == Prediction.WinningOutcomeId);
-                    var totalPoints = Prediction.Outcomes.Sum(p => p.TotalPoints);
-                    var totalUsers = Prediction.Outcomes.Sum(p => p.TotalUsers);
+                    var winOutcome = prediction.Outcomes.FirstOrDefault(p => p.Id == prediction.WinningOutcomeId);
+                    var totalPoints = prediction.Outcomes.Sum(p => p.TotalPoints);
+                    var totalUsers = prediction.Outcomes.Sum(p => p.TotalUsers);
                     //Create field for each loosing outcome
-                    foreach (var outcome in Prediction.Outcomes)
+                    foreach (var outcome in prediction.Outcomes)
                     {
-                        var isWinning = winOutcome != null && outcome.Id == Prediction.WinningOutcomeId;
+                        var isWinning = winOutcome != null && outcome.Id == prediction.WinningOutcomeId;
                         embed.AddField(isWinning ? $"🎉{outcome.Title}🎉" : $"{outcome.Title}",
                             $"Users: **{outcome.TotalUsers:n0}** {Math.Round((double)outcome.TotalUsers / totalUsers * 100, 0)}%\n" +
                             $"Points: **{outcome.TotalPoints:n0}** {Math.Round((double)outcome.TotalPoints / totalPoints * 100, 0)}%\n" +
@@ -109,18 +110,18 @@ public class PubSub
     }
 
 
-    private void PubSub_OnChannelPointsRewardRedeemed(object sender, OnChannelPointsRewardRedeemedArgs Redemption)
+    private void PubSub_OnChannelPointsRewardRedeemed(object sender, OnChannelPointsRewardRedeemedArgs redemptionArg)
     {
         _ = Task.Run(async () =>
         {
-            var redemption = Redemption.RewardRedeemed.Redemption;
+            var redemption = redemptionArg.RewardRedeemed.Redemption;
             var reward = redemption.Reward;
             var redeemedUser = redemption.User;
             //Notify mods of new redemption
             if (redemption.Status == "UNFULFILLED")
                 if (reward.Title.Contains("Minecraft Server"))
                 {
-                    Twitch.IRC.SendMessage("dougdoug",
+                    Twitch.Irc.SendMessage("dougdoug",
                         $"@{redeemedUser.DisplayName} Thanks for redeeming Minecraft access, Please join the discord and complete this form https://forms.gle/oouvNweqqBFZ8DtD9");
                 }
         });

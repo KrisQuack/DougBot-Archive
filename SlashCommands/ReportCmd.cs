@@ -14,18 +14,18 @@ public class ReportCmd : InteractionModuleBase
     public async Task ReportMessage(IMessage message)
     {
         var channel = message.Channel as SocketGuildChannel;
-        await RespondWithModalAsync<reportModal>($"report:{message.Id}:0");
+        await RespondWithModalAsync<ReportModal>($"report:{message.Id}:0");
     }
 
     [UserCommand("Report User")]
     [EnabledInDm(false)]
     public async Task ReportUser(IGuildUser user)
     {
-        await RespondWithModalAsync<reportModal>($"report:0:{user.Id}");
+        await RespondWithModalAsync<ReportModal>($"report:0:{user.Id}");
     }
 
     [ModalInteraction("report:*:*", true)]
-    public async Task ReportProcess(string messageID, string userID, reportModal modal)
+    public async Task ReportProcess(string messageId, string userId, ReportModal modal)
     {
         await RespondAsync("Submitting...", ephemeral: true);
         try
@@ -36,9 +36,9 @@ public class ReportCmd : InteractionModuleBase
             var color = colorHash.BuildToColor(Context.User.Id.ToString());
             var embeds = new List<EmbedBuilder>();
             //If the message is a user report
-            if (userID != "0")
+            if (userId != "0")
             {
-                var reportedUser = await Context.Guild.GetUserAsync(ulong.Parse(userID));
+                var reportedUser = await Context.Guild.GetUserAsync(ulong.Parse(userId));
                 embeds.Add(new EmbedBuilder()
                     .WithTitle("User Reported")
                     .WithFields(
@@ -60,7 +60,7 @@ public class ReportCmd : InteractionModuleBase
             else
             {
                 var channel = Context.Channel as SocketTextChannel;
-                var message = await channel.GetMessageAsync(ulong.Parse(messageID));
+                var message = await channel.GetMessageAsync(ulong.Parse(messageId));
                 embeds.Add(new EmbedBuilder()
                     .WithTitle("Message Reported")
                     .WithUrl(message.GetJumpUrl())
@@ -99,7 +99,7 @@ public class ReportCmd : InteractionModuleBase
     }
 }
 
-public class reportModal : IModal
+public class ReportModal : IModal
 {
     [ModalTextInput("reason", TextInputStyle.Paragraph,
         "Please explain what it is you are reporting and any details that may help us.")]

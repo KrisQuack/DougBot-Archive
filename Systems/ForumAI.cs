@@ -11,7 +11,7 @@ public static class ForumAi
 {
     public static async Task Monitor()
     {
-        var client = Program._Client;
+        var client = Program.Client;
         client.MessageReceived += ForumAiHandler;
     }
 
@@ -34,7 +34,7 @@ public static class ForumAi
                     var messages = await threadChannel.GetMessagesAsync(20).FlattenAsync();
                     messages = messages.OrderBy(m => m.CreatedAt);
                     //Setup OpenAI
-                    var client = new OpenAIClient(new Uri(dbGuild.OpenAiURL),
+                    var client = new OpenAIClient(new Uri(dbGuild.OpenAiUrl),
                         new AzureKeyCredential(dbGuild.OpenAiToken));
                     var model = "WahSpeech";
                     var complete = false;

@@ -15,7 +15,7 @@ public class SendDmJob : IJob
         try
         {
             var dataMap = context.JobDetail.JobDataMap;
-            var client = Program._Client;
+            var client = Program.Client;
             var guildId = Convert.ToUInt64(dataMap.GetString("guildId"));
             var userId = Convert.ToUInt64(dataMap.GetString("userId"));
             var senderId = Convert.ToUInt64(dataMap.GetString("senderId"));
@@ -87,7 +87,10 @@ public class SendDmJob : IJob
                 .WithIdentity($"sendDMTrigger-{Guid.NewGuid()}", guildId)
                 .StartAt(schedule)
                 .Build();
-            await Quartz.MemorySchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
+            if (schedule > DateTime.UtcNow.AddMinutes(10))
+                await Quartz.PersistentSchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
+            else
+                await Quartz.MemorySchedulerInstance.ScheduleJob(sendDmJob, sendDmTrigger);
         }
         catch (Exception e)
         {

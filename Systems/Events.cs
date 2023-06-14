@@ -6,14 +6,14 @@ namespace DougBot.Systems;
 
 public static class Events
 {
-    private static DiscordSocketClient _Client;
+    private static DiscordSocketClient _client;
 
     public static async Task Monitor()
     {
-        _Client = Program._Client;
+        _client = Program.Client;
         ;
-        _Client.MessageReceived += MessageReceivedHandler;
-        _Client.UserJoined += UserJoinedHandler;
+        _client.MessageReceived += MessageReceivedHandler;
+        _client.UserJoined += UserJoinedHandler;
         Console.WriteLine("EventHandler Initialized");
     }
 
@@ -27,7 +27,7 @@ public static class Events
         _ = Task.Run(async () =>
         {
             if (message.Channel is SocketDMChannel && message.Author.MutualGuilds.Any() &&
-                message.Author.Id != _Client.CurrentUser.Id)
+                message.Author.Id != _client.CurrentUser.Id)
             {
                 //Create embed to send to guild
                 var embeds = new List<EmbedBuilder>();

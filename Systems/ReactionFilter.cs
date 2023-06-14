@@ -7,20 +7,20 @@ namespace DougBot.Systems;
 
 public static class ReactionFilter
 {
-    private static readonly Dictionary<ulong, List<string>> emoteWhitelists = new();
-    private static List<Guild> dbGuilds = new();
+    private static readonly Dictionary<ulong, List<string>> EmoteWhitelists = new();
+    private static List<Guild> _dbGuilds = new();
 
     public static async Task Monitor()
     {
-        var client = Program._Client;
+        var client = Program.Client;
         client.ReactionAdded += ReactionAddedHandler;
         Console.WriteLine("ReactionFilter Initialized");
         while (true)
             try
             {
-                dbGuilds = await Guild.GetGuilds();
-                emoteWhitelists.Clear();
-                foreach (var dbGuild in dbGuilds)
+                _dbGuilds = await Guild.GetGuilds();
+                EmoteWhitelists.Clear();
+                foreach (var dbGuild in _dbGuilds)
                 {
                     //If settings are null, skip
                     if (string.IsNullOrEmpty(dbGuild.ReactionFilterEmotes))
@@ -31,7 +31,7 @@ public static class ReactionFilter
                     var guildEmotes = guild.Emotes;
                     var emoteWhitelist = guildEmotes.Select(e => e.Name).ToList();
                     emoteWhitelist.AddRange(dbGuild.ReactionFilterEmotes.Split(','));
-                    emoteWhitelists.Add(guild.Id, emoteWhitelist);
+                    EmoteWhitelists.Add(guild.Id, emoteWhitelist);
                 }
 
                 await Task.Delay(600000);
@@ -42,38 +42,38 @@ public static class ReactionFilter
             }
     }
 
-    private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> Message,
-        Cacheable<IMessageChannel, ulong> Channel, SocketReaction Reaction)
+    private static Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> message,
+        Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                var guild = (Reaction.Channel as SocketTextChannel).Guild;
+                var guild = (reaction.Channel as SocketTextChannel).Guild;
                 //Skip if emoteWhitelists does not contain guild
-                if (!emoteWhitelists.ContainsKey(guild.Id) || !dbGuilds.Any())
+                if (!EmoteWhitelists.ContainsKey(guild.Id) || !_dbGuilds.Any())
                     return;
                 //Load values
-                var emote = Reaction.Emote;
-                var whitelist = emoteWhitelists[guild.Id];
-                var dbGuild = dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
+                var emote = reaction.Emote;
+                var whitelist = EmoteWhitelists[guild.Id];
+                var dbGuild = _dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
                 var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
                 //Check if emote is whitelisted
                 if (whitelist != null && whitelistChannels != null)
-                    if (whitelistChannels.Contains(Reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
+                    if (whitelistChannels.Contains(reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
                     {
                         //Get message
                         IMessage realMessage;
-                        if (!Message.HasValue)
-                            realMessage = await Channel.Value.GetMessageAsync(Reaction.MessageId);
+                        if (!message.HasValue)
+                            realMessage = await channel.Value.GetMessageAsync(reaction.MessageId);
                         else
-                            realMessage = Message.Value;
+                            realMessage = message.Value;
                         //Set target time
                         var targetTime = realMessage.Timestamp.AddMinutes(1).UtcDateTime;
                         var minTargetTime = DateTime.UtcNow.AddSeconds(10);
                         if (targetTime < minTargetTime) targetTime = minTargetTime;
-                        await RemoveReactionJob.Queue(guild.Id.ToString(), Reaction.Channel.Id.ToString(),
-                            Reaction.MessageId.ToString(), emote.Name, targetTime);
+                        await RemoveReactionJob.Queue(guild.Id.ToString(), reaction.Channel.Id.ToString(),
+                            reaction.MessageId.ToString(), emote.Name, targetTime);
                     }
             }
             catch (Exception ex)

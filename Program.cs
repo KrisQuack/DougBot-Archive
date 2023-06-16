@@ -51,7 +51,6 @@ public class Program
             _ = AuditLog.Monitor();
             _ = DMRelay.Monitor();
             _ = new Twitch.Twitch().RunClient();
-            _ = ReactionFilter.Monitor();
             _ = ForumAi.Monitor();
             _ = Scheduler.Quartz.CoreJobs();
             //Set status

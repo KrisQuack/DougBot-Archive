@@ -20,7 +20,7 @@ public class EdgeGpt
             throw;
         }
     }
-    
+
     private static string RunCommand(string command, string args)
     {
         var process = new Process()
@@ -42,15 +42,22 @@ public class EdgeGpt
 
         return string.IsNullOrEmpty(error) ? output : error;
     }
-    
+
     public class EdgeGptResponse
     {
-        public string Text { get; set; }
-        public string Author { get; set; }
-        public object[] Sources { get; set; }
-        public string SourcesText { get; set; }
-        public string[] Suggestions { get; set; }
-        public int MessagesLeft { get; set; }
-        public string AdaptiveText { get; set; }
+        public string text { get; set; }
+        public string author { get; set; }
+        public EdgeGptSource[] sources { get; set; }
+        public string sources_text { get; set; }
+        public string[] suggestions { get; set; }
+        public int messages_left { get; set; }
+        public string adaptive_text { get; set; }
     }
+    public class EdgeGptSource
+    {
+        public string providerDisplayName { get; set; }
+        public string seeMoreUrl { get; set; }
+        public string searchQuery { get; set; }
+    }
+
 }

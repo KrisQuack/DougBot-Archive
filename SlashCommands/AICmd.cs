@@ -47,7 +47,7 @@ Consider the following rules for the conversation:
 8) No Sexual Topics; occasional mature jokes allowed.
 9) No Extremely Distressing topics; seek professional help for mental health issues.
 Conversation:{messageString}".Trim();
-            var response = EdgeGpt.Run(chatMessage, "precise").Text;
+            var response = EdgeGpt.Run(chatMessage, "precise").text;
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -71,7 +71,7 @@ Conversation:{messageString}".Trim();
         //Send to API
         try
         {
-            var response = EdgeGpt.Run(question, "precise").AdaptiveText;
+            var response = EdgeGpt.Run(question, "precise").adaptive_text;
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -118,7 +118,7 @@ Conversation:{messageString}".Trim();
         {
             var chatMessage =
                 $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}".Trim();
-            var response = EdgeGpt.Run(chatMessage, "creative").Text;
+            var response = EdgeGpt.Run(chatMessage, "creative").text;
             //Clean up response
             response = response.Replace("WAHAHA:", "");
             response = response.Replace("Generating answers for you...", "");

@@ -21,11 +21,11 @@ public class Twitch
         {
             Console.WriteLine("Twitch Initialized");
             //Load settings
-            var settings = (await Guild.GetGuild("567141138021089308")).TwitchSettings;
+            var settings = (await Guild.GetGuild("567141138021089308"));
             //Setup API
             Api = new TwitchAPI();
             var monitor = new LiveStreamMonitorService(Api);
-            monitor.SetChannelsByName(new List<string> { settings.ChannelName });
+            monitor.SetChannelsByName(new List<string> { settings.TwitchChannelName });
             monitor.OnStreamOnline += Monitor_OnStreamOnline;
             monitor.OnStreamOffline += Monitor_OnStreamOffline;
             monitor.Start();
@@ -41,30 +41,30 @@ public class Twitch
                 Console.WriteLine($"[General/Info] {DateTime.UtcNow:HH:mm:ss} PubSub Connected");
             };
             //Setup IRC anonymously
-            Irc = new Irc().Create(settings.ChannelName);
-            Irc.OnConnected += (sender, e) => { Irc.JoinChannel(settings.ChannelName); };
+            Irc = new Irc().Create(settings.TwitchChannelName);
+            Irc.OnConnected += (sender, e) => { Irc.JoinChannel(settings.TwitchChannelName); };
             //Refresh token when expired
             while (true)
                 try
                 {
                     //Refresh tokens
                     botRefresh =
-                        await Api.Auth.RefreshAuthTokenAsync(settings.BotRefreshToken, settings.ClientSecret,
-                            settings.ClientId);
+                        await Api.Auth.RefreshAuthTokenAsync(settings.TwitchBotRefreshToken, settings.TwitchClientSecret,
+                            settings.TwitchClientId);
                     dougRefresh =
-                        await Api.Auth.RefreshAuthTokenAsync(settings.ChannelRefreshToken, settings.ClientSecret,
-                            settings.ClientId);
+                        await Api.Auth.RefreshAuthTokenAsync(settings.TwitchChannelRefreshToken, settings.TwitchClientSecret,
+                            settings.TwitchClientId);
                     Api.Settings.AccessToken = botRefresh.AccessToken;
-                    Api.Settings.ClientId = settings.ClientId;
+                    Api.Settings.ClientId = settings.TwitchClientId;
                     //Connect IRC
-                    var credentials = new ConnectionCredentials(settings.BotName, Api.Settings.AccessToken,
+                    var credentials = new ConnectionCredentials(settings.TwitchBotName, Api.Settings.AccessToken,
                         disableUsernameCheck: true);
                     Irc.SetConnectionCredentials(credentials);
                     Irc.Connect();
                     //Update PubSub
                     PubSub.Connect();
-                    PubSub.ListenToChannelPoints(settings.ChannelId);
-                    PubSub.ListenToPredictions(settings.ChannelId);
+                    PubSub.ListenToChannelPoints(settings.TwitchChannelId);
+                    PubSub.ListenToPredictions(settings.TwitchChannelId);
                     //Get the lowest refresh time
                     var refreshTime = botRefresh.ExpiresIn < dougRefresh.ExpiresIn
                         ? botRefresh.ExpiresIn

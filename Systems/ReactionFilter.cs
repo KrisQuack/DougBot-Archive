@@ -23,14 +23,14 @@ public static class ReactionFilter
                 foreach (var dbGuild in _dbGuilds)
                 {
                     //If settings are null, skip
-                    if (string.IsNullOrEmpty(dbGuild.ReactionFilterEmotes))
+                    if (dbGuild.ReactionFilterEmotes == null)
                         continue;
                     //Get guild from client
                     var guild = client.Guilds.FirstOrDefault(g => g.Id.ToString() == dbGuild.Id);
                     //Compile whitelist
                     var guildEmotes = guild.Emotes;
                     var emoteWhitelist = guildEmotes.Select(e => e.Name).ToList();
-                    emoteWhitelist.AddRange(dbGuild.ReactionFilterEmotes.Split(','));
+                    emoteWhitelist.AddRange(dbGuild.ReactionFilterEmotes);
                     EmoteWhitelists.Add(guild.Id, emoteWhitelist);
                 }
 
@@ -57,10 +57,9 @@ public static class ReactionFilter
                 var emote = reaction.Emote;
                 var whitelist = EmoteWhitelists[guild.Id];
                 var dbGuild = _dbGuilds.FirstOrDefault(g => g.Id == guild.Id.ToString());
-                var whitelistChannels = dbGuild.ReactionFilterChannels.Split(",");
                 //Check if emote is whitelisted
-                if (whitelist != null && whitelistChannels != null)
-                    if (whitelistChannels.Contains(reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
+                if (whitelist != null && dbGuild.ReactionFilterChannels != null)
+                    if (dbGuild.ReactionFilterChannels.Contains(reaction.Channel.Id.ToString()) && !whitelist.Contains(emote.Name))
                     {
                         //Get message
                         IMessage realMessage;

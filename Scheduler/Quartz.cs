@@ -1,9 +1,7 @@
 using System.Collections.Specialized;
-using Microsoft.Azure.Cosmos;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Logging;
-using Quartz.Spi.CosmosDbJobStore;
 
 namespace DougBot.Scheduler;
 
@@ -17,26 +15,19 @@ public static class Quartz
     {
         try
         {
-            var properties = new NameValueCollection
-            {
-                [StdSchedulerFactory.PropertySchedulerInstanceName] = "QuartsPersistent",
-                [StdSchedulerFactory.PropertySchedulerInstanceId] = "DougBot",
-                [StdSchedulerFactory.PropertyJobStoreType] = typeof(CosmosDbJobStore).AssemblyQualifiedName,
-                [$"{StdSchedulerFactory.PropertyObjectSerializer}.type"] = "json",
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Endpoint"] =
-                    Environment.GetEnvironmentVariable("ACCOUNT_ENDPOINT"),
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Key"] =
-                    Environment.GetEnvironmentVariable("ACCOUNT_KEY"),
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.DatabaseId"] =
-                    Environment.GetEnvironmentVariable("DATABASE_NAME"),
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.CollectionId"] = "Quartz",
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.Clustered"] = "true",
-                [$"{StdSchedulerFactory.PropertyJobStorePrefix}.ConnectionMode"] =
-                    ((int)ConnectionMode.Gateway).ToString()
-            };
             //JobFactory
             LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
-            var scheduler = await SchedulerBuilder.Create(properties)
+            var scheduler = await SchedulerBuilder.Create()
+                .UsePersistentStore(store =>
+                {
+                    store.UseProperties = true;
+                    store.RetryInterval = TimeSpan.FromSeconds(15);
+                    store.UsePostgres(sql =>
+                    {
+                        sql.ConnectionString = Environment.GetEnvironmentVariable("QUARTZ_CONNECTION_STRING");
+                    });
+                    store.UseJsonSerializer();
+                })
                 .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
                 .BuildScheduler();
             //Singleton
@@ -56,8 +47,7 @@ public static class Quartz
         {
             //JobFactory
             LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
-            var properties = new NameValueCollection();
-            var scheduler = await SchedulerBuilder.Create(properties)
+            var scheduler = await SchedulerBuilder.Create()
                 .WithName("QuartzMemory")
                 .UseDefaultThreadPool(tp => tp.MaxConcurrency = 20)
                 .BuildScheduler();

@@ -15,8 +15,8 @@ public class CheckYoutubeJob : IJob
             using var httpClient = new HttpClient();
             foreach (var dbGuild in dbGuilds)
             {
-                if (dbGuild.YoutubeSettings == null) continue;
-                foreach (var dbYoutube in dbGuild.YoutubeSettings)
+                if (dbGuild.Youtubes == null) continue;
+                foreach (var dbYoutube in dbGuild.Youtubes)
                     try
                     {
                         var ytFeed =

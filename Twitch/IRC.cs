@@ -37,9 +37,9 @@ public class Irc
             try
             {
                 var dbGuild = await Guild.GetGuild("567141138021089308");
-                _containsBlock = dbGuild.TwitchSettings.ContainsBlock;
-                _blockedWords = dbGuild.TwitchSettings.BlockedWords;
-                _endsWithBlock = dbGuild.TwitchSettings.EndsWithBlock;
+                _containsBlock = dbGuild.TwitchContainsBlock;
+                _blockedWords = dbGuild.TwitchBlockedWords;
+                _endsWithBlock = dbGuild.TwitchEndsWithBlock;
                 _firstRun = true;
                 await Task.Delay(60000);
             }

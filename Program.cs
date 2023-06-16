@@ -27,9 +27,7 @@ public class Program
         //Start discord bot
         var config = new DiscordSocketConfig
         {
-            GatewayIntents = GatewayIntents.All,
-            AlwaysDownloadUsers = true,
-            AlwaysResolveStickers = true,
+            GatewayIntents = GatewayIntents.All ^ GatewayIntents.GuildPresences,
             LogLevel = LogSeverity.Info,
             MessageCacheSize = 1000
         };

@@ -1,6 +1,4 @@
-using System.Collections.Specialized;
 using Quartz;
-using Quartz.Impl;
 using Quartz.Logging;
 
 namespace DougBot.Scheduler;

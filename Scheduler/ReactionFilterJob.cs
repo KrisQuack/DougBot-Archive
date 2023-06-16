@@ -37,7 +37,7 @@ public class ReactionFilterJob : IJob
                         //Remove reactions
                         foreach (var reaction in reactions)
                         {
-                            await message.RemoveAllReactionsForEmoteAsync(reaction.Key);
+                            await RemoveReactionJob.Queue(dbGuild.Id, channel.Id.ToString(), message.Id.ToString(), reaction.Key.Name, DateTime.UtcNow);
                         }
                     }
                 }

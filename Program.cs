@@ -50,6 +50,7 @@ public class Program
             _ = Scheduler.Quartz.InitializeMemory();
             _ = AuditLog.Monitor();
             _ = DMRelay.Monitor();
+            _ = TemperatureConversion.Monitor();
             _ = new Twitch.Twitch().RunClient();
             _ = ForumAi.Monitor();
             _ = Scheduler.Quartz.CoreJobs();

@@ -1,11 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
+using Discord;
 using Discord.WebSocket;
 using Quartz;
 
 namespace DougBot.Scheduler;
 
-public class RemoveReactionJob : IJob
+public class AddReactionJob : IJob
 {
     public async Task Execute(IJobExecutionContext context)
     {
@@ -18,18 +19,11 @@ public class RemoveReactionJob : IJob
             var messageId = Convert.ToUInt64(dataMap.GetString("messageId"));
             var emoteName = dataMap.GetString("emoteName");
 
-            //check for nulls and return if any are null
-            if (guildId == 0 || channelId == 0 || messageId == 0 || emoteName == null)
-                return;
-
+            
             var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
             var channel = guild.Channels.FirstOrDefault(c => c.Id == channelId) as SocketTextChannel;
             var message = await channel.GetMessageAsync(messageId);
-            var emote = message.Reactions.FirstOrDefault(r => r.Key.Name == emoteName).Key;
-            //check for nulls and return if any are null
-            if (emote == null)
-                return;
-            await message.RemoveAllReactionsForEmoteAsync(emote);
+            await message.AddReactionAsync(new Emoji(emoteName));
         }
         catch (Exception e)
         {
@@ -47,25 +41,25 @@ public class RemoveReactionJob : IJob
             //Check if trigger already exists
             var trigger =
                 await Quartz.MemorySchedulerInstance.GetTrigger(
-                    new TriggerKey($"removeReactionJob-{hashString}", guildId));
+                    new TriggerKey($"addReactionJob-{hashString}", guildId));
             if (trigger != null)
                 return;
             //If not, create a new trigger
-            var removeReactionJob = JobBuilder.Create<RemoveReactionJob>()
-                .WithIdentity($"removeReactionJob-{hashString}", guildId)
+            var addReactionJob = JobBuilder.Create<RemoveReactionJob>()
+                .WithIdentity($"addReactionJob-{hashString}", guildId)
                 .UsingJobData("guildId", guildId)
                 .UsingJobData("channelId", channelId)
                 .UsingJobData("messageId", messageId)
                 .UsingJobData("emoteName", emoteName)
                 .Build();
-            var removeReactionTrigger = TriggerBuilder.Create()
-                .WithIdentity($"removeReactionJob-{hashString}", guildId)
+            var addReactionTrigger = TriggerBuilder.Create()
+                .WithIdentity($"addReactionJob-{hashString}", guildId)
                 .StartAt(schedule)
                 .Build();
             if (schedule > DateTime.UtcNow.AddMinutes(10))
-                await Quartz.PersistentSchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+                await Quartz.PersistentSchedulerInstance.ScheduleJob(addReactionJob, addReactionTrigger);
             else
-                await Quartz.MemorySchedulerInstance.ScheduleJob(removeReactionJob, removeReactionTrigger);
+                await Quartz.MemorySchedulerInstance.ScheduleJob(addReactionJob, addReactionTrigger);
         }
         catch (Exception e)
         {

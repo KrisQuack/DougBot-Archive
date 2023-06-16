@@ -1,3 +1,4 @@
+using DougBot.Models;
 using Quartz;
 using Quartz.Logging;
 
@@ -82,6 +83,28 @@ public static class Quartz
             .WithIdentity("YoutubeTrigger", "System")
             .StartNow()
             .WithSimpleSchedule(x => x.WithIntervalInMinutes(10).RepeatForever())
+            .Build();
+        await MemorySchedulerInstance.ScheduleJob(job, trigger);
+        //Reaction Filter Frequent
+        job = JobBuilder.Create<ReactionFilterJob>()
+            .WithIdentity("ReactionFilterJob", "System")
+            .UsingJobData("messageCount", 10)
+            .Build();
+        trigger = TriggerBuilder.Create()
+            .WithIdentity("ReactionFilterTrigger", "System")
+            .StartNow()
+            .WithSimpleSchedule(x => x.WithIntervalInMinutes(5).RepeatForever())
+            .Build();
+        await MemorySchedulerInstance.ScheduleJob(job, trigger);
+        //Reaction Filter Infrequent
+        job = JobBuilder.Create<ReactionFilterJob>()
+            .WithIdentity("ReactionFilterJob", "System")
+            .UsingJobData("messageCount", 100)
+            .Build();
+        trigger = TriggerBuilder.Create()
+            .WithIdentity("ReactionFilterTrigger", "System")
+            .StartNow()
+            .WithSimpleSchedule(x => x.WithIntervalInHours(6).RepeatForever())
             .Build();
         await MemorySchedulerInstance.ScheduleJob(job, trigger);
     }

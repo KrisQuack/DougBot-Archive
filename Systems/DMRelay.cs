@@ -4,7 +4,7 @@ using Fernandezja.ColorHashSharp;
 
 namespace DougBot.Systems;
 
-public static class Events
+public static class DMRelay
 {
     private static DiscordSocketClient _client;
 
@@ -13,13 +13,7 @@ public static class Events
         _client = Program.Client;
         ;
         _client.MessageReceived += MessageReceivedHandler;
-        _client.UserJoined += UserJoinedHandler;
-        Console.WriteLine("EventHandler Initialized");
-    }
-
-    private static Task UserJoinedHandler(SocketGuildUser user)
-    {
-        return Task.CompletedTask;
+        Console.WriteLine("DMRelay Initialized");
     }
 
     private static Task MessageReceivedHandler(SocketMessage message)

@@ -49,7 +49,7 @@ public class Program
             _ = Scheduler.Quartz.InitializePersistent();
             _ = Scheduler.Quartz.InitializeMemory();
             _ = AuditLog.Monitor();
-            _ = Events.Monitor();
+            _ = DMRelay.Monitor();
             _ = new Twitch.Twitch().RunClient();
             _ = ReactionFilter.Monitor();
             _ = ForumAi.Monitor();

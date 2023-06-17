@@ -27,7 +27,7 @@ public class AddReactionJob : IJob
         }
         catch (Exception e)
         {
-            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} RemoveReactionJob {e}");
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} AddReactionJob {e}");
         }
     }
 
@@ -63,7 +63,7 @@ public class AddReactionJob : IJob
         }
         catch (Exception e)
         {
-            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} RemoveReactionQueue {e}");
+            Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} AddReactionQueue {e}");
         }
     }
 }

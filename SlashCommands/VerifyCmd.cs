@@ -37,7 +37,7 @@ public class VerifyCmd : InteractionModuleBase
         var component = new ComponentBuilder()
             .WithButton("Submit", $"verifyresponse:{fileName}")
             .Build();
-        await RespondWithFileAsync(file, $"verify{Context.User.Id.ToString()}", components: component, ephemeral: true);
+        await RespondWithFileAsync(file, $"verify{Context.User.Id}.jpeg", components: component, ephemeral: true);
     }
 
     [ComponentInteraction("verifyresponse:*", true)]

@@ -51,13 +51,13 @@ public partial class Guild
     public static async Task<Guild> GetGuild(string id)
     {
         await using var db = new DougBotContext();
-        return await db.Guilds.FindAsync(id);
+        return await db.Guilds.Include(g => g.Youtubes).FirstOrDefaultAsync(g => g.Id == id);
     }
 
     public static async Task<List<Guild>> GetGuilds()
     {
         await using var db = new DougBotContext();
-        return await db.Guilds.ToListAsync();
+        return await db.Guilds.Include(g => g.Youtubes).ToListAsync();
     }
 
     public async Task Update()

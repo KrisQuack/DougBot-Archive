@@ -21,7 +21,7 @@ public class Twitch
         {
             Console.WriteLine("Twitch Initialized");
             //Load settings
-            var settings = (await Guild.GetGuild("567141138021089308"));
+            var settings = await Guild.GetGuild("567141138021089308");
             //Setup API
             Api = new TwitchAPI();
             var monitor = new LiveStreamMonitorService(Api);
@@ -49,10 +49,12 @@ public class Twitch
                 {
                     //Refresh tokens
                     botRefresh =
-                        await Api.Auth.RefreshAuthTokenAsync(settings.TwitchBotRefreshToken, settings.TwitchClientSecret,
+                        await Api.Auth.RefreshAuthTokenAsync(settings.TwitchBotRefreshToken,
+                            settings.TwitchClientSecret,
                             settings.TwitchClientId);
                     dougRefresh =
-                        await Api.Auth.RefreshAuthTokenAsync(settings.TwitchChannelRefreshToken, settings.TwitchClientSecret,
+                        await Api.Auth.RefreshAuthTokenAsync(settings.TwitchChannelRefreshToken,
+                            settings.TwitchClientSecret,
                             settings.TwitchClientId);
                     Api.Settings.AccessToken = botRefresh.AccessToken;
                     Api.Settings.ClientId = settings.TwitchClientId;

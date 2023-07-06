@@ -37,7 +37,8 @@ public class RemoveReactionJob : IJob
         }
     }
 
-    public static async Task Queue(string guildId, string channelId, string messageId, string emoteName, DateTime schedule)
+    public static async Task Queue(string guildId, string channelId, string messageId, string emoteName,
+        DateTime schedule)
     {
         try
         {

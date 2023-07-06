@@ -117,13 +117,15 @@ Conversation:{messageString}".Trim();
         try
         {
             var chatMessage =
-                $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}".Trim();
+                $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}"
+                    .Trim();
             var response = EdgeGpt.Run(chatMessage, "creative").text;
             //Clean up response
             response = response.Replace("WAHAHA:", "");
             response = response.Replace("Generating answers for you...", "");
             //Remove lines that contain "]: http", "Searching the web for:", or are empty
-            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "", RegexOptions.Multiline);
+            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "",
+                RegexOptions.Multiline);
             //Remove [^1^], [^2^], etc
             response = Regex.Replace(response, @"\[\^\d+\^\]", "");
             response = response.Trim();

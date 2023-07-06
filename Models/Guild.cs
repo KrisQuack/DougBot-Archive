@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace DougBot.Models;
 
-public partial class Guild
+public class Guild
 {
     public string Id { get; set; } = null!;
 
@@ -66,5 +64,4 @@ public partial class Guild
         db.Guilds.Update(this);
         await db.SaveChangesAsync();
     }
-
 }

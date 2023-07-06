@@ -3,7 +3,6 @@ using DougBot.Scheduler;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
-using TwitchLib.PubSub.Models.Responses.Messages.Redemption;
 
 namespace DougBot.Twitch;
 
@@ -120,10 +119,8 @@ public class PubSub
             //Notify mods of new redemption
             if (redemption.Status == "UNFULFILLED")
                 if (reward.Title.Contains("Minecraft Server"))
-                {
                     Twitch.Irc.SendMessage("dougdoug",
                         $"@{redeemedUser.DisplayName} Thanks for redeeming Minecraft access, Please join the discord and complete this form https://forms.gle/oouvNweqqBFZ8DtD9");
-                }
         });
     }
 

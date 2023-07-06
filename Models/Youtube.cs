@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace DougBot.Models;
 
-namespace DougBot.Models;
-
-public partial class Youtube
+public class Youtube
 {
     public string Id { get; set; } = null!;
 

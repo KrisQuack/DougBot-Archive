@@ -19,7 +19,7 @@ public class AddReactionJob : IJob
             var messageId = Convert.ToUInt64(dataMap.GetString("messageId"));
             var emoteName = dataMap.GetString("emoteName");
 
-            
+
             var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
             var channel = guild.Channels.FirstOrDefault(c => c.Id == channelId) as SocketTextChannel;
             var message = await channel.GetMessageAsync(messageId);
@@ -31,7 +31,8 @@ public class AddReactionJob : IJob
         }
     }
 
-    public static async Task Queue(string guildId, string channelId, string messageId, string emoteName, DateTime schedule)
+    public static async Task Queue(string guildId, string channelId, string messageId, string emoteName,
+        DateTime schedule)
     {
         try
         {

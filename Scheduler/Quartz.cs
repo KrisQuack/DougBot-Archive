@@ -1,4 +1,3 @@
-using DougBot.Models;
 using Quartz;
 using Quartz.Logging;
 

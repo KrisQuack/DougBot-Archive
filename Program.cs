@@ -1,9 +1,9 @@
-﻿using Discord;
+﻿using System.Reflection;
+using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DougBot.Systems;
-using System.Reflection;
 
 namespace DougBot;
 

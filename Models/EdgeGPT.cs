@@ -23,7 +23,7 @@ public class EdgeGpt
 
     private static string RunCommand(string command, string args)
     {
-        var process = new Process()
+        var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
@@ -32,7 +32,7 @@ public class EdgeGpt
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true,
+                CreateNoWindow = true
             }
         };
         process.Start();
@@ -53,11 +53,11 @@ public class EdgeGpt
         public int messages_left { get; set; }
         public string adaptive_text { get; set; }
     }
+
     public class EdgeGptSource
     {
         public string providerDisplayName { get; set; }
         public string seeMoreUrl { get; set; }
         public string searchQuery { get; set; }
     }
-
 }

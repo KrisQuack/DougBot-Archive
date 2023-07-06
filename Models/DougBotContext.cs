@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace DougBot.Models;
 
@@ -20,7 +18,9 @@ public partial class DougBotContext : DbContext
     public virtual DbSet<Youtube> Youtubes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"));
+    {
+        optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"));
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

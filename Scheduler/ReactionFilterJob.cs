@@ -1,5 +1,3 @@
-using System;
-using System.Xml.Linq;
 using Discord;
 using DougBot.Models;
 using Quartz;
@@ -14,7 +12,7 @@ public class ReactionFilterJob : IJob
         {
             //Get data
             var dataMap = context.JobDetail.JobDataMap;
-            var messageCount =dataMap.GetInt("messageCount");
+            var messageCount = dataMap.GetInt("messageCount");
             var dbGuilds = await Guild.GetGuilds();
             using var httpClient = new HttpClient();
             foreach (var dbGuild in dbGuilds)
@@ -36,9 +34,8 @@ public class ReactionFilterJob : IJob
                         var reactions = message.Reactions.Where(r => !emoteWhitelist.Contains(r.Key.Name));
                         //Remove reactions
                         foreach (var reaction in reactions)
-                        {
-                            await RemoveReactionJob.Queue(dbGuild.Id, channel.Id.ToString(), message.Id.ToString(), reaction.Key.Name, DateTime.UtcNow);
-                        }
+                            await RemoveReactionJob.Queue(dbGuild.Id, channel.Id.ToString(), message.Id.ToString(),
+                                reaction.Key.Name, DateTime.UtcNow);
                     }
                 }
             }

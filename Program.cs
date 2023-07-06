@@ -29,7 +29,8 @@ public class Program
         {
             GatewayIntents = GatewayIntents.All ^ GatewayIntents.GuildPresences,
             LogLevel = LogSeverity.Info,
-            MessageCacheSize = 1000
+            MessageCacheSize = 1000,
+            UseInteractionSnowflakeDate = true
         };
         Client = new DiscordSocketClient(config);
         Client.Log += Log;

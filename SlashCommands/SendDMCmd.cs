@@ -5,7 +5,7 @@ using DougBot.Scheduler;
 
 namespace DougBot.SlashCommands;
 
-public class SendDmCmd : InteractionModuleBase
+public class SendDMCmd : InteractionModuleBase
 {
     [SlashCommand("senddm", "Send a DM to the specified user")]
     [EnabledInDm(false)]

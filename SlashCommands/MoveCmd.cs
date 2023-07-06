@@ -12,15 +12,13 @@ public class MoveCmd : InteractionModuleBase
     [EnabledInDm(false)]
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     public async Task Move(
+        [Summary(description: "The ID of the message")] string message,
         [Summary(description: "Leave empty to view current setting")] ITextChannel channel
     )
     {
         await RespondAsync("Moving the message", ephemeral: true);
         //Grab the message using a reply
-        var movingMessage = await ReplyAsync("👀");
-        var messageToMoveId = movingMessage.ReferencedMessage.ReferencedMessage.Id;
-        var messageToMove = await Context.Channel.GetMessageAsync(messageToMoveId);
-        await movingMessage.DeleteAsync();
+        var messageToMove = await Context.Channel.GetMessageAsync(Convert.ToUInt64(message));
         //Check the message to move is not null
         if (messageToMove is null)
         {
@@ -41,5 +39,6 @@ public class MoveCmd : InteractionModuleBase
         await webhook.SendMessageAsync(messageToMove.Content, embeds: embedList, username: messageToMove.Author.Username, avatarUrl: messageToMove.Author.GetAvatarUrl(),allowedMentions: AllowedMentions.None);
         await messageToMove.DeleteAsync();
         await ModifyOriginalResponseAsync(x => x.Content = "Message moved");
+        await ReplyAsync($"{messageToMove.Author.Mention} your message has been moved to {channel.Mention}");
     }
 }

@@ -20,15 +20,15 @@ public class MoveCmd : InteractionModuleBase
         await RespondAsync("Moving the message", ephemeral: true);
         //Grab the message using a reply
         var messageToMove = await Context.Channel.GetMessageAsync(Convert.ToUInt64(message));
-        //Set the authors name as either the server nickname if there is one or the username
-        var authorName = messageToMove.Author is IGuildUser guildUser ? guildUser.Nickname ?? guildUser.Username : Context.User.Username;
         //Check the message to move is not null
         if (messageToMove is null)
         {
             await ModifyOriginalResponseAsync(x => x.Content = "Message not found");
             return;
         }
-
+        //Set the authors name as either the server nickname if there is one or the username
+        var authorObj = messageToMove.Author as IGuildUser;
+        var authorName = authorObj.Nickname ?? authorObj.Username;
         //Check if the channel has a webhook named Wah
         var webhooks = await channel.GetWebhooksAsync();
         //If the webhook is null, create a new one

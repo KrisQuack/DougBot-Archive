@@ -20,6 +20,8 @@ public class MoveCmd : InteractionModuleBase
         await RespondAsync("Moving the message", ephemeral: true);
         //Grab the message using a reply
         var messageToMove = await Context.Channel.GetMessageAsync(Convert.ToUInt64(message));
+        //Set the authors name as either the server nickname if there is one or the username
+        var authorName = Context.User is IGuildUser guildUser ? guildUser.Nickname ?? guildUser.Username : Context.User.Username;
         //Check the message to move is not null
         if (messageToMove is null)
         {
@@ -56,7 +58,7 @@ public class MoveCmd : InteractionModuleBase
             }
             //Send the message with attachments
             await webhook.SendFilesAsync(attachments, messageToMove.Content, embeds: embedList,
-                username: messageToMove.Author.Username, avatarUrl: messageToMove.Author.GetAvatarUrl(),
+                username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
                 allowedMentions: AllowedMentions.None);
             //Delete the attachments
             foreach (var attachment in attachmentPaths)
@@ -67,7 +69,7 @@ public class MoveCmd : InteractionModuleBase
         else
         {
             await webhook.SendMessageAsync(messageToMove.Content, embeds: embedList,
-                username: messageToMove.Author.Username, avatarUrl: messageToMove.Author.GetAvatarUrl(),
+                username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
                 allowedMentions: AllowedMentions.None);
         }
 

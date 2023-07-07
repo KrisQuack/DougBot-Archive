@@ -13,7 +13,7 @@ public class MoveCmd : InteractionModuleBase
     public async Task Move(
         [Summary(description: "The ID of the message")]
         string message,
-        [Summary(description: "Leave empty to view current setting")]
+        [Summary(description: "The channel to move it to")]
         ITextChannel channel
     )
     {

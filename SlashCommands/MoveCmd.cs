@@ -21,7 +21,7 @@ public class MoveCmd : InteractionModuleBase
         //Grab the message using a reply
         var messageToMove = await Context.Channel.GetMessageAsync(Convert.ToUInt64(message));
         //Set the authors name as either the server nickname if there is one or the username
-        var authorName = Context.User is IGuildUser guildUser ? guildUser.Nickname ?? guildUser.Username : Context.User.Username;
+        var authorName = messageToMove.Author is IGuildUser guildUser ? guildUser.Nickname ?? guildUser.Username : Context.User.Username;
         //Check the message to move is not null
         if (messageToMove is null)
         {

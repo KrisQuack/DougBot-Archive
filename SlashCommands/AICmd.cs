@@ -47,7 +47,7 @@ Consider the following rules for the conversation:
 8) No Sexual Topics; occasional mature jokes allowed.
 9) No Extremely Distressing topics; seek professional help for mental health issues.
 Conversation:{messageString}".Trim();
-            var response = EdgeGpt.Run(chatMessage, "precise").text;
+            var response = EdgeGpt.Run(chatMessage, "precise");
             embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
@@ -58,31 +58,6 @@ Conversation:{messageString}".Trim();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
     }
-
-    [SlashCommand("ask", "Ask Bing a question")]
-    public async Task Ask(string question)
-    {
-        //Initial response
-        var embed = new EmbedBuilder()
-            .WithColor(Color.Blue)
-            .WithTitle("Ask Bing")
-            .WithDescription("Processing, This may take a minute");
-        await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
-        //Send to API
-        try
-        {
-            var response = EdgeGpt.Run(question, "precise").adaptive_text;
-            embed.WithDescription(response.Contains("<Disengaged>") ? "Bing refused to respond" : response);
-            await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
-        }
-        catch (Exception e)
-        {
-            var response = "Failed to chat, Please try again: " + e.Message;
-            embed.WithDescription(response);
-            await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
-        }
-    }
-
     [SlashCommand("chat", "Respond to messages in chat")]
     [RequireOwnerOrUserPermission(GuildPermission.Administrator)]
     public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
@@ -119,7 +94,7 @@ Conversation:{messageString}".Trim();
             var chatMessage =
                 $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}"
                     .Trim();
-            var response = EdgeGpt.Run(chatMessage, "creative").text;
+            var response = EdgeGpt.Run(chatMessage, "creative");
             //Clean up response
             response = response.Replace("WAHAHA:", "");
             response = response.Replace("Generating answers for you...", "");

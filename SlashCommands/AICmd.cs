@@ -61,14 +61,14 @@ Conversation:{messageString}".Trim();
 
     [SlashCommand("chat", "Respond to messages in chat")]
     [RequireOwnerOrUserPermission(GuildPermission.Administrator)]
-    public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(100)] int read = 10)
+    public async Task Chat([Summary("read", "How many messages to read (10)")] [MaxValue(100)] int read = 10)
     {
         //Initial response
         var embed = new EmbedBuilder()
             .WithColor(Color.Blue)
             .WithTitle("AI Chatting")
             .WithDescription("Processing, This may take a minute");
-        //await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
+        await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
         //Get values
         var channel = Context.Channel as ITextChannel;
         var messages = await channel.GetMessagesAsync(200).FlattenAsync();
@@ -101,10 +101,7 @@ Conversation:{messageString}".Trim();
             var response = await EdgeGpt.Run(chatMessage, "creative", Context.Guild.Id.ToString());
             //Clean up response
             response = response.Replace("Bing:", "");
-            response = response.Replace("Generating answers for you...", "");
-            //Remove lines that contain "]: http", "Searching the web for:", or are empty
-            response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "",
-                RegexOptions.Multiline);
+            response = response.Replace("Bing", "Wahaha");
             //Remove [^1^], [^2^], etc
             response = Regex.Replace(response, @"\[\^\d+\^\]", "");
             //Send Response

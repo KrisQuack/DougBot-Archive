@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace DougBot.Models;
 
@@ -10,6 +11,8 @@ public class EdgeGpt
         try
         {
             var response = RunCommand("python3", $"Models/EdgeGPTPython.py \"{style}\" \"{message}\"");
+            //Remove lines containing "BingChat|DEBUG"
+            response = Regex.Replace(response, @"BingChat\|DEBUG.*\n", "");
             return response;
         }
         catch (Exception e)

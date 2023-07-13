@@ -1,16 +1,8 @@
-﻿import asyncio, sys
-from EdgeGPT.EdgeGPT import ConversationStyle
+﻿import sys
 from EdgeGPT.EdgeUtils import Query, Cookie
 
-style_map = {
-    "creative": ConversationStyle.creative,
-    "precise": ConversationStyle.precise,
-    "balanced": ConversationStyle.balanced
-}
-style_arg = sys.argv[1]
+style = sys.argv[1]
 message = sys.argv[2]
-style = style_map.get(style_arg, ConversationStyle.creative)
-
 # Use a for loop with range(max_tries)
 for _ in range(3):
     try:

@@ -61,14 +61,14 @@ Conversation:{messageString}".Trim();
 
     [SlashCommand("chat", "Respond to messages in chat")]
     [RequireOwnerOrUserPermission(GuildPermission.Administrator)]
-    public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)
+    public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(100)] int read = 10)
     {
         //Initial response
         var embed = new EmbedBuilder()
             .WithColor(Color.Blue)
             .WithTitle("AI Chatting")
             .WithDescription("Processing, This may take a minute");
-        await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
+        //await RespondAsync(embeds: new[] { embed.Build() }, ephemeral: true);
         //Get values
         var channel = Context.Channel as ITextChannel;
         var messages = await channel.GetMessagesAsync(200).FlattenAsync();
@@ -97,8 +97,7 @@ Conversation:{messageString}".Trim();
         try
         {
             var chatMessage =
-                $"Reply to this conversation with one sentence as a user named Bing.You may use search.\n{messageString}"
-                    .Trim();
+                $"Reply to this conversation with one sentence. You may use search.\n\n{messageString}".Trim();
             var response = await EdgeGpt.Run(chatMessage, "creative", Context.Guild.Id.ToString());
             //Clean up response
             response = response.Replace("Bing:", "");
@@ -108,7 +107,6 @@ Conversation:{messageString}".Trim();
                 RegexOptions.Multiline);
             //Remove [^1^], [^2^], etc
             response = Regex.Replace(response, @"\[\^\d+\^\]", "");
-            response = response.Trim();
             //Send Response
             embed.WithDescription(response);
             if (!response.Contains("<Disengaged>"))

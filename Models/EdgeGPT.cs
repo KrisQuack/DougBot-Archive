@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Discord;
 using DougBot.Systems;
@@ -14,23 +13,13 @@ public class EdgeGpt
         {
             var response = RunCommand("python3", $"Models/EdgeGPTPython.py \"{style}\" \"{message}\"");
             //Audit log response
-            //Create fields for audit log
-            var fields = new List<EmbedFieldBuilder>
-            {
-                new()
-                {
-                    Name = "Response",
-                    Value = response,
-                    IsInline = false
-                }
-            };
             //Author
             var author = new EmbedAuthorBuilder
             {
                 Name = "EdgeGPT"
             };
             //Send audit log
-            await AuditLog.LogEvent("AI Chat", guildId, Color.Blue, fields, author);
+            await AuditLog.LogEvent(response, guildId, Color.Blue, author: author);
             //Remove lines containing "BingChat|DEBUG" and get the last entry splitting by \n------\n
             response = response.Split("\n------\n").Last();
             response = Regex.Replace(response, @"BingChat\|DEBUG.*\n", "");

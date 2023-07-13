@@ -26,6 +26,7 @@ public class MoveCmd : InteractionModuleBase
             await ModifyOriginalResponseAsync(x => x.Content = "Message not found");
             return;
         }
+
         //Set the authors name as either the server nickname if there is one or the username
         var authorObj = messageToMove.Author as IGuildUser;
         var authorName = authorObj.Nickname ?? authorObj.Username;
@@ -56,15 +57,13 @@ public class MoveCmd : InteractionModuleBase
                 attachments.Add(new FileAttachment(path, attachment.Filename));
                 attachmentPaths.Add(path);
             }
+
             //Send the message with attachments
             await webhook.SendFilesAsync(attachments, messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
                 allowedMentions: AllowedMentions.None);
             //Delete the attachments
-            foreach (var attachment in attachmentPaths)
-            {
-                File.Delete(attachment);
-            }
+            foreach (var attachment in attachmentPaths) File.Delete(attachment);
         }
         else
         {

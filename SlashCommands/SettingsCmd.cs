@@ -11,7 +11,8 @@ public class SettingsCmd : InteractionModuleBase
     [RequireUserPermission(GuildPermission.Administrator)]
     public async Task Settings(
         [Choice("Emotes", "emotes")] string setting,
-        [Summary(description: "Leave empty to view current setting")] string? value = null
+        [Summary(description: "Leave empty to view current setting")]
+        string? value = null
     )
     {
         await RespondAsync("Processing...", ephemeral: true);
@@ -22,7 +23,8 @@ public class SettingsCmd : InteractionModuleBase
             switch (setting)
             {
                 case "emotes":
-                    await ModifyOriginalResponseAsync(x => x.Content = $"Emotes: {string.Join(", ", dbGuild.ReactionFilterEmotes)}");
+                    await ModifyOriginalResponseAsync(x =>
+                        x.Content = $"Emotes: {string.Join(", ", dbGuild.ReactionFilterEmotes)}");
                     break;
             }
         //Set setting
@@ -33,7 +35,8 @@ public class SettingsCmd : InteractionModuleBase
                     var emotes = value.Split(",");
                     dbGuild.ReactionFilterEmotes = emotes;
                     await dbGuild.Update();
-                    await ModifyOriginalResponseAsync(x => x.Content = $"Emotes set to: {string.Join(", ", dbGuild.ReactionFilterEmotes)}");
+                    await ModifyOriginalResponseAsync(x =>
+                        x.Content = $"Emotes set to: {string.Join(", ", dbGuild.ReactionFilterEmotes)}");
                     break;
             }
     }

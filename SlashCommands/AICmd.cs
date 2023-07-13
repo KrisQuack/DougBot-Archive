@@ -58,6 +58,7 @@ Conversation:{messageString}".Trim();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed.Build() });
         }
     }
+
     [SlashCommand("chat", "Respond to messages in chat")]
     [RequireOwnerOrUserPermission(GuildPermission.Administrator)]
     public async Task Chat([Summary("read", "How many messages to read (50)")] [MaxValue(200)] int read = 50)

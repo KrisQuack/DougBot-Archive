@@ -47,19 +47,24 @@ public class SendMessageJob : IJob
             ComponentBuilder componentBuilderObj = null;
             if (!string.IsNullOrEmpty(componentBuilder))
                 componentBuilderObj = JsonSerializer.Deserialize<ComponentBuilder>(componentBuilder);
-
-            // Send the message with embeds and components (if any)
-            await channel.SendMessageAsync(message,
-                embeds: embeds?.ToArray(),
-                components: componentBuilderObj?.Build(),
-                allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
-
+            
             // Send attachments (if any)
             if (!string.IsNullOrEmpty(attachments) && attachments != "null")
             {
                 var attachList = JsonSerializer.Deserialize<List<string>>(attachments);
                 var fileAttachments = attachList.Select(attachment => new FileAttachment(attachment)).AsEnumerable();
-                await channel.SendFilesAsync(fileAttachments, "***Attachment(s)***");
+                await channel.SendFilesAsync(fileAttachments, message,
+                    embeds: embeds?.ToArray(),
+                    components: componentBuilderObj?.Build(),
+                    allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
+            }
+            //Else send the message with embeds and components (if any)
+            else
+            {
+                await channel.SendMessageAsync(message,
+                    embeds: embeds?.ToArray(),
+                    components: componentBuilderObj?.Build(),
+                    allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
             }
         }
         catch (Exception e)

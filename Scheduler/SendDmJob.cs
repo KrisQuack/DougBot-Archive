@@ -58,7 +58,7 @@ public class SendDmJob : IJob
             embeds = embedBuildersList.Select(embed =>
                 embed.WithTitle(status)
                     .WithColor(color)
-                    .WithAuthor($"DM to {user.Username}#{user.Discriminator} ({user.Id}) from {sender.Username}",
+                    .WithAuthor($"DM to {user.Username} ({user.Id}) from {sender.Username}",
                         sender.GetAvatarUrl())
                     .Build()).ToList();
             await channel.SendMessageAsync(embeds: embeds.ToArray());

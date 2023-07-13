@@ -38,7 +38,7 @@ public static class AuditLog
             //Set Author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
+                Name = $"{user.Username} ({user.Id})",
                 IconUrl = user.GetAvatarUrl()
             };
             //Log event
@@ -54,7 +54,7 @@ public static class AuditLog
             //Set Author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
+                Name = $"{user.Username} ({user.Id})",
                 IconUrl = user.GetAvatarUrl()
             };
             //Log event
@@ -70,7 +70,7 @@ public static class AuditLog
             //Set Author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
+                Name = $"{user.Username} ({user.Id})",
                 IconUrl = user.GetAvatarUrl()
             };
             //Log event
@@ -86,7 +86,7 @@ public static class AuditLog
             //Set Author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{user.Username}#{user.Discriminator} ({user.Id})",
+                Name = $"{user.Username} ({user.Id})",
                 IconUrl = user.GetAvatarUrl()
             };
             //Log event
@@ -107,7 +107,7 @@ public static class AuditLog
             //Set author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{after.Username}#{after.Discriminator} ({after.Id})",
+                Name = $"{after.Username} ({after.Id})",
                 IconUrl = after.GetAvatarUrl()
             };
             //Log event for each mutual guild
@@ -168,7 +168,7 @@ public static class AuditLog
             //Set author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{after.Username}#{after.Discriminator} ({after.Id})",
+                Name = $"{after.Username} ({after.Id})",
                 IconUrl = after.GetAvatarUrl()
             };
             //Log event if fields are not empty
@@ -222,7 +222,7 @@ public static class AuditLog
             var author = new EmbedAuthorBuilder
             {
                 Name =
-                    $"{messageObj.Author.Username}#{messageObj.Author.Discriminator} ({messageObj.Author.Id})",
+                    $"{messageObj.Author.Username} ({messageObj.Author.Id})",
                 IconUrl = messageObj.Author.GetAvatarUrl()
             };
             //Log event
@@ -250,7 +250,7 @@ public static class AuditLog
             //Set author
             var author = new EmbedAuthorBuilder
             {
-                Name = $"{after.Author.Username}#{after.Author.Discriminator} ({after.Author.Id})",
+                Name = $"{after.Author.Username} ({after.Author.Id})",
                 IconUrl = after.Author.GetAvatarUrl()
             };
             //Log event

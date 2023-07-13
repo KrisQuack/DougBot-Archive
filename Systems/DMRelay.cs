@@ -32,7 +32,7 @@ public static class DMRelay
                     .WithDescription(message.Content)
                     .WithColor((Color)color)
                     .WithAuthor(new EmbedAuthorBuilder()
-                        .WithName($"{message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id})")
+                        .WithName($"{message.Author.Username} ({message.Author.Id})")
                         .WithIconUrl(message.Author.GetAvatarUrl()))
                     .WithCurrentTimestamp());
                 //Attachment embeds
@@ -40,7 +40,7 @@ public static class DMRelay
                     new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
                         .WithColor((Color)color)
                         .WithAuthor(new EmbedAuthorBuilder()
-                            .WithName($"{message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id})")
+                            .WithName($"{message.Author.Username} ({message.Author.Id})")
                             .WithIconUrl(message.Author.GetAvatarUrl()))
                         .WithUrl(attachment.Url)
                         .WithCurrentTimestamp()));

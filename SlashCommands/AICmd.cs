@@ -79,25 +79,29 @@ Conversation:{messageString}".Trim();
         var messageString = new StringBuilder();
         foreach (var message in messages)
         {
-            messageString.Append($"{message.Author.Username}: ");
+            messageString.Append($"{message.Author.GlobalName}: ");
             if (message.Reference != null)
             {
                 var referencedMessage = await channel.GetMessageAsync((ulong)message.Reference.MessageId);
-                messageString.Append($"{referencedMessage.Author.Username}, ");
+                messageString.Append($"{referencedMessage.Author.GlobalName}, ");
             }
 
             messageString.AppendLine(message.CleanContent.Replace("@", ""));
         }
-
+        //The AI insists on being called bing so replace Wah and Wahaha in with Bing
+        messageString = messageString.Replace("Wah", "Bing");
+        messageString = messageString.Replace("wah", "Bing");
+        messageString = messageString.Replace("Wahaha", "Bing");
+        
         //Send to API
         try
         {
             var chatMessage =
-                $"Reply to this conversation with one sentence as a user named WAHAHA.You may use search.\n{messageString}"
+                $"Reply to this conversation with one sentence as a user named Bing.You may use search.\n{messageString}"
                     .Trim();
             var response = await EdgeGpt.Run(chatMessage, "creative", Context.Guild.Id.ToString());
             //Clean up response
-            response = response.Replace("WAHAHA:", "");
+            response = response.Replace("Bing:", "");
             response = response.Replace("Generating answers for you...", "");
             //Remove lines that contain "]: http", "Searching the web for:", or are empty
             response = Regex.Replace(response, @"(\[.*\]: http.*)|(Searching the web for:.*)|(\s*\n)", "",

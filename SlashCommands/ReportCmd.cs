@@ -45,14 +45,14 @@ public class ReportCmd : InteractionModuleBase
                         new EmbedFieldBuilder()
                             .WithName("User Info")
                             .WithValue(
-                                $"\nMention: {reportedUser.Mention}\nUsername: {reportedUser.Username}#{reportedUser.Discriminator}\nID: {reportedUser.Id}"),
+                                $"\nMention: {reportedUser.Mention}\nUsername: {reportedUser.Username}\nID: {reportedUser.Id}"),
                         new EmbedFieldBuilder()
                             .WithName("Reason")
                             .WithValue(modal.Reason)
                     )
                     .WithColor((Color)color)
                     .WithAuthor(new EmbedAuthorBuilder()
-                        .WithName($"{Context.User.Username}#{Context.User.Discriminator} ({Context.User.Id})")
+                        .WithName($"{Context.User.Username} ({Context.User.Id})")
                         .WithIconUrl(Context.User.GetAvatarUrl()))
                     .WithCurrentTimestamp());
             }
@@ -68,7 +68,7 @@ public class ReportCmd : InteractionModuleBase
                         new EmbedFieldBuilder()
                             .WithName("User Info")
                             .WithValue(
-                                $"\nMention: {message.Author.Mention}\nUsername: {message.Author.Username}#{message.Author.Discriminator}\nID: {message.Author.Id}"),
+                                $"\nMention: {message.Author.Mention}\nUsername: {message.Author.Username}\nID: {message.Author.Id}"),
                         new EmbedFieldBuilder()
                             .WithName("Message Info")
                             .WithValue($"\nChannel: {channel.Mention}\nMessage: {message.Content}"),
@@ -78,7 +78,7 @@ public class ReportCmd : InteractionModuleBase
                     )
                     .WithColor((Color)color)
                     .WithAuthor(new EmbedAuthorBuilder()
-                        .WithName($"{Context.User.Username}#{Context.User.Discriminator} ({Context.User.Id})")
+                        .WithName($"{Context.User.Username} ({Context.User.Id})")
                         .WithIconUrl(Context.User.GetAvatarUrl()))
                     .WithCurrentTimestamp());
                 //Attachment embeds

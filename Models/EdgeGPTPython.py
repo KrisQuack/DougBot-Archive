@@ -1,4 +1,5 @@
 ﻿import asyncio, sys
+from EdgeGPT.EdgeGPT import ConversationStyle
 from EdgeGPT.EdgeUtils import Query, Cookie
 
 style_map = {

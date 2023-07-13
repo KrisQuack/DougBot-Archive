@@ -1,17 +1,38 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Discord;
+using DougBot.Systems;
 
 namespace DougBot.Models;
 
 public class EdgeGpt
 {
-    public static string Run(string message, string style)
+    public static async Task<string> Run(string message, string style, string guildId)
     {
         try
         {
             var response = RunCommand("python3", $"Models/EdgeGPTPython.py \"{style}\" \"{message}\"");
-            //Remove lines containing "BingChat|DEBUG"
+            //Audit log response
+            //Create fields for audit log
+            var fields = new List<EmbedFieldBuilder>
+            {
+                new()
+                {
+                    Name = "Response",
+                    Value = response,
+                    IsInline = false
+                }
+            };
+            //Author
+            var author = new EmbedAuthorBuilder
+            {
+                Name = "EdgeGPT"
+            };
+            //Send audit log
+            await AuditLog.LogEvent("AI Chat", guildId, Color.Blue, fields, author);
+            //Remove lines containing "BingChat|DEBUG" and get the last entry splitting by \n------\n
+            response = response.Split("\n------\n").Last();
             response = Regex.Replace(response, @"BingChat\|DEBUG.*\n", "");
             return response;
         }

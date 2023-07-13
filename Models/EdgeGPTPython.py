@@ -10,6 +10,6 @@ for _ in range(3):
         print(q)
         break # Exit the loop if no error
     except Exception as e:
-        print(f"Error: {e}\n")
+        print(f"Error: {e}\n------\n")
         if _ == 2: # Check if max tries reached
             print("Maximum number of tries reached. Exiting.")

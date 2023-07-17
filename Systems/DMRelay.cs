@@ -11,7 +11,6 @@ public static class DMRelay
     public static async Task Monitor()
     {
         _client = Program.Client;
-        ;
         _client.MessageReceived += MessageReceivedHandler;
         Console.WriteLine("DMRelay Initialized");
     }

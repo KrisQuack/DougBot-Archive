@@ -54,6 +54,7 @@ public class Program
             _ = new Twitch.Twitch().RunClient();
             _ = ForumAi.Monitor();
             _ = Scheduler.Quartz.CoreJobs();
+            _ = DeezNutz.Monitor();
             //Set status
             await Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
             //Register Commands

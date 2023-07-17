@@ -2,6 +2,7 @@ using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.Webhook;
+using Discord.WebSocket;
 
 namespace DougBot.SlashCommands;
 
@@ -14,10 +15,16 @@ public class MoveCmd : InteractionModuleBase
         [Summary(description: "The ID of the message")]
         string message,
         [Summary(description: "The channel to move it to")]
-        ITextChannel channel
+        IChannel channelInput
     )
     {
         await RespondAsync("Moving the message", ephemeral: true);
+        //Identify if it is a thread
+        SocketThreadChannel? threadChannel = channelInput as SocketThreadChannel;
+        var channel = threadChannel != null
+            ? threadChannel.ParentChannel as ITextChannel
+            : channelInput as ITextChannel;
+        ulong? threadId = threadChannel != null ? threadChannel.Id : null;
         //Grab the message using a reply
         var messageToMove = await Context.Channel.GetMessageAsync(Convert.ToUInt64(message));
         //Check the message to move is not null
@@ -61,7 +68,7 @@ public class MoveCmd : InteractionModuleBase
             //Send the message with attachments
             await webhook.SendFilesAsync(attachments, messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
-                allowedMentions: AllowedMentions.None);
+                allowedMentions: AllowedMentions.None, threadId: threadId);
             //Delete the attachments
             foreach (var attachment in attachmentPaths) File.Delete(attachment);
         }
@@ -69,11 +76,12 @@ public class MoveCmd : InteractionModuleBase
         {
             await webhook.SendMessageAsync(messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
-                allowedMentions: AllowedMentions.None);
+                allowedMentions: AllowedMentions.None, threadId: threadId);
         }
 
         await messageToMove.DeleteAsync();
         await ModifyOriginalResponseAsync(x => x.Content = "Message moved");
-        await ReplyAsync($"{messageToMove.Author.Mention} your message has been moved to {channel.Mention}");
+        string destination = threadChannel != null ? threadChannel.Mention : channel.Mention;
+        await ReplyAsync($"{messageToMove.Author.Mention} your message has been moved to {destination}");
     }
 }

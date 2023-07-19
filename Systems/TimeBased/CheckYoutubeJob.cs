@@ -1,9 +1,10 @@
 using System.Xml.Linq;
 using Discord;
 using DougBot.Models;
+using DougBot.Scheduler;
 using Quartz;
 
-namespace DougBot.Scheduler;
+namespace DougBot.Systems.TimeBased;
 
 public class CheckYoutubeJob : IJob
 {

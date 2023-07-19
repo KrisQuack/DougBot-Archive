@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Discord;
-using DougBot.Systems;
+using DougBot.Systems.EventBased;
 
 namespace DougBot.Models;
 

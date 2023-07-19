@@ -5,7 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using DougBot.Models;
 
-namespace DougBot.Systems;
+namespace DougBot.Systems.EventBased;
 
 public static class ForumAi
 {

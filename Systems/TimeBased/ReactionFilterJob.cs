@@ -1,8 +1,9 @@
 using Discord;
 using DougBot.Models;
+using DougBot.Scheduler;
 using Quartz;
 
-namespace DougBot.Scheduler;
+namespace DougBot.Systems.TimeBased;
 
 public class ReactionFilterJob : IJob
 {

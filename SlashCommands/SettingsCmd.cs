@@ -24,7 +24,7 @@ public class SettingsCmd : InteractionModuleBase
             {
                 case "emotes":
                     await ModifyOriginalResponseAsync(x =>
-                        x.Content = $"Emotes: {string.Join(", ", dbGuild.ReactionFilterEmotes)}");
+                        x.Content = $"{string.Join(",", dbGuild.ReactionFilterEmotes)}");
                     break;
             }
         //Set setting
@@ -36,7 +36,7 @@ public class SettingsCmd : InteractionModuleBase
                     dbGuild.ReactionFilterEmotes = emotes;
                     await dbGuild.Update();
                     await ModifyOriginalResponseAsync(x =>
-                        x.Content = $"Emotes set to: {string.Join(", ", dbGuild.ReactionFilterEmotes)}");
+                        x.Content = $"Emotes set to: {string.Join(",", dbGuild.ReactionFilterEmotes)}");
                     break;
             }
     }

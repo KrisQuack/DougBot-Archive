@@ -3,7 +3,8 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Systems;
+using DougBot.Systems.EventBased;
+using DougBot.Systems.TimeBased;
 
 namespace DougBot;
 
@@ -49,11 +50,11 @@ public class Program
             //Register Plugins
             _ = Scheduler.Quartz.InitializePersistent();
             _ = Scheduler.Quartz.InitializeMemory();
+            _ = TimeBased.Schedule();
             _ = AuditLog.Monitor();
             _ = DMRelay.Monitor();
             _ = new Twitch.Twitch().RunClient();
             _ = ForumAi.Monitor();
-            _ = Scheduler.Quartz.CoreJobs();
             _ = DeezNutz.Monitor();
             //Set status
             await Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);

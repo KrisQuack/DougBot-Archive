@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using DougBot.Models;
 using DougBot.Scheduler;
 
-namespace DougBot.Systems;
+namespace DougBot.Systems.EventBased;
 
 public static class AuditLog
 {
@@ -103,7 +103,7 @@ public static class AuditLog
             //If username changed add field
             if (before.Username != after.Username)
                 fields.Add(new EmbedFieldBuilder
-                    { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
+                { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
             //Set author
             var author = new EmbedAuthorBuilder
             {
@@ -129,7 +129,7 @@ public static class AuditLog
             //If nickname changed add field
             if (beforeObj.Nickname != after.Nickname)
                 fields.Add(new EmbedFieldBuilder
-                    { Name = "Nickname", Value = $"{beforeObj.Nickname} -> {after.Nickname}" });
+                { Name = "Nickname", Value = $"{beforeObj.Nickname} -> {after.Nickname}" });
             //If roles changed add field
             if (beforeObj.Roles.Count != after.Roles.Count)
             {
@@ -141,7 +141,7 @@ public static class AuditLog
                     fields.Add(new EmbedFieldBuilder { Name = "Roles Added", Value = string.Join("\n", addedRoles) });
                 if (removedRoles.Any())
                     fields.Add(new EmbedFieldBuilder
-                        { Name = "Roles Removed", Value = string.Join("\n", removedRoles) });
+                    { Name = "Roles Removed", Value = string.Join("\n", removedRoles) });
             }
 
             //If guild avatar changed add field
@@ -216,7 +216,8 @@ public static class AuditLog
             if (messageObj.Attachments.Count > 0)
                 fields.Add(new EmbedFieldBuilder
                 {
-                    Name = "Attachments", Value = string.Join("\n", messageObj.Attachments.Select(a => a.Filename))
+                    Name = "Attachments",
+                    Value = string.Join("\n", messageObj.Attachments.Select(a => a.Filename))
                 });
             //Set author
             var author = new EmbedAuthorBuilder

@@ -2,7 +2,7 @@ using Discord;
 using Discord.WebSocket;
 using System.Text.RegularExpressions;
 
-namespace DougBot.Systems;
+namespace DougBot.Systems.EventBased;
 
 public static class DeezNutz
 {

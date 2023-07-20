@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using System.Reflection;
 using Discord;
 using Discord.Interactions;
@@ -20,9 +21,10 @@ public class MoveCmd : InteractionModuleBase
     {
         await RespondAsync("Moving the message", ephemeral: true);
         //Identify if it is a thread
-        SocketThreadChannel? threadChannel = channel as SocketThreadChannel;
-        ITextChannel? textChannel = null;
-        IForumChannel? forumChannel = null;
+        var threadChannel = channel as SocketThreadChannel;
+        var threadChannelId = threadChannel?.Id;
+        ITextChannel? textChannel;
+        IForumChannel? forumChannel;
         if (threadChannel != null)
         {
             textChannel = threadChannel.ParentChannel as ITextChannel;
@@ -41,10 +43,6 @@ public class MoveCmd : InteractionModuleBase
             await ModifyOriginalResponseAsync(x => x.Content = "Message not found");
             return;
         }
-
-        //Set the authors name as either the server nickname if there is one or the username
-        var authorObj = messageToMove.Author as IGuildUser;
-        var authorName = authorObj.Nickname ?? authorObj.Username;
         //Get the webhook
         IWebhook wahWebhook;
         if (textChannel != null)
@@ -64,6 +62,9 @@ public class MoveCmd : InteractionModuleBase
         }
         //Grab the webhook
         var webhook = new DiscordWebhookClient(wahWebhook.Id, wahWebhook.Token);
+        //Set the authors name as either the server nickname if there is one or the username
+        var authorObj = messageToMove.Author as IGuildUser;
+        var authorName = authorObj.Nickname ?? authorObj.GlobalName;
         //Get the embeds
         var repliedEmbeds = messageToMove.Embeds;
         var embeds = repliedEmbeds.Select(e => e as Embed);
@@ -89,7 +90,7 @@ public class MoveCmd : InteractionModuleBase
             //Send the message with attachments
             await webhook.SendFilesAsync(attachments, messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
-                allowedMentions: AllowedMentions.None, threadId: threadChannel.Id);
+                allowedMentions: AllowedMentions.None, threadId: threadChannelId);
             //Delete the attachments
             foreach (var attachment in attachmentPaths) File.Delete(attachment);
         }
@@ -97,7 +98,7 @@ public class MoveCmd : InteractionModuleBase
         {
             await webhook.SendMessageAsync(messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),
-                allowedMentions: AllowedMentions.None, threadId: threadChannel.Id);
+                allowedMentions: AllowedMentions.None, threadId: threadChannelId);
         }
 
         await messageToMove.DeleteAsync();

@@ -63,7 +63,7 @@ public class MoveCmd : InteractionModuleBase
         //Grab the webhook
         var webhook = new DiscordWebhookClient(wahWebhook.Id, wahWebhook.Token);
         //Set the authors name as either the server nickname if there is one or the username
-        var authorObj = messageToMove.Author as IGuildUser;
+        var authorObj = await Context.Guild.GetUserAsync(messageToMove.Author.Id);
         var authorName = authorObj.Nickname ?? authorObj.GlobalName;
         //Get the embeds
         var repliedEmbeds = messageToMove.Embeds;

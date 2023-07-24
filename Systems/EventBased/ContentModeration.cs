@@ -13,9 +13,9 @@ public static class ContentModeration
     private static DiscordSocketClient _client;
     private static BlockingCollection<SocketMessage> _messagesToModerate = new BlockingCollection<SocketMessage>();
 
-    private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials("e4dbbd62b2ec4a65b82f556b1283bf6e"))
+    private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials(Environment.GetEnvironmentVariable("CONTENT_MODERATION_TOKEN")))
     {
-        Endpoint = "https://dougcontentmoderation.cognitiveservices.azure.com/"
+        Endpoint = Environment.GetEnvironmentVariable("CONTENT_MODERATION_URL")
     };
 
     public static async Task Monitor()

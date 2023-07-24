@@ -7,7 +7,7 @@ using TwitchLib.Client;
 using TwitchLib.Client.Models;
 using TwitchLib.PubSub;
 
-namespace DougBot.Twitch;
+namespace DougBot.Systems.Twitch;
 
 public class Twitch
 {

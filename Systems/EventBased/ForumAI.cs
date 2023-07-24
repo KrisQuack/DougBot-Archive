@@ -34,8 +34,8 @@ public static class ForumAi
                     var messages = await threadChannel.GetMessagesAsync(20).FlattenAsync();
                     messages = messages.OrderBy(m => m.CreatedAt);
                     //Setup OpenAI
-                    var client = new OpenAIClient(new Uri(dbGuild.OpenAiUrl),
-                        new AzureKeyCredential(dbGuild.OpenAiToken));
+                    var client = new OpenAIClient(new Uri(Environment.GetEnvironmentVariable("AI_URL")),
+                        new AzureKeyCredential(Environment.GetEnvironmentVariable("AI_TOKEN")));
                     var model = "WahSpeech";
                     var complete = false;
                     var currentRetry = 0;

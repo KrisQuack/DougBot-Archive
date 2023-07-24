@@ -34,10 +34,6 @@ public class Guild
 
     public string? ReportChannel { get; set; }
 
-    public string? OpenAiToken { get; set; }
-
-    public string? OpenAiUrl { get; set; }
-
     public string? OpenAiChatForum { get; set; }
 
     public string? LogChannel { get; set; }

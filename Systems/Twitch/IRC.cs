@@ -6,7 +6,7 @@ using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 using TwitchLib.Communication.Events;
 
-namespace DougBot.Twitch;
+namespace DougBot.Systems.Twitch;
 
 public class Irc
 {

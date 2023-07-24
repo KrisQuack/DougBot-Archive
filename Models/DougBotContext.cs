@@ -43,12 +43,6 @@ public partial class DougBotContext : DbContext
             entity.Property(e => e.OpenAiChatForum)
                 .HasMaxLength(255)
                 .HasColumnName("open_ai_chat_forum");
-            entity.Property(e => e.OpenAiToken)
-                .HasMaxLength(255)
-                .HasColumnName("open_ai_token");
-            entity.Property(e => e.OpenAiUrl)
-                .HasMaxLength(255)
-                .HasColumnName("open_ai_url");
             entity.Property(e => e.ReactionFilterChannels).HasColumnName("reaction_filter_channels");
             entity.Property(e => e.ReactionFilterEmotes).HasColumnName("reaction_filter_emotes");
             entity.Property(e => e.ReportChannel)

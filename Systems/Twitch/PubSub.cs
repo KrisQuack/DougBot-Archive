@@ -4,7 +4,7 @@ using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
 
-namespace DougBot.Twitch;
+namespace DougBot.Systems.Twitch;
 
 public class PubSub
 {

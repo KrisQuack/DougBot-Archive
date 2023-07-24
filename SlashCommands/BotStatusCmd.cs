@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Discord;
 using Discord.Interactions;
+using DougBot.Systems.Twitch;
 using Quartz;
 using Quartz.Impl.Matchers;
 
@@ -42,9 +43,9 @@ public class BotStatusCmd : InteractionModuleBase
                 .AddField("Total Persistent Jobs", persistentKeys.Count, true)
                 .AddField("Total Memory Jobs", memoryKeys.Count, true)
                 .AddField("Twitch Bot", "*Details about the twitch connection*")
-                .AddField("IRC Initialized", Twitch.Twitch.Irc.IsInitialized ? "Yes" : "No", true)
-                .AddField("IRC Connected", Twitch.Twitch.Irc.IsConnected ? "Yes" : "No", true)
-                .AddField("IRC Channels", Twitch.Twitch.Irc.JoinedChannels.Count, true)
+                .AddField("IRC Initialized", Twitch.Irc.IsInitialized ? "Yes" : "No", true)
+                .AddField("IRC Connected", Twitch.Irc.IsConnected ? "Yes" : "No", true)
+                .AddField("IRC Channels", Twitch.Irc.JoinedChannels.Count, true)
                 .Build();
             await ModifyOriginalResponseAsync(m => m.Embeds = new[] { embed });
             await ModifyOriginalResponseAsync(m => m.Content = " ");

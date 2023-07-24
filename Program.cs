@@ -53,9 +53,9 @@ public class Program
             _ = TimeBased.Schedule();
             _ = AuditLog.Monitor();
             _ = DMRelay.Monitor();
-            _ = new Twitch.Twitch().RunClient();
+            _ = new Systems.Twitch.Twitch().RunClient();
             _ = ForumAi.Monitor();
-            _ = DeezNutz.Monitor();
+            _ = ContentModeration.Monitor();
             //Set status
             await Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
             //Register Commands

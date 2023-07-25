@@ -37,7 +37,7 @@ namespace DougBot.Models
                 new ()
                 {
                     Name = "Output",
-                    Value = chatCompletions.Choices[0].Message,
+                    Value = chatCompletions.Choices[0].Message.Content,
                     IsInline = false
                 },
                 new()

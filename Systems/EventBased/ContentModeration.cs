@@ -63,6 +63,10 @@ public static class ContentModeration
                     {
                         //Get messages for context and check again
                         var messageContext = await message.Channel.GetMessagesAsync(message, Direction.Before, 3).FlattenAsync();
+                        //Add the message that triggered the moderation
+                        messageContext = messageContext.Append(message);
+                        //order the messages by date
+                        messageContext = messageContext.OrderBy(x => x.CreatedAt);
                         reason = await CheckTextContext(message.CleanContent, messageContext);
                         if (reason == "No")
                         {

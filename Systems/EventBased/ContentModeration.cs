@@ -93,7 +93,7 @@ public static class ContentModeration
                 }
                 catch (Exception e)
                 {
-                    if (e.Message.Contains("BadRequest")) return;
+                    if (e.Message.Contains("BadRequest")) continue;
                     Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} ContentModerator {e}");
                 }
             }

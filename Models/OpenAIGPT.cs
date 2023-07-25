@@ -27,6 +27,19 @@ namespace DougBot.Models
             var chatCompletions = completionResponse.Value;
             //Log tokens used and price
             var fields = new List<EmbedFieldBuilder>{
+                new ()
+                {
+                    Name = "Input",
+                    Value = $"System: {systemPrompt}\n" +
+                            $"User: {message}",
+                    IsInline = false
+                },
+                new ()
+                {
+                    Name = "Output",
+                    Value = chatCompletions.Choices[0].Message,
+                    IsInline = false
+                },
                 new()
                 {
                     Name = "Tokens",

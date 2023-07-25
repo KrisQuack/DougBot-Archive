@@ -28,10 +28,12 @@ public class Program
         //Start discord bot
         var config = new DiscordSocketConfig
         {
-            GatewayIntents = GatewayIntents.All ^ GatewayIntents.GuildPresences,
+            GatewayIntents = GatewayIntents.All ^ (GatewayIntents.GuildPresences | GatewayIntents.GuildScheduledEvents | GatewayIntents.GuildInvites),
             LogLevel = LogSeverity.Info,
-            MessageCacheSize = 1000,
-            UseInteractionSnowflakeDate = true
+            MessageCacheSize = 100,
+            UseInteractionSnowflakeDate = true,
+            AlwaysDownloadUsers = false,
+            AlwaysDownloadDefaultStickers = false,
         };
         Client = new DiscordSocketClient(config);
         Client.Log += Log;

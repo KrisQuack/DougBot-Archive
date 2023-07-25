@@ -1,32 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.6" />
-        <PackageReference Include="ColorHashSharp" Version="1.0.0" />
-        <PackageReference Include="Discord.Net" Version="3.11.0" />
-        <PackageReference Include="Microsoft.Azure.CognitiveServices.ContentModerator" Version="2.0.0" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
-        <PackageReference Include="Quartz" Version="3.6.3" />
-        <PackageReference Include="Quartz.Serialization.Json" Version="3.6.3" />
-        <PackageReference Include="TwitchLib" Version="3.5.3" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.6" />
+    <PackageReference Include="ColorHashSharp" Version="1.0.0" />
+    <PackageReference Include="Discord.Net" Version="3.11.0" />
+    <PackageReference Include="Microsoft.Azure.CognitiveServices.ContentModerator" Version="2.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
+    <PackageReference Include="Quartz" Version="3.6.3" />
+    <PackageReference Include="Quartz.Serialization.Json" Version="3.6.3" />
+    <PackageReference Include="TwitchLib" Version="3.5.3" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <None Include="Media\*.jpeg">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="Media\*.jpeg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
-    <ItemGroup>
-        <Content Include=".github\workflows\publish.yml" />
-    </ItemGroup>
+  <ItemGroup>
+    <Content Include=".github\workflows\publish.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Newtonsoft.Json" />
+  </ItemGroup>
 
 </Project>

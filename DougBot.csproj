@@ -29,8 +29,4 @@
     <Content Include=".github\workflows\publish.yml" />
   </ItemGroup>
 
-  <ItemGroup>
-    <TrimmerRootAssembly Include="Newtonsoft.Json" />
-  </ItemGroup>
-
 </Project>

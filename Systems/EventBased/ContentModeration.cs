@@ -5,6 +5,8 @@ using Microsoft.Azure.CognitiveServices.ContentModerator.Models;
 using System.Text;
 using System.Collections.Concurrent;
 using DougBot.Models;
+using DougBot.Scheduler;
+using System.Net.Mail;
 
 namespace DougBot.Systems.EventBased;
 
@@ -29,7 +31,7 @@ public static class ContentModeration
     private static Task MessageReceivedHandler(SocketMessage message)
     {
         //Ignore bots
-        if(message.Author.IsBot) return Task.CompletedTask;
+        if (message.Author.IsBot) return Task.CompletedTask;
         //Process
         _messagesToModerate.Add(message);
         return Task.CompletedTask;
@@ -43,22 +45,26 @@ public static class ContentModeration
             {
                 try
                 {
+                    string reason = "No";
                     bool isTextSafe = await CheckTextContent(message.Content);
                     bool areImagesSafe = true;
                     foreach (var attachment in message.Attachments)
                     {
-                        bool isImageSafe = await CheckImageContent(attachment.Url);
+                        var (isImageSafe, response) = await CheckImageContent(attachment.Url);
                         if (!isImageSafe)
                         {
+                            reason = response;
                             areImagesSafe = false;
                             break;
                         }
                     }
-                    var response = "No";
+
                     if (!isTextSafe)
                     {
-                        response = await CheckTextContext(message.CleanContent);
-                        if(response == "No")
+                        //Get messages for context and check again
+                        var messageContext = await message.Channel.GetMessagesAsync(message, Direction.Before, 3).FlattenAsync();
+                        reason = await CheckTextContext(message.CleanContent, messageContext);
+                        if (reason == "No")
                         {
                             isTextSafe = true;
                         }
@@ -66,29 +72,30 @@ public static class ContentModeration
 
                     if (!isTextSafe || !areImagesSafe)
                     {
-                        // Create an embed builder.
-                        var embedBuilder = new EmbedBuilder();
-                        // Add fields to the embed for the author, content, and link to the message.
-                        embedBuilder.Title = "Content Moderation";
-                        embedBuilder.Url = message.GetJumpUrl();
-                        embedBuilder.Author = new EmbedAuthorBuilder
+                        // Create the main embed
+                        var embed = new EmbedBuilder();
+                        embed.Title = "Content Moderation";
+                        embed.Url = message.GetJumpUrl();
+                        embed.Author = new EmbedAuthorBuilder
                         {
                             Name = $"{message.Author.GlobalName} ({message.Author.Id})",
                             IconUrl = message.Author.GetAvatarUrl()
                         };
-                        embedBuilder.AddField("Author", message.Author.Mention, inline: true);
-                        embedBuilder.AddField("Content", string.IsNullOrEmpty(message.CleanContent) ? "Media" : message.CleanContent, inline: true);
-                        embedBuilder.AddField("Reason", response, inline: true);
+                        embed.AddField("Author", message.Author.Mention, inline: true);
+                        embed.AddField("Channel", ((ITextChannel)message.Channel).Mention, inline: true); // Changed line
+                        embed.AddField("Content", string.IsNullOrEmpty(message.CleanContent) ? "Media" : message.CleanContent);
+                        embed.AddField("Reason", reason);
+                        //Create a list of attachments
+                        var attachments = new List<string>();
                         if (!areImagesSafe)
                         {
                             foreach (var attachment in message.Attachments)
                             {
-                                embedBuilder.ImageUrl = attachment.Url;
+                                attachments.Add(attachment.Url);
                             }
                         }
                         // Send the embed to the log channel.
-                        var logChannel = await _client.GetChannelAsync(886548334154760242) as ITextChannel;
-                        await logChannel.SendMessageAsync(embed: embedBuilder.Build());
+                        await SendMessageJob.Queue("567141138021089308", "886548334154760242", new List<EmbedBuilder> { embed }, DateTime.UtcNow, attachments: attachments);
                     }
                 }
                 catch (Exception e)
@@ -107,7 +114,7 @@ public static class ContentModeration
             return true;
         }
         await Task.Delay(1000);
-        var screenResult = await _moderatorClient.TextModeration.ScreenTextAsync("text/plain", new MemoryStream(Encoding.UTF8.GetBytes(text)), language: "eng",classify: true, pII: true);
+        var screenResult = await _moderatorClient.TextModeration.ScreenTextAsync("text/plain", new MemoryStream(Encoding.UTF8.GetBytes(text)), language: "eng", classify: true, pII: true);
         bool isClassificationSafe = screenResult.Classification.Category1.Score < 0.95 &&
                                 screenResult.Classification.Category2.Score < 0.95 &&
                                 screenResult.Classification.Category3.Score < 0.95;
@@ -115,53 +122,46 @@ public static class ContentModeration
         return isClassificationSafe;
     }
 
-    private static async Task<string> CheckTextContext(string message)
+    private static async Task<string> CheckTextContext(string message, IEnumerable<IMessage> messageContext)
     {
         var result = await OpenAIGPT.Wah354k(
             @"
-You are an AI assistant for a discord server, you will analyse the chat provided and determine if it violates any of the servers rules.
-If a rules is broken you will respond with who broke it and the reason
-If no rule is broken you will respond only 'No'
-
-Rules:
-- Follow Discord's Terms of Service
-- No Offensive Speech
-- Be Kind
-- No Spam or Irrelevant Posting
-- English Only
-- No Alternate Accounts or Impersonation
-- No Political Discussions:
-- No Sexual Topics
-- No Extremely Distressing Topics
-
-Example:
-User: I fucking love olive garden
+You are an AI assistant for a discord server, analyzing chat and determining if it violates any rules. You will be provided a message and its context. If a rule is broken, respond with the violation. If no rule is broken, respond 'No'.
+Rules: Follow Discord's TOS, No Offensive Speech, Be Kind, No Spam, English Only, No Impersonation, No Political/Sexual/Distressing Topics.
+Example 1:
+Message:I fucking love olive garden
+Context:{<@1235>:Hey guys in going to live garden today<@1234>:I fucking love olive garden<@1235>:haha me too thats great}
 Assistant: No
-
-User: Fuck you, you dont know me
-Assistant: Agressive language
-
-User: British food tastes like carboard
-Assistant: Hate speach towards British people
-
-User: This chicken tastest like ass
-Assistant: No
+Example 2:
+Message:Fuck you, you dont know me
+Context:{<@1235>:Hey how is everyone today<@1234>:I am good<@1236>:Fuck you, you dont know me}
+Assistant: Rude behaviour
 "
-            , message);
+            ,
+            $"Message:{message}\nContext:{{\n{string.Join("", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}"))}}}"
+            );
         return result;
     }
 
-    private static async Task<bool> CheckImageContent(string imageUrl)
+    private static async Task<(bool, string)> CheckImageContent(string imageUrl)
     {
         var bodyModel = new BodyModel("URL", imageUrl);
         await Task.Delay(1000);
         var evaluationResult = await _moderatorClient.ImageModeration.EvaluateUrlInputAsync("application/json", bodyModel);
 
-        // If the image is considered adult or racy, the result will be true.
-        bool isImageSafe = !(
-            (evaluationResult.AdultClassificationScore.HasValue && evaluationResult.AdultClassificationScore.Value > 0.5) ||
-            (evaluationResult.RacyClassificationScore.HasValue && evaluationResult.RacyClassificationScore.Value > 0.5)
-            );
+        string reason = null;
+        bool isImageSafe = true;
+
+        if (evaluationResult.AdultClassificationScore.HasValue && evaluationResult.AdultClassificationScore.Value > 0.5)
+        {
+            isImageSafe = false;
+            reason = "Adult content detected";
+        }
+        else if (evaluationResult.RacyClassificationScore.HasValue && evaluationResult.RacyClassificationScore.Value > 0.5)
+        {
+            isImageSafe = false;
+            reason = "Racy content detected";
+        }
 
         if (isImageSafe)
         {
@@ -171,10 +171,15 @@ Assistant: No
             if (ocrResult.Text != null)
             {
                 // Check the text found by OCR
-                isImageSafe = await CheckTextContent(ocrResult.Text);
+                bool isTextSafe = await CheckTextContent(ocrResult.Text);
+                if (!isTextSafe)
+                {
+                    isImageSafe = false;
+                    reason = "Offensive text detected in image";
+                }
             }
         }
 
-        return isImageSafe;
+        return (isImageSafe, reason);
     }
 }

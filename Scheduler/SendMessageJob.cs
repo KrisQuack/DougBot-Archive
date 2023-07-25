@@ -28,7 +28,7 @@ public class SendMessageJob : IJob
 
             // Get the guild and channel
             var guild = Program.Client.GetGuild(guildId);
-            var channel = guild.Channels.FirstOrDefault(x => x.Id == channelId) as SocketTextChannel;
+            var channel = guild.GetTextChannel(Convert.ToUInt64(channelId));
 
             // Deserialize and process embeds (if any)
             List<Embed> embeds = null;
@@ -48,24 +48,24 @@ public class SendMessageJob : IJob
             if (!string.IsNullOrEmpty(componentBuilder))
                 componentBuilderObj = JsonSerializer.Deserialize<ComponentBuilder>(componentBuilder);
             
-            // Send attachments (if any)
-            if (!string.IsNullOrEmpty(attachments) && attachments != "null")
+            // Send attachments (if any) in their own embed
+            if (!string.IsNullOrEmpty(attachments) && attachments != "null" && attachments != "[]")
             {
-                var attachList = JsonSerializer.Deserialize<List<string>>(attachments);
-                var fileAttachments = attachList.Select(attachment => new FileAttachment(attachment)).AsEnumerable();
-                await channel.SendFilesAsync(fileAttachments, message,
+                var attachmentsList = JsonSerializer.Deserialize<List<string>>(attachments);
+                foreach (var attachment in attachmentsList)
+                {
+                    var attachmentEmbed = new EmbedBuilder()
+                        .WithTitle(attachment.Split('/').Last().Split('\\').Last())
+                        .WithUrl(attachment)
+                        .WithImageUrl(attachment)
+                        .Build();
+                    embeds.Add(attachmentEmbed);
+                }
+            }
+            await channel.SendMessageAsync(message,
                     embeds: embeds?.ToArray(),
                     components: componentBuilderObj?.Build(),
                     allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
-            }
-            //Else send the message with embeds and components (if any)
-            else
-            {
-                await channel.SendMessageAsync(message,
-                    embeds: embeds?.ToArray(),
-                    components: componentBuilderObj?.Build(),
-                    allowedMentions: ping ? AllowedMentions.All : AllowedMentions.None);
-            }
         }
         catch (Exception e)
         {

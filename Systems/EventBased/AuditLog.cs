@@ -104,6 +104,14 @@ public static class AuditLog
             if (before.Username != after.Username)
                 fields.Add(new EmbedFieldBuilder
                 { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
+            //If guild avatar changed add field
+            var attachments = new List<string>();
+            if (before.AvatarId != after.AvatarId)
+            {
+                attachments = new List<string> { before.GetAvatarUrl(), after.GetAvatarUrl() };
+                //add field 
+                fields.Add(new EmbedFieldBuilder { Name = "Guild avatar updated", Value = "See attachments below" });
+            }
             //Set author
             var author = new EmbedAuthorBuilder
             {
@@ -113,7 +121,7 @@ public static class AuditLog
             //Log event for each mutual guild
             if (fields.Count > 0)
                 foreach (var guild in after.MutualGuilds)
-                    await LogEvent("User Updated", guild.Id.ToString(), Color.LightOrange, fields, author);
+                    await LogEvent("User Updated", guild.Id.ToString(), Color.LightOrange, fields, author, attachments);
         });
         return Task.CompletedTask;
     }
@@ -148,19 +156,7 @@ public static class AuditLog
             var attachments = new List<string>();
             if (beforeObj.GuildAvatarId != after.GuildAvatarId)
             {
-                using var httpClient = new HttpClient();
-                //get root path
-                var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                //old avatar
-                var attachmentBytes = await httpClient.GetByteArrayAsync(beforeObj.GetGuildAvatarUrl());
-                var path = Path.Combine(rootPath, $"{beforeObj.GuildAvatarId}_before.png");
-                await File.WriteAllBytesAsync(path, attachmentBytes);
-                attachments.Add(path);
-                //new avatar
-                attachmentBytes = await httpClient.GetByteArrayAsync(after.GetGuildAvatarUrl());
-                path = Path.Combine(rootPath, $"{after.GuildAvatarId}_after.png");
-                await File.WriteAllBytesAsync(path, attachmentBytes);
-                attachments.Add(path);
+                attachments = new List<string> {beforeObj.GetGuildAvatarUrl(), after.GetGuildAvatarUrl()};
                 //add field 
                 fields.Add(new EmbedFieldBuilder { Name = "Guild avatar updated", Value = "See attachments below" });
             }
@@ -188,18 +184,8 @@ public static class AuditLog
             var messageObj = await message.GetOrDownloadAsync();
             if (messageObj == null || await BlacklistCheck(channelObj))
                 return;
-            //Download message attachments from url via httpclient
-            var attachments = new List<string>();
-            using var httpClient = new HttpClient();
-            //get root path
-            var rootPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            foreach (var attachment in messageObj.Attachments)
-            {
-                var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
-                var path = Path.Combine(rootPath, attachment.Filename);
-                await File.WriteAllBytesAsync(path, attachmentBytes);
-                attachments.Add(path);
-            }
+            //Download message attachments from url
+            var attachments = messageObj.Attachments.Select(a => a.Url).ToList();
 
             //Set fields
             var fields = new List<EmbedFieldBuilder>

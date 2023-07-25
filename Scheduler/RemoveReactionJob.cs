@@ -22,8 +22,8 @@ public class RemoveReactionJob : IJob
             if (guildId == 0 || channelId == 0 || messageId == 0 || emoteName == null)
                 return;
 
-            var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
-            var channel = guild.Channels.FirstOrDefault(c => c.Id == channelId) as SocketTextChannel;
+            var guild = client.GetGuild(guildId);
+            var channel = guild.GetTextChannel(channelId);
             var message = await channel.GetMessageAsync(messageId);
             var emote = message.Reactions.FirstOrDefault(r => r.Key.Name == emoteName).Key;
             //check for nulls and return if any are null

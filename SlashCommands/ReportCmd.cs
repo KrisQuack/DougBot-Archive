@@ -35,6 +35,7 @@ public class ReportCmd : InteractionModuleBase
             var colorHash = new ColorHash();
             var color = colorHash.BuildToColor(Context.User.Id.ToString());
             var embeds = new List<EmbedBuilder>();
+            var attachments = new List<string>();
             //If the message is a user report
             if (userId != "0")
             {
@@ -81,13 +82,11 @@ public class ReportCmd : InteractionModuleBase
                         .WithName($"{Context.User.Username} ({Context.User.Id})")
                         .WithIconUrl(Context.User.GetAvatarUrl()))
                     .WithCurrentTimestamp());
-                //Attachment embeds
-                embeds.AddRange(message.Attachments.Select(attachment =>
-                    new EmbedBuilder().WithTitle(attachment.Filename).WithImageUrl(attachment.Url)
-                        .WithUrl(attachment.Url)));
+                //Attachments
+                attachments = message.Attachments.Select(a => a.Url).ToList();
             }
 
-            await SendMessageJob.Queue(dbGuild.Id, dbGuild.ReportChannel, embeds, DateTime.UtcNow);
+            await SendMessageJob.Queue(dbGuild.Id, dbGuild.ReportChannel, embeds, DateTime.UtcNow, attachments: attachments);
             await ModifyOriginalResponseAsync(m => m.Content = "Your report has been sent to the mods.");
         }
         catch (Exception e)

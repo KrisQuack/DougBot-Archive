@@ -26,9 +26,9 @@ public class SendDmJob : IJob
                 return;
 
             var dbGuild = await Guild.GetGuild(guildId.ToString());
-            var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
+            var guild = client.GetGuild(guildId);
             var channel =
-                guild.Channels.FirstOrDefault(c => c.Id.ToString() == dbGuild.DmReceiptChannel) as SocketTextChannel;
+                guild.GetTextChannel(Convert.ToUInt64(dbGuild.DmReceiptChannel));
             var user = await client.GetUserAsync(userId);
             var sender = await client.GetUserAsync(senderId);
 

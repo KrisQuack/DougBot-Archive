@@ -20,8 +20,8 @@ public class AddReactionJob : IJob
             var emoteName = dataMap.GetString("emoteName");
 
 
-            var guild = client.Guilds.FirstOrDefault(g => g.Id == guildId);
-            var channel = guild.Channels.FirstOrDefault(c => c.Id == channelId) as SocketTextChannel;
+            var guild = client.GetGuild(guildId);
+            var channel = guild.GetTextChannel(channelId);
             var message = await channel.GetMessageAsync(messageId);
             await message.AddReactionAsync(new Emoji(emoteName));
         }

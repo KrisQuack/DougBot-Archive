@@ -11,16 +11,6 @@ public static class TimeBased
         while (Scheduler.Quartz.MemorySchedulerInstance == null || Scheduler.Quartz.MemorySchedulerInstance.IsStarted == false) await Task.Delay(1000);
         IJobDetail job;
         ITrigger trigger;
-        //Clean Forums
-        //var job = JobBuilder.Create<CleanForumsJob>()
-        //    .WithIdentity("CleanForumsJob", "System")
-        //    .Build();
-        //var trigger = TriggerBuilder.Create()
-        //    .WithIdentity("CleanForumsTrigger", "System")
-        //    .StartNow()
-        //    .WithSimpleSchedule(x => x.WithIntervalInHours(1).RepeatForever())
-        //    .Build();
-        //await Scheduler.Quartz.MemorySchedulerInstance.ScheduleJob(job, trigger);
         //Youtube
         job = JobBuilder.Create<CheckYoutubeJob>()
             .WithIdentity("YoutubeJob", "System")

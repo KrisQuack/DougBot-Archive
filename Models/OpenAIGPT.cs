@@ -25,6 +25,8 @@ namespace DougBot.Models
             chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.User, message));
             var completionResponse = await client.GetChatCompletionsAsync("Wah-35-4k", chatCompletionsOptions);
             var chatCompletions = completionResponse.Value;
+            var chatText = chatCompletions.Choices[0].Message.Content;
+            chatText = string.IsNullOrEmpty(chatText) ? "No" : chatText;
             //Log tokens used and price
             var fields = new List<EmbedFieldBuilder>{
                 new ()
@@ -37,7 +39,7 @@ namespace DougBot.Models
                 new ()
                 {
                     Name = "Output",
-                    Value = chatCompletions.Choices[0].Message.Content,
+                    Value = chatText,
                     IsInline = false
                 },
                 new()
@@ -51,7 +53,7 @@ namespace DougBot.Models
             };
             //Send audit log
             await AuditLog.LogEvent("OpenAI: Wah-35-4k", "290611616586924033", Color.Green, fields);
-            return chatCompletions.Choices[0].Message.Content;
+            return chatText;
         }
     }
 }

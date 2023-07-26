@@ -6,7 +6,6 @@ using System.Text;
 using System.Collections.Concurrent;
 using DougBot.Models;
 using DougBot.Scheduler;
-using System.Net.Mail;
 
 namespace DougBot.Systems.EventBased;
 
@@ -129,7 +128,7 @@ public static class ContentModeration
     private static async Task<string> CheckTextContext(string message, IEnumerable<IMessage> messageContext)
     {
         var result = await OpenAIGPT.Wah354k(
-            @"
+@"
 You are an AI assistant for a discord server, analyzing chat and determining if it violates any rules. You will be provided a message and its context. If a rule is broken, respond with the violation. If no rule is broken, respond 'No'.
 Rules: Follow Discord's TOS, No Offensive Speech, Be Kind, No Spam, English Only, No Impersonation, No Political/Sexual/Distressing Topics.
 Example 1:

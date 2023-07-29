@@ -118,9 +118,9 @@ public static class ContentModeration
         }
         await Task.Delay(1000);
         var screenResult = await _moderatorClient.TextModeration.ScreenTextAsync("text/plain", new MemoryStream(Encoding.UTF8.GetBytes(text)), language: "eng", classify: true, pII: true);
-        bool isClassificationSafe = screenResult.Classification.Category1.Score < 0.95 &&
-                                screenResult.Classification.Category2.Score < 0.95 &&
-                                screenResult.Classification.Category3.Score < 0.95;
+        bool isClassificationSafe = screenResult.Classification.Category1.Score < 0.98 &&
+                                screenResult.Classification.Category2.Score < 0.98 &&
+                                screenResult.Classification.Category3.Score < 0.98;
         // If the text contains any terms from the moderation list, the result will not be null.
         return isClassificationSafe;
     }

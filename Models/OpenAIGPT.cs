@@ -33,13 +33,6 @@ namespace DougBot.Models
                 var fields = new List<EmbedFieldBuilder>{
                 new ()
                 {
-                    Name = "Input",
-                    Value = $"System: {systemPrompt}\n" +
-                            $"User: {message}",
-                    IsInline = false
-                },
-                new ()
-                {
                     Name = "Output",
                     Value = chatText,
                     IsInline = false

@@ -58,6 +58,7 @@ public class Program
             _ = new Systems.Twitch.Twitch().RunClient();
             _ = ForumAi.Monitor();
             _ = ContentModeration.Monitor();
+            _ = ForumAutomod.Monitor();
             //Set status
             await Client.SetGameAsync("DMs for mod help", null, ActivityType.Listening);
             //Register Commands

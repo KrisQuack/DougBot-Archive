@@ -1,7 +1,8 @@
-﻿using Azure.AI.OpenAI;
-using Azure;
-using Discord;
+﻿using Discord;
 using DougBot.Systems.EventBased;
+using OpenAI.Managers;
+using OpenAI;
+using OpenAI.ObjectModels.RequestModels;
 
 namespace DougBot.Models
 {
@@ -13,21 +14,26 @@ namespace DougBot.Models
             try
             {
                 //Setup OpenAI
-                var client = new OpenAIClient(new Uri(Environment.GetEnvironmentVariable("AI_URL")), new AzureKeyCredential(Environment.GetEnvironmentVariable("AI_TOKEN")));
-                var chatCompletionsOptions = new ChatCompletionsOptions
+                var openAiService = new OpenAIService(new OpenAiOptions()
                 {
-                    MaxTokens = 2000,
-                    Temperature = 0.5f,
-                    PresencePenalty = 0.5f,
-                    FrequencyPenalty = 0.5f
-                };
-                chatCompletionsOptions.StopSequences.Add("\n");
-                //Add messages to chat
-                chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
-                chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.User, message));
-                var completionResponse = await client.GetChatCompletionsAsync("Wah-35-4k", chatCompletionsOptions);
-                var chatCompletions = completionResponse.Value;
-                var chatText = chatCompletions.Choices[0].Message.Content;
+                    ApiKey = Environment.GetEnvironmentVariable("AI_TOKEN")
+                });
+                var completionResult = await openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                {
+                    Messages = new List<ChatMessage>
+                    {
+                        ChatMessage.FromSystem(systemPrompt),
+                        ChatMessage.FromUser(message)
+                    },
+                    Model = OpenAI.ObjectModels.Models.ChatGpt3_5Turbo,
+                    MaxTokens = 500,
+                    Temperature = 0.9f,
+                    PresencePenalty = 0.6f,
+                    FrequencyPenalty = 0.0f,
+                    StopAsList = new List<string> { "\n" }
+                });
+                var chatCompletions = completionResult;
+                var chatText = chatCompletions.Choices.First().Message.Content;
                 chatText = string.IsNullOrEmpty(chatText) ? "No" : chatText;
                 //Log tokens used and price
                 var fields = new List<EmbedFieldBuilder>{

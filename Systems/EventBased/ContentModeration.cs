@@ -6,6 +6,9 @@ using System.Text;
 using System.Collections.Concurrent;
 using DougBot.Models;
 using DougBot.Scheduler;
+using OpenAI.ObjectModels.RequestModels;
+using OpenAI.Managers;
+using OpenAI;
 
 namespace DougBot.Systems.EventBased;
 
@@ -13,8 +16,6 @@ public static class ContentModeration
 {
     private static DiscordSocketClient _client;
     private static BlockingCollection<SocketMessage> _messagesToModerate = new BlockingCollection<SocketMessage>();
-    private static ConcurrentDictionary<ulong, List<DateTime>> _channelFlags = new ConcurrentDictionary<ulong, List<DateTime>>();
-
 
     private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials(Environment.GetEnvironmentVariable("CONTENT_MODERATION_TOKEN")))
     {
@@ -27,7 +28,6 @@ public static class ContentModeration
         _client.MessageReceived += MessageReceivedHandler;
         _client.MessageUpdated += MessageUpdatedHandler;
         _ = ProcessMessages();
-        _ = CleanUpOldFlags();
         Console.WriteLine("Content Moderation Initialized");
     }
 
@@ -57,42 +57,27 @@ public static class ContentModeration
             {
                 try
                 {
+                    IEnumerable<IMessage> messageContext;
                     //Check if there are any images and if they are safe
                     foreach (var attachment in message.Attachments)
                     {
                         var (isImageSafe, imageResponse) = await CheckImageContent(attachment.Url);
                         if (!isImageSafe)
                         {
-                            var messageContext = new List<IMessage> { message };
+                            messageContext = new List<IMessage> { message };
                             await SendModerationEmbed(messageContext, imageResponse, true);
                             continue;
                         }
                     }
                     //Check if the text is safe
-                    var (isTextSafe, textResponse) = await CheckTextContent(message.CleanContent);
+                    messageContext = await message.Channel.GetMessagesAsync(10).FlattenAsync();
+                    messageContext = messageContext.Where(m => !string.IsNullOrEmpty(m.CleanContent));
+                    messageContext = messageContext.OrderBy(m => m.CreatedAt);
+                    var (isTextSafe, textResponse) = await CheckTextContent(message.CleanContent, messageContext);
                     if (!isTextSafe)
                     {
-                        // Update the flags for the channel
-                        var now = DateTime.UtcNow;
-                        _channelFlags.AddOrUpdate(
-                            message.Channel.Id,
-                            new List<DateTime> { now },
-                            (_, existing) => { existing.Add(now); return existing; }
-                        );
-                        //Check if there has been more than 5 flags in the last 10 minutes
-                        var recentFlags = _channelFlags[message.Channel.Id].Where(time => now - time <= TimeSpan.FromMinutes(10)).ToList();
-                        if (recentFlags.Count >= 5)
-                        {
-                            // Trigger a context check on the last 10 messages
-                            var messageContext = await message.Channel.GetMessagesAsync(10).FlattenAsync();
-                            messageContext = messageContext.OrderBy(m => m.CreatedAt);
-                            var result = await CheckTextContext(messageContext);
-                            // If the result is No, message is safe
-                            if (result == "No") continue;
-                            // If the result is not No, send a message to the log channel.
-                            await SendModerationEmbed(messageContext, result, false);
-                            _channelFlags.TryRemove(message.Channel.Id, out _);
-                        }
+                        await SendModerationEmbed(messageContext, textResponse, false);
+                        continue;
                     }
                 }
                 catch (Exception e)
@@ -104,42 +89,40 @@ public static class ContentModeration
         });
     }
 
-    private static async Task<(bool,string)> CheckTextContent(string text)
+    private static async Task<(bool,string)> CheckTextContent(string text, IEnumerable<IMessage>? messageContext =  null)
     {
+        //Check if the text is empty
         if (string.IsNullOrWhiteSpace(text))
         {
             return (true,"");
         }
+        //Check with Azure content mod
         await Task.Delay(1000);
         var screenResult = await _moderatorClient.TextModeration.ScreenTextAsync("text/plain", new MemoryStream(Encoding.UTF8.GetBytes(text)), language: "eng", classify: true, pII: true);
-        bool isClassificationSafe = screenResult.Terms == null;
-        // If the text contains any terms from the moderation list, the result will not be null.
-        return (isClassificationSafe, !isClassificationSafe ? string.Join(", ", screenResult.Terms.Select(t => t.Term)) : "");
-    }
-
-    private static async Task<string> CheckTextContext(IEnumerable<IMessage> messageContext)
-    {
-        var result = await OpenAIGPT.Wah354k(
-@"
-You are an AI assistant for a discord server, analyzing chat and determining if it violates any rules. You will be provided a message and its context. If a rule is broken, respond with the violation. If no rule is broken, respond 'No'.
-Rules: Follow Discord's TOS, No Offensive Speech, Be Kind, No Spam, English Only, No Impersonation, No Political/Sexual/Distressing Topics.
-Example 1:
-Message:I fucking love olive garden
-<@1235>:Hey guys in going to live garden today
-<@1234>:I fucking love olive garden
-<@1235>:haha me too thats great
-Assistant: No
-Example 2:
-Message:Fuck you, you dont know me
-<@1235>:Hey how is everyone today
-<@1234>:I am good
-<@1236>:Fuck you, you dont know me
-Assistant: <@1236> Rude behaviour
-"
-            ,
-            $"\n{string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}"))}"
-            );
-        return result;
+        if(screenResult.Terms == null) return (true,"");
+        if(messageContext == null) return (false, string.Join(", ", screenResult.Terms.Select(t => t.Term)));
+        //If bad word, setup OpenAI
+        var openAiService = new OpenAIService(new OpenAiOptions()
+        {
+            ApiKey = Environment.GetEnvironmentVariable("AI_TOKEN")
+        });
+        //Check if the message context is safe
+        var moderationResponse = await openAiService.Moderation.CreateModeration(new CreateModerationRequest()
+        {
+            Input = string.Join("\n", messageContext.Select(m => $"{m.Author.GlobalName}:{m.CleanContent}"))
+        });
+        var moderationResult = moderationResponse.Results.FirstOrDefault();
+        //Make a string of categories that are flagged
+        List<string> flags = new List<string>();
+        if(moderationResult.Categories.Sexual) flags.Add("Sexual");
+        if(moderationResult.Categories.SexualMinors) flags.Add("SexualMinors");
+        if(moderationResult.Categories.Hate) flags.Add("Hate");
+        if(moderationResult.Categories.HateThreatening) flags.Add("HateThreatening");
+        if(moderationResult.Categories.SelfHarm) flags.Add("SelfHarm");
+        if(moderationResult.Categories.Violence) flags.Add("Violence");
+        if (moderationResult.Categories.ViolenceGraphic) flags.Add("ViolenceGraphic");
+        //Return if the message is safe
+        return (!moderationResult.Flagged, string.Join(", ", flags));
     }
 
     private static async Task<(bool, string)> CheckImageContent(string imageUrl)
@@ -182,38 +165,10 @@ Assistant: <@1236> Rude behaviour
         return (isImageSafe, reason);
     }
 
-    public static async Task CleanUpOldFlags()
-    {
-        while (true)
-        {
-            try
-            {
-                var now = DateTime.UtcNow;
-                foreach (var key in _channelFlags.Keys)
-                {
-                    _channelFlags.AddOrUpdate(
-                        key,
-                        new List<DateTime>(),
-                        (_, existing) =>
-                        {
-                            return existing.Where(time => now - time <= TimeSpan.FromMinutes(30)).ToList();
-                        }
-                    );
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} CleanUpOldFlags {e}");
-            }
-            // Wait some time before the next cleanup
-            await Task.Delay(TimeSpan.FromMinutes(5));
-        }
-    }
-
     private static async Task SendModerationEmbed(IEnumerable<IMessage> messageContext, string reason, bool image)
     {
         var message = messageContext.LastOrDefault();
-        var contextString = string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}: {m.CleanContent}"));
+        var contextString = string.Join("\n", messageContext.Select(m => $"{m.Author.GlobalName}: {m.CleanContent}"));
         var contextTruncated = contextString.Length <= 1024 ? contextString : "..." + contextString.Substring(contextString.Length - 1020);
         // Create the main embed
         var embed = new EmbedBuilder();
@@ -224,16 +179,15 @@ Assistant: <@1236> Rude behaviour
         embed.AddField("Content", image ? "Media" : contextTruncated);
         embed.AddField("Reason", reason);
         //Create a list of attachments
-        var attachments = new List<string>();
         if (image)
         {
             foreach (var attachment in message.Attachments)
             {
-                attachments.Add(attachment.Url);
+                embed.ImageUrl = attachment.Url;
             }
         }
         // Send the embed to the log channel.
-        await SendMessageJob.Queue("567141138021089308", "886548334154760242", new List<EmbedBuilder> { embed }, DateTime.UtcNow, attachments: attachments);
+        await SendMessageJob.Queue("567141138021089308", "886548334154760242", new List<EmbedBuilder> { embed }, DateTime.UtcNow);
     }
 
 }

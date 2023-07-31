@@ -15,6 +15,7 @@ public static class ContentModeration
     private static DiscordSocketClient _client;
     private static BlockingCollection<SocketMessage> _messagesToModerate = new BlockingCollection<SocketMessage>();
     private static ConcurrentDictionary<ulong, List<DateTime>> _channelFlags = new ConcurrentDictionary<ulong, List<DateTime>>();
+    private static Guild _guild;
 
     private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials(Environment.GetEnvironmentVariable("CONTENT_MODERATION_TOKEN")))
     {
@@ -33,8 +34,12 @@ public static class ContentModeration
 
     private static Task MessageUpdatedHandler(Cacheable<IMessage, ulong> cacheable, SocketMessage message, ISocketMessageChannel channel)
     {
-        //Ignore bots
-        if (message.Author.IsBot) return Task.CompletedTask;
+        //Check if _guild is null and if so if this message is valid
+        var guildChannel = channel as SocketTextChannel;
+        if (_guild == null || guildChannel == null || message.Author.IsBot ||
+            _guild.LogBlacklistChannels.Contains(guildChannel.Id.ToString()) ||
+            _guild.LogBlacklistChannels.Contains(guildChannel.CategoryId.ToString())
+            ) return Task.CompletedTask;
         //Process
         _messagesToModerate.Add(message);
         return Task.CompletedTask;
@@ -42,8 +47,12 @@ public static class ContentModeration
 
     private static Task MessageReceivedHandler(SocketMessage message)
     {
-        //Ignore bots
-        if (message.Author.IsBot) return Task.CompletedTask;
+        //Check if _guild is null and if so if this message is valid
+        var guildChannel = message.Channel as SocketTextChannel;
+        if (_guild == null || guildChannel == null || message.Author.IsBot ||
+            _guild.LogBlacklistChannels.Contains(guildChannel.Id.ToString()) ||
+            _guild.LogBlacklistChannels.Contains(guildChannel.CategoryId.ToString())
+            ) return Task.CompletedTask;
         //Process
         _messagesToModerate.Add(message);
         return Task.CompletedTask;
@@ -197,7 +206,7 @@ public static class ContentModeration
             }
         }
         // Send the embed to the log channel.
-        await SendMessageJob.Queue("567141138021089308", "886548334154760242", new List<EmbedBuilder> { embed }, DateTime.UtcNow);
+        await SendMessageJob.Queue("567141138021089308", "571965793131036672", new List<EmbedBuilder> { embed }, DateTime.UtcNow);
     }
 
     public static async Task CleanUpOldFlags()
@@ -206,6 +215,7 @@ public static class ContentModeration
         {
             try
             {
+                // Remove all flags older than 10 minutes
                 var now = DateTime.UtcNow;
                 foreach (var key in _channelFlags.Keys)
                 {
@@ -214,10 +224,12 @@ public static class ContentModeration
                         new List<DateTime>(),
                         (_, existing) =>
                         {
-                            return existing.Where(time => now - time <= TimeSpan.FromMinutes(30)).ToList();
+                            return existing.Where(time => now - time <= TimeSpan.FromMinutes(10)).ToList();
                         }
                     );
                 }
+                // Update _guild
+                _guild = await Guild.GetGuild("567141138021089308");
             }
             catch (Exception e)
             {

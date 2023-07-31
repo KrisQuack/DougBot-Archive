@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 
 namespace DougBot.Systems.EventBased
@@ -38,9 +37,9 @@ namespace DougBot.Systems.EventBased
                     {
                         Title = "Welcome to your new thread!",
                         Description = "Please remember the server rules still apply. " +
-                        "If you have any issues, please contact the moderation team. More info:  https://discord.com/channels/567141138021089308/880127379119415306/1132052471481638932\n\n" +
-                        $"{firstMessage.Author.Mention} as the owner you may also Pin and Unpin posts in your thread using the new options in the context menu",
-                        ImageUrl = "https://cdn.discordapp.com/attachments/886548334154760242/1135511848817545236/image.png",
+                        "If you have any issues, please contact the moderation team. More info:  https://discord.com/channels/567141138021089308/880127379119415306/1132052471481638932\n" +
+                        $"{firstMessage.Author.Mention} as the owner you may also Pin and Unpin posts in your thread, Just right click (hold down on mobile) on a message, select Apps and then Pin or Unpin." +
+                        $" [Example](https://cdn.discordapp.com/attachments/886548334154760242/1135511848817545236/image.png)",
                         Color = Color.Orange,
                         Author = new EmbedAuthorBuilder()
                         {

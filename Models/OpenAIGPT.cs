@@ -10,7 +10,7 @@ namespace DougBot.Models
 
     public class OpenAIGPT
     {
-        public static async Task<ChatCompletionCreateResponse> Wah354k(List<ChatMessage> chatMessages)
+        public static async Task<string> Wah354k(List<ChatMessage> chatMessages)
         {
             try
             {
@@ -34,26 +34,7 @@ namespace DougBot.Models
                     StopAsList = new List<string> { "\n" }
                 });
                 var chatText = completionResult.Choices?.FirstOrDefault()?.Message.Content ?? "No";
-                //Log tokens used and price
-                var fields = new List<EmbedFieldBuilder>{
-                    new ()
-                    {
-                        Name = "Output",
-                        Value = chatText,
-                        IsInline = false
-                    },
-                    new()
-                    {
-                        Name = "Tokens",
-                        Value = $"Prompt: {completionResult.Usage.PromptTokens}\n" +
-                                $"Completion: {completionResult.Usage.CompletionTokens}\n" +
-                                $"Total: {completionResult.Usage.TotalTokens}\n",
-                        IsInline = false
-                    }
-                };
-                //Send audit log
-                await AuditLog.LogEvent("OpenAI: Wah-35-4k", "290611616586924033", Color.Green, fields);
-                return completionResult;
+                return chatText;
             }
             catch (Exception e)
             {

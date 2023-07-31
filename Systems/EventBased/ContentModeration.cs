@@ -140,8 +140,7 @@ public static class ContentModeration
             ChatMessage.FromSystem("<@1236> Rude behaviour towards <@1235>"),
             ChatMessage.FromUser(string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}")))
         };
-        var result = await OpenAIGPT.Wah354k(chatMessages);
-        return result.Choices.FirstOrDefault().Message.Content;
+        return await OpenAIGPT.Wah354k(chatMessages);
     }
 
     private static async Task<(bool, string)> CheckImageContent(string imageUrl)

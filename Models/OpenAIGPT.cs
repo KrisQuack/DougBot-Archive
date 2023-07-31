@@ -33,8 +33,7 @@ namespace DougBot.Models
                     FrequencyPenalty = 0.0f,
                     StopAsList = new List<string> { "\n" }
                 });
-                var chatText = completionResult.Choices.First().Message.Content;
-                chatText = string.IsNullOrEmpty(chatText) ? "No" : chatText;
+                var chatText = completionResult.Choices?.FirstOrDefault()?.Message.Content ?? "No";
                 //Log tokens used and price
                 var fields = new List<EmbedFieldBuilder>{
                     new ()

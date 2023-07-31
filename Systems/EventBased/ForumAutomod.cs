@@ -26,7 +26,7 @@ namespace DougBot.Systems.EventBased
                     if (pinnedMessages.Count > 0) return;
                     //Pin the first message
                     var messages = await channel.GetMessagesAsync(10).FlattenAsync();
-                    var firstMessage = messages.OrderBy(m => m.CreatedAt).LastOrDefault();
+                    var firstMessage = messages.OrderBy(m => m.CreatedAt).FirstOrDefault();
                     if (firstMessage != null)
                     {
                         var pinMessage = firstMessage as SocketUserMessage;

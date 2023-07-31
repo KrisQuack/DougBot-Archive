@@ -25,8 +25,8 @@ namespace DougBot.Systems.EventBased
                     //If there are any pinned messages, return
                     if (pinnedMessages.Count > 0) return;
                     //Pin the first message
-                    var messages = await channel.GetMessagesAsync(1).FlattenAsync();
-                    var firstMessage = messages.FirstOrDefault();
+                    var messages = await channel.GetMessagesAsync(10).FlattenAsync();
+                    var firstMessage = messages.OrderBy(m => m.CreatedAt).LastOrDefault();
                     if (firstMessage != null)
                     {
                         var pinMessage = firstMessage as SocketUserMessage;
@@ -38,7 +38,7 @@ namespace DougBot.Systems.EventBased
                         Title = "Welcome to your new thread!",
                         Description = "Please remember the server rules still apply. " +
                         "If you have any issues, please contact the moderation team. More info:  https://discord.com/channels/567141138021089308/880127379119415306/1132052471481638932\n" +
-                        $"{firstMessage.Author.Mention} as the owner you may also Pin and Unpin posts in your thread, Just right click (hold down on mobile) on a message, select Apps and then Pin or Unpin." +
+                        $"<@{firstMessage.Author.Id}> as the owner you may also Pin and Unpin posts in your thread, Just right click (hold down on mobile) on a message, select Apps and then Pin or Unpin." +
                         $" [Example](https://cdn.discordapp.com/attachments/886548334154760242/1135511848817545236/image.png)",
                         Color = Color.Orange,
                         Author = new EmbedAuthorBuilder()

@@ -7,8 +7,6 @@ using System.Collections.Concurrent;
 using DougBot.Models;
 using DougBot.Scheduler;
 using OpenAI.ObjectModels.RequestModels;
-using OpenAI.Managers;
-using OpenAI;
 
 namespace DougBot.Systems.EventBased;
 
@@ -16,10 +14,11 @@ public static class ContentModeration
 {
     private static DiscordSocketClient _client;
     private static BlockingCollection<SocketMessage> _messagesToModerate = new BlockingCollection<SocketMessage>();
+    private static ConcurrentDictionary<ulong, List<DateTime>> _channelFlags = new ConcurrentDictionary<ulong, List<DateTime>>();
 
     private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials(Environment.GetEnvironmentVariable("CONTENT_MODERATION_TOKEN")))
     {
-        Endpoint = Environment.GetEnvironmentVariable("CONTENT_MODERATION_URL")
+        Endpoint = Environment.GetEnvironmentVariable("CONTENT_MODERATION_URL"),
     };
 
     public static async Task Monitor()
@@ -28,6 +27,7 @@ public static class ContentModeration
         _client.MessageReceived += MessageReceivedHandler;
         _client.MessageUpdated += MessageUpdatedHandler;
         _ = ProcessMessages();
+        _ = CleanUpOldFlags();
         Console.WriteLine("Content Moderation Initialized");
     }
 
@@ -49,7 +49,7 @@ public static class ContentModeration
         return Task.CompletedTask;
     }
 
-    private static async Task ProcessMessages()
+    private static Task ProcessMessages()
     {
         _ = Task.Run(async () =>
         {
@@ -87,6 +87,7 @@ public static class ContentModeration
                 }
             }
         });
+        return Task.CompletedTask;
     }
 
     private static async Task<(bool,string)> CheckTextContent(string text, IEnumerable<IMessage>? messageContext =  null)
@@ -99,30 +100,39 @@ public static class ContentModeration
         //Check with Azure content mod
         await Task.Delay(1000);
         var screenResult = await _moderatorClient.TextModeration.ScreenTextAsync("text/plain", new MemoryStream(Encoding.UTF8.GetBytes(text)), language: "eng", classify: true, pII: true);
-        if(screenResult.Terms == null) return (true,"");
+        if(screenResult.Terms == null && !text.Contains("?weird")) return (true,"");
         if(messageContext == null) return (false, string.Join(", ", screenResult.Terms.Select(t => t.Term)));
-        //If bad word, setup OpenAI
-        var openAiService = new OpenAIService(new OpenAiOptions()
-        {
-            ApiKey = Environment.GetEnvironmentVariable("AI_TOKEN")
-        });
-        //Check if the message context is safe
-        var moderationResponse = await openAiService.Moderation.CreateModeration(new CreateModerationRequest()
-        {
-            Input = string.Join("\n", messageContext.Select(m => $"{m.Author.GlobalName}:{m.CleanContent}"))
-        });
-        var moderationResult = moderationResponse.Results.FirstOrDefault();
-        //Make a string of categories that are flagged
-        List<string> flags = new List<string>();
-        if(moderationResult.Categories.Sexual) flags.Add("Sexual");
-        if(moderationResult.Categories.SexualMinors) flags.Add("SexualMinors");
-        if(moderationResult.Categories.Hate) flags.Add("Hate");
-        if(moderationResult.Categories.HateThreatening) flags.Add("HateThreatening");
-        if(moderationResult.Categories.SelfHarm) flags.Add("SelfHarm");
-        if(moderationResult.Categories.Violence) flags.Add("Violence");
-        if (moderationResult.Categories.ViolenceGraphic) flags.Add("ViolenceGraphic");
+        //Check if there has been more than 3 flags in the last 5 minutes
+        var now = DateTime.UtcNow;
+        var message = messageContext.Last();
+        _channelFlags.AddOrUpdate(
+            message.Channel.Id,
+            new List<DateTime> { now },
+            (_, existing) => { existing.Add(now); return existing; }
+        );
+        var recentFlags = _channelFlags[message.Channel.Id].Where(time => now - time <= TimeSpan.FromMinutes(10)).ToList();
+        if (recentFlags.Count < 3 && !text.Contains("?weird")) return (true, "");
+        _channelFlags.TryRemove(message.Channel.Id, out _);
+        //If bad word, Ask AI if it is safe
+        var contextResponse = await CheckTextContext(messageContext);
+        var isContextSafe = (contextResponse == "No");
         //Return if the message is safe
-        return (!moderationResult.Flagged, string.Join(", ", flags));
+        return (isContextSafe, contextResponse);
+    }
+
+    private static async Task<string> CheckTextContext(IEnumerable<IMessage> messageContext)
+    {
+        var chatMessages = new List<ChatMessage>
+        {
+            ChatMessage.FromSystem("You are an AI assistant for a discord server, analyzing chat and determining if it violates any rules. You will be provided a message and its context. If a rule is broken, respond with the violation. If no rule is broken, respond 'No'.\nRules: Follow Discord's TOS, No Offensive Speech, Be Kind, No Spam, English Only, No Impersonation, No Political/Sexual/Distressing Topics."),
+            ChatMessage.FromUser("<@1235>:Hey guys in going to live garden today\n<@1234>:I fucking love olive garden\n<@1235>:haha me too thats great"),
+            ChatMessage.FromAssistant("No"),
+            ChatMessage.FromUser("<@1235>:Hey how is everyone today\r\n<@1234>:I am good\r\n<@1236>:Fuck you, you dont know me"),
+            ChatMessage.FromSystem("<@1236> Rude behaviour towards <@1235>"),
+            ChatMessage.FromUser(string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}")))
+        };
+        var result = await OpenAIGPT.Wah354k(chatMessages);
+        return result.Choices.FirstOrDefault().Message.Content;
     }
 
     private static async Task<(bool, string)> CheckImageContent(string imageUrl)
@@ -188,6 +198,34 @@ public static class ContentModeration
         }
         // Send the embed to the log channel.
         await SendMessageJob.Queue("567141138021089308", "886548334154760242", new List<EmbedBuilder> { embed }, DateTime.UtcNow);
+    }
+
+    public static async Task CleanUpOldFlags()
+    {
+        while (true)
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                foreach (var key in _channelFlags.Keys)
+                {
+                    _channelFlags.AddOrUpdate(
+                        key,
+                        new List<DateTime>(),
+                        (_, existing) =>
+                        {
+                            return existing.Where(time => now - time <= TimeSpan.FromMinutes(30)).ToList();
+                        }
+                    );
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} CleanUpOldFlags {e}");
+            }
+            // Wait some time before the next cleanup
+            await Task.Delay(TimeSpan.FromMinutes(5));
+        }
     }
 
 }

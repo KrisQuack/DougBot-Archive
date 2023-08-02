@@ -79,7 +79,7 @@ public static class ContentModeration
                         }
                     }
                     //Check if the text is safe
-                    messageContext = await message.Channel.GetMessagesAsync(10).FlattenAsync();
+                    messageContext = await message.Channel.GetMessagesAsync(20).FlattenAsync();
                     messageContext = messageContext.Where(m => !string.IsNullOrEmpty(m.CleanContent));
                     messageContext = messageContext.OrderBy(m => m.CreatedAt);
                     var (isTextSafe, textResponse) = await CheckTextContent(message.CleanContent, messageContext);
@@ -133,11 +133,16 @@ public static class ContentModeration
     {
         var chatMessages = new List<ChatMessage>
         {
-            ChatMessage.FromSystem("You are an AI assistant for a discord server, analyzing chat and determining if it violates any rules. You will be provided a message and its context. If a rule is broken, respond with the violation. If no rule is broken, respond 'No'.\nRules: Follow Discord's TOS, No Offensive Speech, Be Kind, No Spam, English Only, No Impersonation, No Political/Sexual/Distressing Topics."),
-            ChatMessage.FromUser("<@1235>:Hey guys in going to live garden today\n<@1234>:I fucking love olive garden\n<@1235>:haha me too thats great"),
+            ChatMessage.FromSystem("You are acting as a content filter for a discord server. " +
+            "You will analyzing chat provided to you and determining if it violates any rules. " +
+            "Obvious jokes or light hearted comments and perfectly acceptable and will not need flagging. " +
+            "Mild sexual refference and jokes are also acceptable as long as they are not over the line. " +
+            "If a rule is broken, respond with the violation. If no rule is broken, respond only with 'No'.\n" +
+            "Rules: Follow Discord's TOS, No Offensive Speech, Be Kind, No Spam, English Only, No Impersonation, No Political/Sexual/Distressing Topics."),
+            ChatMessage.FromUser("<@1>:Hey guys in going to live garden today\n<@2>:I fucking love olive garden\n<@1>:haha me too thats great"),
             ChatMessage.FromAssistant("No"),
-            ChatMessage.FromUser("<@1235>:Hey how is everyone today\r\n<@1234>:I am good\r\n<@1236>:Fuck you, you dont know me"),
-            ChatMessage.FromSystem("<@1236> Rude behaviour towards <@1235>"),
+            ChatMessage.FromUser("<@1>:Hey how is everyone today\r\n<@2>:I am good\r\n<@3>:Fuck you, you dont know me"),
+            ChatMessage.FromSystem("<@3> Rude behaviour towards <@1>"),
             ChatMessage.FromUser(string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}")))
         };
         return await OpenAIGPT.Wah354k(chatMessages);
@@ -186,7 +191,7 @@ public static class ContentModeration
     private static async Task SendModerationEmbed(IEnumerable<IMessage> messageContext, string reason, bool image)
     {
         var message = messageContext.LastOrDefault();
-        var contextString = string.Join("\n", messageContext.Select(m => $"{m.Author.GlobalName}: {m.CleanContent}"));
+        var contextString = string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}: {m.CleanContent}"));
         var contextTruncated = contextString.Length <= 1024 ? contextString : "..." + contextString.Substring(contextString.Length - 1020);
         // Create the main embed
         var embed = new EmbedBuilder();

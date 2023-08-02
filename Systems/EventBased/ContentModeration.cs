@@ -191,7 +191,7 @@ public static class ContentModeration
     private static async Task SendModerationEmbed(IEnumerable<IMessage> messageContext, string reason, bool image)
     {
         var message = messageContext.LastOrDefault();
-        var contextString = string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}: {m.CleanContent}"));
+        var contextString = string.Join("\n", messageContext.Select(m => $"{m.Author.GlobalName}: {m.CleanContent}"));
         var contextTruncated = contextString.Length <= 1024 ? contextString : "..." + contextString.Substring(contextString.Length - 1020);
         // Create the main embed
         var embed = new EmbedBuilder();

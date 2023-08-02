@@ -32,8 +32,8 @@ public class Program
             LogLevel = LogSeverity.Info,
             MessageCacheSize = 100,
             UseInteractionSnowflakeDate = true,
-            AlwaysDownloadUsers = false,
-            AlwaysDownloadDefaultStickers = false,
+            AlwaysDownloadUsers = true,
+            AlwaysDownloadDefaultStickers = false
         };
         Client = new DiscordSocketClient(config);
         Client.Log += Log;

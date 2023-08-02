@@ -111,7 +111,7 @@ public static class ContentModeration
         var screenResult = await _moderatorClient.TextModeration.ScreenTextAsync("text/plain", new MemoryStream(Encoding.UTF8.GetBytes(text)), language: "eng", classify: true, pII: true);
         if(screenResult.Terms == null && !text.Contains("?weird")) return (true,"");
         if(messageContext == null) return (false, string.Join(", ", screenResult.Terms.Select(t => t.Term)));
-        //Check if there has been more than 3 flags in the last 5 minutes
+        //Check if there has been more than 5 flags in the last 5 minutes
         var now = DateTime.UtcNow;
         var message = messageContext.Last();
         _channelFlags.AddOrUpdate(
@@ -120,7 +120,7 @@ public static class ContentModeration
             (_, existing) => { existing.Add(now); return existing; }
         );
         var recentFlags = _channelFlags[message.Channel.Id].Where(time => now - time <= TimeSpan.FromMinutes(10)).ToList();
-        if (recentFlags.Count < 3 && !text.Contains("?weird")) return (true, "");
+        if (recentFlags.Count < 5 && !text.Contains("?weird")) return (true, "");
         _channelFlags.TryRemove(message.Channel.Id, out _);
         //If bad word, Ask AI if it is safe
         var contextResponse = await CheckTextContext(messageContext);

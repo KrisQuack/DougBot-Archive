@@ -145,7 +145,7 @@ public static class ContentModeration
             ChatMessage.FromSystem("<@3> Rude behaviour towards <@1>"),
             ChatMessage.FromUser(string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}")))
         };
-        return await OpenAIGPT.Wah354k(chatMessages);
+        return await OpenAIGPT.Gpt48k(chatMessages);
     }
 
     private static async Task<(bool, string)> CheckImageContent(string imageUrl)

@@ -64,6 +64,7 @@ namespace DougBot.Models
                 {
                     Messages = chatMessages,
                     MaxTokens = maxTokens,
+                    Model = deploymentId,
                     Temperature = 0.9f,
                     PresencePenalty = 0.6f,
                     FrequencyPenalty = 0.0f,

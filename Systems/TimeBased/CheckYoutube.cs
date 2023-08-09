@@ -51,7 +51,7 @@ public class CheckYoutube
                             .WithUrl(videoUrl);
                         await ConfigurationService.Instance.Guild
                             .GetTextChannel(Convert.ToUInt64(Youtube.PostChannel))
-                            .SendMessageAsync(mentionRole, false, embed.Build(), allowedMentions: AllowedMentions.None);
+                            .SendMessageAsync(mentionRole, false, embed.Build(), allowedMentions: AllowedMentions.All);
                         Youtube.LastVideoId = videoId;
                     }
                     catch (Exception ex)
@@ -65,7 +65,7 @@ public class CheckYoutube
             {
                 Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} CheckYoutubeJob {ex}");
             }
-            await Task.Delay(600000);
+            await Task.Delay(1);
         }
     }
 }

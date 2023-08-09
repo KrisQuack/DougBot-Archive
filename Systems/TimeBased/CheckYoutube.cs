@@ -15,7 +15,6 @@ public class CheckYoutube
         Console.WriteLine("Youtube Initialized");
         while (true)
         {
-            await Task.Delay(600000);
             try
             {
                 foreach (var Youtube in ConfigurationService.Instance.YoutubeConfigs)
@@ -52,7 +51,7 @@ public class CheckYoutube
                             .WithUrl(videoUrl);
                         await ConfigurationService.Instance.Guild
                             .GetTextChannel(Convert.ToUInt64(Youtube.PostChannel))
-                            .SendMessageAsync(mentionRole, false, embed.Build(), allowedMentions: AllowedMentions.All);
+                            .SendMessageAsync(mentionRole, false, embed.Build(), allowedMentions: AllowedMentions.None);
                         Youtube.LastVideoId = videoId;
                     }
                     catch (Exception ex)
@@ -66,6 +65,7 @@ public class CheckYoutube
             {
                 Console.WriteLine($"[General/Warning] {DateTime.UtcNow:HH:mm:ss} CheckYoutubeJob {ex}");
             }
+            await Task.Delay(600000);
         }
     }
 }

@@ -63,7 +63,7 @@ namespace DougBot
                     Id = id,
                     MentionRole = Get($"youtube_mention_role_{i}"),
                     PostChannel = Get($"youtube_post_channel_{i}"),
-                    LastVideoId = Get($"youtube_last_video_id_{i}"),
+                    LastVideoId = null,
                     GuildId = Get($"youtube_guild_id_{i}")
                 });
 
@@ -83,7 +83,7 @@ namespace DougBot
         public string Id { get; set; }
         public string MentionRole { get; set; }
         public string PostChannel { get; set; }
-        public string LastVideoId { get; set; }
+        public string? LastVideoId { get; set; }
         public string GuildId { get; set; }
     }
 }

@@ -1,8 +1,6 @@
 using Discord;
 using Discord.Interactions;
 using DougBot.Models;
-using DougBot.Scheduler;
-
 namespace DougBot.SlashCommands;
 
 public class SendDMCmd : InteractionModuleBase
@@ -23,35 +21,10 @@ public class SendDMCmd : InteractionModuleBase
             .WithCurrentTimestamp()
             .WithFooter(new EmbedFooterBuilder()
                 .WithText("Any replies to this DM will be sent to the mod team"));
-        await SendDmJob.Queue(user.Id.ToString(), Context.User.Id.ToString(), Context.Guild.Id.ToString(),
-            new List<EmbedBuilder> { embed }, DateTime.UtcNow);
-        await RespondAsync("DM Queued", ephemeral: true);
-    }
-
-    [ComponentInteraction("dmRecieved:*:*", true)]
-    public async Task DmProcess(string guildId, string guildName)
-    {
-        var interaction = Context.Interaction as IComponentInteraction;
-        var dbGuild = await Guild.GetGuild(guildId);
-        if (guildId == "cancel")
-        {
-            await interaction.Message.DeleteAsync();
-            return;
-        }
-
-        var rawEmbeds = interaction.Message.Embeds;
-        //Convert rawEmbeds to a list of EmbedBuilders
-        var embedBuilders = rawEmbeds.Select(rawEmbed =>
-            new EmbedBuilder()
-                .WithAuthor(rawEmbed.Author.Value.Name, rawEmbed.Author.Value.IconUrl)
-                .WithDescription(rawEmbed.Description)
-                .WithColor(rawEmbed.Color.Value)
-                .WithTimestamp(rawEmbed.Timestamp.Value)
-                .WithImageUrl(rawEmbed.Image?.Url)
-                .WithTitle(rawEmbed.Title)
-        ).ToList();
-        await SendMessageJob.Queue(dbGuild.Id, dbGuild.DmReceiptChannel, embedBuilders, DateTime.UtcNow);
-        await interaction.Message.DeleteAsync();
-        await RespondAsync($"Message Sent to {guildName}");
+        user.SendMessageAsync(embed: embed.Build());
+        embed.Author.Name = $"DM to {user.Username} ({user.Id}) from {Context.User.GlobalName}";
+        embed.Author.IconUrl = Context.User.GetAvatarUrl();
+        await ConfigurationService.Instance.DmReceiptChannel.SendMessageAsync(embed: embed.Build());
+        await RespondAsync("DM Sent", ephemeral: true);
     }
 }

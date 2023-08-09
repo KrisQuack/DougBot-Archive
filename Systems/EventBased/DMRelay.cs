@@ -44,18 +44,7 @@ public static class DMRelay
                         .WithUrl(attachment.Url)
                         .WithCurrentTimestamp()));
                 //Confirm message and where to send
-                var builder = new ComponentBuilder();
-                builder.WithButton("CANCEL", "dmRecieved:cancel:cancel", ButtonStyle.Danger);
-                foreach (var guild in message.Author.MutualGuilds)
-                {
-                    var guildId = guild.Id.ToString();
-                    var guildName = guild.Name;
-                    builder.WithButton(guildName, $"dmRecieved:{guildId}:{guildName}");
-                }
-
-                await message.Author.SendMessageAsync(
-                    "This message will be sent to the Mod team, please select the server you would like to send it to",
-                    embeds: embeds.Select(embed => embed.Build()).ToArray(), components: builder.Build());
+                await ConfigurationService.Instance.DmReceiptChannel.SendMessageAsync(embeds: embeds.Select(embed => embed.Build()).ToArray());
             }
         });
         return Task.CompletedTask;

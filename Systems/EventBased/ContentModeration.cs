@@ -5,7 +5,6 @@ using Microsoft.Azure.CognitiveServices.ContentModerator.Models;
 using System.Text;
 using System.Collections.Concurrent;
 using DougBot.Models;
-using DougBot.Scheduler;
 using OpenAI.ObjectModels.RequestModels;
 
 namespace DougBot.Systems.EventBased;
@@ -15,11 +14,10 @@ public static class ContentModeration
     private static DiscordSocketClient _client;
     private static BlockingCollection<SocketMessage> _messagesToModerate = new BlockingCollection<SocketMessage>();
     private static ConcurrentDictionary<ulong, List<DateTime>> _channelFlags = new ConcurrentDictionary<ulong, List<DateTime>>();
-    private static Guild _guild;
 
-    private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials(Environment.GetEnvironmentVariable("CONTENT_MODERATION_TOKEN")))
+    private static readonly ContentModeratorClient _moderatorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentials(ConfigurationService.Instance.ContentModerationToken))
     {
-        Endpoint = Environment.GetEnvironmentVariable("CONTENT_MODERATION_URL"),
+        Endpoint = ConfigurationService.Instance.ContentModerationUrl,
     };
 
     public static async Task Monitor()
@@ -36,9 +34,9 @@ public static class ContentModeration
     {
         //Check if _guild is null and if so if this message is valid
         var guildChannel = channel as SocketTextChannel;
-        if (_guild == null || guildChannel == null || message.Author.IsBot ||
-            _guild.LogBlacklistChannels.Contains(guildChannel.Id.ToString()) ||
-            _guild.LogBlacklistChannels.Contains(guildChannel.CategoryId.ToString())
+        if (guildChannel == null || message.Author.IsBot ||
+            ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel) ||
+            ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel)
             ) return Task.CompletedTask;
         //Process
         _messagesToModerate.Add(message);
@@ -49,9 +47,9 @@ public static class ContentModeration
     {
         //Check if _guild is null and if so if this message is valid
         var guildChannel = message.Channel as SocketTextChannel;
-        if (_guild == null || guildChannel == null || message.Author.IsBot ||
-            _guild.LogBlacklistChannels.Contains(guildChannel.Id.ToString()) ||
-            _guild.LogBlacklistChannels.Contains(guildChannel.CategoryId.ToString())
+        if (guildChannel == null || message.Author.IsBot ||
+            ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel) ||
+            ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel)
             ) return Task.CompletedTask;
         //Process
         _messagesToModerate.Add(message);
@@ -210,7 +208,8 @@ public static class ContentModeration
             }
         }
         // Send the embed to the log channel.
-        await SendMessageJob.Queue("567141138021089308", "571965793131036672", new List<EmbedBuilder> { embed }, DateTime.UtcNow);
+        var logChannel = ConfigurationService.Instance.LogChannel;
+        await logChannel.SendMessageAsync(embed: embed.Build());
     }
 
     public static async Task CleanUpOldFlags()
@@ -232,8 +231,6 @@ public static class ContentModeration
                         }
                     );
                 }
-                // Update _guild
-                _guild = await Guild.GetGuild("567141138021089308");
             }
             catch (Exception e)
             {

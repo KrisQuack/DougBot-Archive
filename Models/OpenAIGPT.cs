@@ -54,8 +54,8 @@ namespace DougBot.Models
                 }
                 var openAiService = new OpenAIService(new OpenAiOptions()
                 {
-                    BaseDomain = Environment.GetEnvironmentVariable("AI_URL"),
-                    ApiKey = Environment.GetEnvironmentVariable("AI_TOKEN"),
+                    BaseDomain = ConfigurationService.Instance.AiUrl,
+                    ApiKey = ConfigurationService.Instance.AiToken,
                     DeploymentId = deploymentId,
                     ResourceName = "dougAI",
                     ProviderType = ProviderType.Azure

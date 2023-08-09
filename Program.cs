@@ -38,7 +38,7 @@ public class Program
         Client = new DiscordSocketClient(config);
         Client.Log += Log;
         Client.Ready += Ready;
-        await Client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN"));
+        await Client.LoginAsync(TokenType.Bot, ConfigurationService.Instance.Token);
         await Client.StartAsync();
         //Block Task
         await Task.Delay(-1);
@@ -50,13 +50,11 @@ public class Program
         {
             _firstStart = false;
             //Register Plugins
-            _ = Scheduler.Quartz.InitializePersistent();
-            _ = Scheduler.Quartz.InitializeMemory();
-            _ = TimeBased.Schedule();
+            _ = new Systems.Twitch.Twitch().RunClient();
+            _ = CheckYoutube.Monitor();
+            _ = ReactionFilter.Monitor();
             _ = AuditLog.Monitor();
             _ = DMRelay.Monitor();
-            _ = new Systems.Twitch.Twitch().RunClient();
-            _ = ForumAi.Monitor();
             _ = ContentModeration.Monitor();
             _ = ForumAutomod.Monitor();
             //Set status

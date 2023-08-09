@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using System.Collections.Concurrent;
 
 namespace DougBot.Systems.EventBased
 {
     public class ForumAutomod
     {
+        private static ConcurrentDictionary<ulong, DateTime> ProcessedThreads = new ConcurrentDictionary<ulong, DateTime>();
+
         public static async Task Monitor()
         {
             var client = Program.Client;
@@ -18,12 +21,14 @@ namespace DougBot.Systems.EventBased
             {
                 try
                 {
+                    // Check if the thread has already been processed
+                    if (!ProcessedThreads.TryAdd(channel.Id, DateTime.UtcNow)) // 0 is a dummy value
+                    {
+                        return;
+                    }
+                    await Task.Delay(1000);
                     //Check if the parent channel is a forum
                     if (channel.ParentChannel.Id != 1133709621610156103) return;
-                    //Get the current pinned messages
-                    var pinnedMessages = await channel.GetPinnedMessagesAsync();
-                    //If there are any pinned messages, return
-                    if (pinnedMessages.Count > 0) return;
                     //Pin the first message
                     var messages = await channel.GetMessagesAsync(10).FlattenAsync();
                     var firstMessage = messages.OrderBy(m => m.CreatedAt).FirstOrDefault();
@@ -48,6 +53,13 @@ namespace DougBot.Systems.EventBased
                         },
                     };
                     await channel.SendMessageAsync(embed: embed.Build());
+                    //remove the thread from the dictionary older than 10 minutes
+                    var oldKeys = ProcessedThreads.Where(kvp => kvp.Value < DateTime.UtcNow.AddMinutes(-10)).Select(kvp => kvp.Key);
+                    foreach (var key in oldKeys)
+                    {
+                        ProcessedThreads.TryRemove(key, out _);
+                    }
+
                 }
                 catch (Exception e)
                 {

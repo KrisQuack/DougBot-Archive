@@ -1,5 +1,4 @@
 using Discord;
-using DougBot.Scheduler;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Enums;
 using TwitchLib.PubSub.Events;
@@ -98,8 +97,8 @@ public class PubSub
                 //Check the embed is not empty
                 if (string.IsNullOrEmpty(embed.Title)) return;
                 //Send message
-                await SendMessageJob.Queue("567141138021089308", "1070317311505997864",
-                    new List<EmbedBuilder> { embed }, DateTime.UtcNow, messageContent, true);
+                var channel = ConfigurationService.Instance.Guild.GetTextChannel(1070317311505997864);
+                await channel.SendMessageAsync(messageContent,embed: embed.Build(), allowedMentions: AllowedMentions.All);
             }
             catch (Exception ex)
             {

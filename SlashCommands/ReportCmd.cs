@@ -1,8 +1,6 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DougBot.Models;
-using DougBot.Scheduler;
 using Fernandezja.ColorHashSharp;
 
 namespace DougBot.SlashCommands;
@@ -30,7 +28,6 @@ public class ReportCmd : InteractionModuleBase
         await RespondAsync("Submitting...", ephemeral: true);
         try
         {
-            var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
             //Get the report
             var colorHash = new ColorHash();
             var color = colorHash.BuildToColor(Context.User.Id.ToString());
@@ -85,8 +82,15 @@ public class ReportCmd : InteractionModuleBase
                 //Attachments
                 attachments = message.Attachments.Select(a => a.Url).ToList();
             }
-
-            await SendMessageJob.Queue(dbGuild.Id, dbGuild.ReportChannel, embeds, DateTime.UtcNow, attachments: attachments);
+            foreach (var attachment in attachments)
+            {
+                embeds.Add(new EmbedBuilder()
+                    .WithTitle("Attachment")
+                    .WithImageUrl(attachment)
+                    .WithColor((Color)color)
+                    .WithCurrentTimestamp());
+            }
+            await ConfigurationService.Instance.ReportChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build()).ToArray());
             await ModifyOriginalResponseAsync(m => m.Content = "Your report has been sent to the mods.");
         }
         catch (Exception e)

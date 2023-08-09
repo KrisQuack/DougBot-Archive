@@ -12,7 +12,6 @@ public class HelpCmd : InteractionModuleBase
     public async Task Help()
     {
         var embeds = new List<Embed>();
-        var dbGuild = await Guild.GetGuild(Context.Guild.Id.ToString());
         //Commands
         var commandsEmbed = new EmbedBuilder()
             .WithTitle("Commands")
@@ -42,20 +41,20 @@ public class HelpCmd : InteractionModuleBase
                 {
                     Name = "Logging",
                     Value =
-                        $"The bot will log most events happening on the server and to its users in <#{dbGuild.LogChannel}>",
+                        $"The bot will log most events happening on the server and to its users in <#{ConfigurationService.Instance.LogChannel.Id}>",
                     IsInline = false
                 },
                 new()
                 {
                     Name = "Bot DMs",
-                    Value = $"The bot will relay and DMs sent to the mod team into <#{dbGuild.DmReceiptChannel}>",
+                    Value = $"The bot will relay and DMs sent to the mod team into <#{ConfigurationService.Instance.DmReceiptChannel.Id}>",
                     IsInline = false
                 },
                 new()
                 {
                     Name = "Reporting",
                     Value =
-                        $"Users can right click a message or another member of the server and report them, this will be posted to <#{dbGuild.ReportChannel}>",
+                        $"Users can right click a message or another member of the server and report them, this will be posted to <#{ConfigurationService.Instance.ReportChannel.Id}>",
                     IsInline = false
                 }
             });

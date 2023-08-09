@@ -1,8 +1,5 @@
-using System.Reflection;
 using Discord;
 using Discord.WebSocket;
-using DougBot.Models;
-using DougBot.Scheduler;
 
 namespace DougBot.Systems.EventBased;
 
@@ -247,32 +244,29 @@ public static class AuditLog
         return Task.CompletedTask;
     }
 
-    public static Task LogEvent(string content, string guildId, Color embedColor,
+    public static async Task ErrorHandler(Exception e, string module)
+    {
+
+    }
+
+    public static async Task LogEvent(string content, string guildId, Color embedColor,
         List<EmbedFieldBuilder> fields = null, EmbedAuthorBuilder author = null, List<string> attachments = null)
     {
-        _ = Task.Run(async () =>
-        {
-            var dbGuild = await Guild.GetGuild(guildId);
-            var embed = new EmbedBuilder()
-                .WithDescription(content)
-                .WithColor(embedColor)
-                .WithCurrentTimestamp();
-            if (fields != null)
-                foreach (var field in fields.Where(f => f.Name != "null"))
-                    embed.AddField(field);
-            if (author != null)
-                embed.WithAuthor(author);
-
-            await SendMessageJob.Queue(dbGuild.Id, dbGuild.LogChannel, new List<EmbedBuilder> { embed },
-                DateTime.UtcNow, attachments: attachments);
-        });
-        return Task.CompletedTask;
+        var embed = new EmbedBuilder()
+            .WithDescription(content)
+            .WithColor(embedColor)
+            .WithCurrentTimestamp();
+        if (fields != null)
+            foreach (var field in fields.Where(f => f.Name != "null"))
+                embed.AddField(field);
+        if (author != null)
+            embed.WithAuthor(author);
+        await ConfigurationService.Instance.LogChannel.SendMessageAsync(embed: embed.Build());
     }
 
     private static async Task<bool> BlacklistCheck(SocketTextChannel channel)
     {
-        var dbGuild = await Guild.GetGuild(channel.Guild.Id.ToString());
-        return dbGuild.LogBlacklistChannels.Contains(channel.Id.ToString()) ||
-               dbGuild.LogBlacklistChannels.Contains(channel.CategoryId.ToString());
+        return ConfigurationService.Instance.LogBlacklistChannels.Contains(channel) ||
+               ConfigurationService.Instance.LogBlacklistChannels.Contains(channel);
     }
 }

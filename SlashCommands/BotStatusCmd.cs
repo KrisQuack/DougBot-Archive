@@ -2,8 +2,6 @@ using System.Diagnostics;
 using Discord;
 using Discord.Interactions;
 using DougBot.Systems.Twitch;
-using Quartz;
-using Quartz.Impl.Matchers;
 
 namespace DougBot.SlashCommands;
 
@@ -27,10 +25,6 @@ public class BotStatusCmd : InteractionModuleBase
             var currentAppThreadsCount = process.Threads.Count;
             var threadList = process.Threads.Cast<ProcessThread>().ToList();
             var youngThreads = threadList.Count(t => t.TotalProcessorTime.TotalSeconds < 10);
-            // Get job keys
-            var persistentKeys =
-                await Scheduler.Quartz.PersistentSchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
-            var memoryKeys = await Scheduler.Quartz.MemorySchedulerInstance.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
             //Create embed
             var embed = new EmbedBuilder()
                 .WithTitle("Bot Status")
@@ -40,8 +34,6 @@ public class BotStatusCmd : InteractionModuleBase
                 .AddField("Threads", $"{currentAppThreadsCount}", true)
                 .AddField("Young Threads (<10s)", $"{youngThreads}", true)
                 .AddField("Quartz Job Data", "*These stats are since the bots last reboot*")
-                .AddField("Total Persistent Jobs", persistentKeys.Count, true)
-                .AddField("Total Memory Jobs", memoryKeys.Count, true)
                 .AddField("Twitch Bot", "*Details about the twitch connection*")
                 .AddField("IRC Initialized", Twitch.Irc.IsInitialized ? "Yes" : "No", true)
                 .AddField("IRC Connected", Twitch.Irc.IsConnected ? "Yes" : "No", true)

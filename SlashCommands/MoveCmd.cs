@@ -80,7 +80,7 @@ public class MoveCmd : InteractionModuleBase
             foreach (var attachment in messageToMove.Attachments)
             {
                 var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
-                var path = "Media/Downloads";
+                var path = Path.Combine("Media", "Downloads", attachment.Filename);
                 await File.WriteAllBytesAsync(path, attachmentBytes);
                 attachments.Add(new FileAttachment(path, attachment.Filename));
                 attachmentPaths.Add(path);

@@ -29,7 +29,7 @@ public class VerifyCmd : InteractionModuleBase
     public async Task VerifyRequest()
     {
         //Get a random file from the Media folder
-        var files = Directory.GetFiles("Media/Verify");
+        var files = Directory.GetFiles(Path.Combine("Media", "Verify"));
         var file = files[Program.Random.Next(0, files.Length)];
         //get file name without extension
         var fileName = Path.GetFileNameWithoutExtension(file);

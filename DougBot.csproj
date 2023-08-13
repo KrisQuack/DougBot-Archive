@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -17,13 +17,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Media\*.jpeg">
+    <None Include="Media\Verify\*.jpeg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
     <Content Include=".github\workflows\publish.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Media\Downloads\" />
   </ItemGroup>
 
 </Project>

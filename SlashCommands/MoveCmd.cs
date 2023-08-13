@@ -1,9 +1,8 @@
-using System.Net.Mail;
-using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.Webhook;
 using Discord.WebSocket;
+using System.Reflection;
 
 namespace DougBot.SlashCommands;
 
@@ -19,7 +18,7 @@ public class MoveCmd : InteractionModuleBase
         IChannel channel
     )
     {
-        await RespondAsync("Moving the message", ephemeral: true);
+        //await RespondAsync("Moving the message", ephemeral: true);
         //Identify if it is a thread
         var threadChannel = channel as SocketThreadChannel;
         var threadChannelId = threadChannel?.Id;
@@ -81,12 +80,11 @@ public class MoveCmd : InteractionModuleBase
             foreach (var attachment in messageToMove.Attachments)
             {
                 var attachmentBytes = await httpClient.GetByteArrayAsync(attachment.Url);
-                var path = Path.Combine(rootPath, attachment.Filename);
+                var path = "Media/Downloads";
                 await File.WriteAllBytesAsync(path, attachmentBytes);
                 attachments.Add(new FileAttachment(path, attachment.Filename));
                 attachmentPaths.Add(path);
             }
-
             //Send the message with attachments
             await webhook.SendFilesAsync(attachments, messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),

@@ -166,22 +166,22 @@ public static class ContentModeration
             reason = "Racy content detected";
         }
 
-        if (isImageSafe)
-        {
-            // Perform OCR on the image
-            await Task.Delay(1000);
-            var ocrResult = await _moderatorClient.ImageModeration.OCRUrlInputAsync("eng", "application/json", bodyModel);
-            if (ocrResult.Text != null)
-            {
-                // Check the text found by OCR
-                var (isTextSafe, response) = await CheckTextContent(ocrResult.Text);
-                if (!isTextSafe)
-                {
-                    isImageSafe = false;
-                    reason = $"Offensive text detected in image: {response}";
-                }
-            }
-        }
+        //if (isImageSafe)
+        //{
+        //    // Perform OCR on the image
+        //    await Task.Delay(1000);
+        //    var ocrResult = await _moderatorClient.ImageModeration.OCRUrlInputAsync("eng", "application/json", bodyModel);
+        //    if (ocrResult.Text != null)
+        //    {
+        //        // Check the text found by OCR
+        //        var (isTextSafe, response) = await CheckTextContent(ocrResult.Text);
+        //        if (!isTextSafe)
+        //        {
+        //            isImageSafe = false;
+        //            reason = $"Offensive text detected in image: {response}";
+        //        }
+        //    }
+        //}
 
         return (isImageSafe, reason);
     }
@@ -208,7 +208,7 @@ public static class ContentModeration
             }
         }
         // Send the embed to the log channel.
-        var logChannel = ConfigurationService.Instance.LogChannel;
+        var logChannel = ConfigurationService.Instance.Guild.GetTextChannel(571965793131036672);
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
 

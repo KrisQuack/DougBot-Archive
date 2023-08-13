@@ -18,7 +18,7 @@ public class MoveCmd : InteractionModuleBase
         IChannel channel
     )
     {
-        //await RespondAsync("Moving the message", ephemeral: true);
+        await RespondAsync("Moving the message", ephemeral: true);
         //Identify if it is a thread
         var threadChannel = channel as SocketThreadChannel;
         var threadChannelId = threadChannel?.Id;

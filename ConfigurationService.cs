@@ -49,8 +49,8 @@ public class ConfigurationService
     public SocketTextChannel LogChannel => Guild.GetTextChannel(ulong.Parse(LogChannelId));
     private string LogBlacklistChannelIds => Get("log_blacklist_channels");
 
-    public List<SocketTextChannel> LogBlacklistChannels => LogBlacklistChannelIds.Split(',')
-        .Select(id => Guild.GetTextChannel(ulong.Parse(id))).ToList();
+    public List<SocketGuildChannel> LogBlacklistChannels => LogBlacklistChannelIds.Split(',')
+        .Select(id => Guild.GetChannel(ulong.Parse(id))).ToList();
 
     public List<YoutubeConfig> YoutubeConfigs { get; }
 

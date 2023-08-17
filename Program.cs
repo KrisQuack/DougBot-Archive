@@ -5,6 +5,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using DougBot.Systems.EventBased;
 using DougBot.Systems.TimeBased;
+using DougBot.Systems.Twitch;
 
 namespace DougBot;
 
@@ -28,7 +29,8 @@ public class Program
         //Start discord bot
         var config = new DiscordSocketConfig
         {
-            GatewayIntents = GatewayIntents.All ^ (GatewayIntents.GuildPresences | GatewayIntents.GuildScheduledEvents | GatewayIntents.GuildInvites),
+            GatewayIntents = GatewayIntents.All ^ (GatewayIntents.GuildPresences | GatewayIntents.GuildScheduledEvents |
+                                                   GatewayIntents.GuildInvites),
             LogLevel = LogSeverity.Info,
             MessageCacheSize = 100,
             UseInteractionSnowflakeDate = true,
@@ -50,7 +52,7 @@ public class Program
         {
             _firstStart = false;
             //Register Plugins
-            _ = new Systems.Twitch.Twitch().RunClient();
+            _ = new Twitch().RunClient();
             _ = CheckYoutube.Monitor();
             _ = ReactionFilter.Monitor();
             _ = AuditLog.Monitor();

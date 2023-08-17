@@ -44,7 +44,8 @@ public static class DMRelay
                         .WithUrl(attachment.Url)
                         .WithCurrentTimestamp()));
                 //Confirm message and where to send
-                await ConfigurationService.Instance.DmReceiptChannel.SendMessageAsync(embeds: embeds.Select(embed => embed.Build()).ToArray());
+                await ConfigurationService.Instance.DmReceiptChannel.SendMessageAsync(
+                    embeds: embeds.Select(embed => embed.Build()).ToArray());
             }
         });
         return Task.CompletedTask;

@@ -1,8 +1,8 @@
+using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.Webhook;
 using Discord.WebSocket;
-using System.Reflection;
 
 namespace DougBot.SlashCommands;
 
@@ -34,6 +34,7 @@ public class MoveCmd : InteractionModuleBase
             textChannel = channel as ITextChannel;
             forumChannel = channel as IForumChannel;
         }
+
         //Grab the message using a reply
         var messageToMove = await Context.Channel.GetMessageAsync(Convert.ToUInt64(message));
         //Check the message to move is not null
@@ -42,23 +43,28 @@ public class MoveCmd : InteractionModuleBase
             await ModifyOriginalResponseAsync(x => x.Content = "Message not found");
             return;
         }
+
         //Get the webhook
         IWebhook wahWebhook;
         if (textChannel != null)
         {
             var webhooks = await textChannel.GetWebhooksAsync();
-            wahWebhook = webhooks.FirstOrDefault(x => x.Name == "Wahaha") ?? await textChannel.CreateWebhookAsync("Wahaha");
+            wahWebhook = webhooks.FirstOrDefault(x => x.Name == "Wahaha") ??
+                         await textChannel.CreateWebhookAsync("Wahaha");
         }
         else if (forumChannel != null)
         {
             var webhooks = await forumChannel.GetWebhooksAsync();
-            wahWebhook = webhooks.FirstOrDefault(x => x.Name == "Wahaha") ?? await forumChannel.CreateWebhookAsync("Wahaha");
+            wahWebhook = webhooks.FirstOrDefault(x => x.Name == "Wahaha") ??
+                         await forumChannel.CreateWebhookAsync("Wahaha");
         }
         else
         {
-            await ModifyOriginalResponseAsync(x => x.Content = "Invalid channel type. Only text channels, forum channels and threads are supported.");
+            await ModifyOriginalResponseAsync(x =>
+                x.Content = "Invalid channel type. Only text channels, forum channels and threads are supported.");
             return;
         }
+
         //Grab the webhook
         var webhook = new DiscordWebhookClient(wahWebhook.Id, wahWebhook.Token);
         //Set the authors name as either the server nickname if there is one or the username
@@ -85,6 +91,7 @@ public class MoveCmd : InteractionModuleBase
                 attachments.Add(new FileAttachment(path, attachment.Filename));
                 attachmentPaths.Add(path);
             }
+
             //Send the message with attachments
             await webhook.SendFilesAsync(attachments, messageToMove.Content, embeds: embedList,
                 username: authorName, avatarUrl: messageToMove.Author.GetAvatarUrl(),

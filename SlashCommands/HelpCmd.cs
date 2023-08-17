@@ -1,6 +1,5 @@
 using Discord;
 using Discord.Interactions;
-using DougBot.Models;
 
 namespace DougBot.SlashCommands;
 
@@ -47,7 +46,8 @@ public class HelpCmd : InteractionModuleBase
                 new()
                 {
                     Name = "Bot DMs",
-                    Value = $"The bot will relay and DMs sent to the mod team into <#{ConfigurationService.Instance.DmReceiptChannel.Id}>",
+                    Value =
+                        $"The bot will relay and DMs sent to the mod team into <#{ConfigurationService.Instance.DmReceiptChannel.Id}>",
                     IsInline = false
                 },
                 new()

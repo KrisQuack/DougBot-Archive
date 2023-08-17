@@ -98,7 +98,8 @@ public class PubSub
                 if (string.IsNullOrEmpty(embed.Title)) return;
                 //Send message
                 var channel = ConfigurationService.Instance.Guild.GetTextChannel(1070317311505997864);
-                await channel.SendMessageAsync(messageContent,embed: embed.Build(), allowedMentions: AllowedMentions.All);
+                await channel.SendMessageAsync(messageContent, embed: embed.Build(),
+                    allowedMentions: AllowedMentions.All);
             }
             catch (Exception ex)
             {

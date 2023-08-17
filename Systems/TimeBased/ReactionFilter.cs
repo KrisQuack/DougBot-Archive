@@ -1,4 +1,5 @@
 using Discord;
+
 namespace DougBot.Systems.TimeBased;
 
 public class ReactionFilter
@@ -28,10 +29,7 @@ public class ReactionFilter
                         //Get reactions to remove
                         var reactions = message.Reactions.Where(r => !emoteWhitelist.Contains(r.Key.Name));
                         //Remove reactions
-                        foreach (var reaction in reactions)
-                        {
-                            await message.RemoveAllReactionsForEmoteAsync(reaction.Key);
-                        }
+                        foreach (var reaction in reactions) await message.RemoveAllReactionsForEmoteAsync(reaction.Key);
                     }
                 }
             }

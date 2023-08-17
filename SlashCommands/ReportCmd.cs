@@ -82,15 +82,15 @@ public class ReportCmd : InteractionModuleBase
                 //Attachments
                 attachments = message.Attachments.Select(a => a.Url).ToList();
             }
+
             foreach (var attachment in attachments)
-            {
                 embeds.Add(new EmbedBuilder()
                     .WithTitle("Attachment")
                     .WithImageUrl(attachment)
                     .WithColor((Color)color)
                     .WithCurrentTimestamp());
-            }
-            await ConfigurationService.Instance.ReportChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build()).ToArray());
+            await ConfigurationService.Instance.ReportChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build())
+                .ToArray());
             await ModifyOriginalResponseAsync(m => m.Content = "Your report has been sent to the mods.");
         }
         catch (Exception e)

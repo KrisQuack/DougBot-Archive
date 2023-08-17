@@ -100,7 +100,7 @@ public static class AuditLog
             //If username changed add field
             if (before.Username != after.Username)
                 fields.Add(new EmbedFieldBuilder
-                { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
+                    { Name = "Username", Value = $"{before.Username} -> {after.Username}" });
             //If guild avatar changed add field
             var attachments = new List<string>();
             if (before.AvatarId != after.AvatarId)
@@ -109,6 +109,7 @@ public static class AuditLog
                 //add field 
                 fields.Add(new EmbedFieldBuilder { Name = "Guild avatar updated", Value = "See attachments below" });
             }
+
             //Set author
             var author = new EmbedAuthorBuilder
             {
@@ -134,7 +135,7 @@ public static class AuditLog
             //If nickname changed add field
             if (beforeObj.Nickname != after.Nickname)
                 fields.Add(new EmbedFieldBuilder
-                { Name = "Nickname", Value = $"{beforeObj.Nickname} -> {after.Nickname}" });
+                    { Name = "Nickname", Value = $"{beforeObj.Nickname} -> {after.Nickname}" });
             //If roles changed add field
             if (beforeObj.Roles.Count != after.Roles.Count)
             {
@@ -146,14 +147,14 @@ public static class AuditLog
                     fields.Add(new EmbedFieldBuilder { Name = "Roles Added", Value = string.Join("\n", addedRoles) });
                 if (removedRoles.Any())
                     fields.Add(new EmbedFieldBuilder
-                    { Name = "Roles Removed", Value = string.Join("\n", removedRoles) });
+                        { Name = "Roles Removed", Value = string.Join("\n", removedRoles) });
             }
 
             //If guild avatar changed add field
             var attachments = new List<string>();
             if (beforeObj.GuildAvatarId != after.GuildAvatarId)
             {
-                attachments = new List<string> {beforeObj.GetGuildAvatarUrl(), after.GetGuildAvatarUrl()};
+                attachments = new List<string> { beforeObj.GetGuildAvatarUrl(), after.GetGuildAvatarUrl() };
                 //add field 
                 fields.Add(new EmbedFieldBuilder { Name = "Guild avatar updated", Value = "See attachments below" });
             }
@@ -246,7 +247,6 @@ public static class AuditLog
 
     public static async Task ErrorHandler(Exception e, string module)
     {
-
     }
 
     public static async Task LogEvent(string content, string guildId, Color embedColor,

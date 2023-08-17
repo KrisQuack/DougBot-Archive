@@ -1,6 +1,6 @@
 using Discord;
 using Discord.Interactions;
-using DougBot.Models;
+
 namespace DougBot.SlashCommands;
 
 public class SendDMCmd : InteractionModuleBase

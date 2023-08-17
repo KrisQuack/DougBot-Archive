@@ -1,4 +1,3 @@
-using DougBot.Models;
 using TwitchLib.Api;
 using TwitchLib.Api.Auth;
 using TwitchLib.Api.Services;
@@ -57,7 +56,8 @@ public class Twitch
                     Api.Settings.AccessToken = botRefresh.AccessToken;
                     Api.Settings.ClientId = ConfigurationService.Instance.TwitchClientId;
                     //Connect IRC
-                    var credentials = new ConnectionCredentials(ConfigurationService.Instance.TwitchBotName, Api.Settings.AccessToken,
+                    var credentials = new ConnectionCredentials(ConfigurationService.Instance.TwitchBotName,
+                        Api.Settings.AccessToken,
                         disableUsernameCheck: true);
                     Irc.SetConnectionCredentials(credentials);
                     Irc.Connect();

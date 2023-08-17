@@ -9,7 +9,7 @@ namespace DougBot.Systems.Twitch;
 public class Irc
 {
     private readonly string _botId = "853660174";
-    private bool _firstRun = true;
+    private readonly bool _firstRun = true;
 
     public TwitchClient Create(string channelName)
     {
@@ -60,8 +60,8 @@ public class Irc
                 .WithDescription(whisper.WhisperMessage.Message)
                 .WithColor(Color.Purple)
                 .WithCurrentTimestamp();
-            await ConfigurationService.Instance.Guild.GetTextChannel(1080251555619557445).
-            SendMessageAsync(embed: embed.Build());
+            await ConfigurationService.Instance.Guild.GetTextChannel(1080251555619557445)
+                .SendMessageAsync(embed: embed.Build());
         });
     }
 

@@ -26,7 +26,7 @@ public class ForumAutomod
                     return;
                 await Task.Delay(1000);
                 //Check if the parent channel is a forum
-                if (channel.ParentChannel.Id != 1133709621610156103) return;
+                if (channel.ParentChannel.Id != 1133709621610156103 && channel.ParentChannel.Id != 1133709621610156103) return;
                 //Pin the first message
                 var messages = await channel.GetMessagesAsync(10).FlattenAsync();
                 var firstMessage = messages.OrderBy(m => m.CreatedAt).FirstOrDefault();

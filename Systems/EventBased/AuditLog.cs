@@ -184,7 +184,6 @@ public static class AuditLog
                 return;
             //Download message attachments from url
             var attachments = messageObj.Attachments.Select(a => a.Url).ToList();
-
             //Set fields
             var fields = new List<EmbedFieldBuilder>
             {
@@ -252,16 +251,25 @@ public static class AuditLog
     public static async Task LogEvent(string content, string guildId, Color embedColor,
         List<EmbedFieldBuilder> fields = null, EmbedAuthorBuilder author = null, List<string> attachments = null)
     {
-        var embed = new EmbedBuilder()
+        var embeds = new List<Embed>();
+        //Create main embed
+        var mainEmbed = new EmbedBuilder()
             .WithDescription(content)
             .WithColor(embedColor)
             .WithCurrentTimestamp();
         if (fields != null)
             foreach (var field in fields.Where(f => f.Name != "null"))
-                embed.AddField(field);
+                mainEmbed.AddField(field);
         if (author != null)
-            embed.WithAuthor(author);
-        await ConfigurationService.Instance.LogChannel.SendMessageAsync(embed: embed.Build());
+            mainEmbed.WithAuthor(author);
+        embeds.Add(mainEmbed.Build());
+        //Create attachment embeds
+        embeds.AddRange(attachments.Select(attachment => new EmbedBuilder().WithTitle(attachment.Split('\\').Last().Split('/').Last())
+                .WithUrl(attachment)
+                .WithImageUrl(attachment)
+                .WithColor(embedColor))
+            .Select(attachmentEmbed => attachmentEmbed.Build()));
+        await ConfigurationService.Instance.LogChannel.SendMessageAsync(embeds: embeds.ToArray());
     }
 
     private static async Task<bool> BlacklistCheck(SocketTextChannel channel)

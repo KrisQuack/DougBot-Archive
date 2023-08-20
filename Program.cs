@@ -33,7 +33,6 @@ public class Program
                                                    GatewayIntents.GuildInvites),
             LogLevel = LogSeverity.Info,
             MessageCacheSize = 100,
-            UseInteractionSnowflakeDate = true,
             AlwaysDownloadUsers = true,
             AlwaysDownloadDefaultStickers = false
         };

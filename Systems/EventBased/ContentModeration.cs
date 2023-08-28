@@ -47,16 +47,19 @@ public static class ContentModeration
 
     private static async Task MessageReceivedHandler(SocketMessage message)
     {
-        //Check for headers by splitting it into lines and checking if any start with "# ", "## ", or "### "
-        var lines = message.Content.Split("\n");
-        if (lines.Any(l => l.StartsWith("# ")) || lines.Any(l => l.StartsWith("## ")) ||
-            lines.Any(l => l.StartsWith("### "))) await message.DeleteAsync();
+        //Author
+        var author = message.Author as SocketGuildUser;
         //Check if _guild is null and if so if this message is valid
         var guildChannel = message.Channel as SocketTextChannel;
         if (guildChannel == null || message.Author.IsBot ||
             ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel) ||
-            ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel)
-           )
+            ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel) ||
+            author.Roles.Any(r => r.Id == 718291172124131408)
+           ) return;
+        //Check for headers by splitting it into lines and checking if any start with "# ", "## ", or "### "
+        var lines = message.Content.Split("\n");
+        if (lines.Any(l => l.StartsWith("# ")) || lines.Any(l => l.StartsWith("## ")) ||
+            lines.Any(l => l.StartsWith("### "))) await message.DeleteAsync();
         //Process
         _messagesToModerate.Add(message);
     }

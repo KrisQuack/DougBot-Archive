@@ -45,17 +45,20 @@ public static class ContentModeration
         return Task.CompletedTask;
     }
 
-    private static Task MessageReceivedHandler(SocketMessage message)
+    private static async Task MessageReceivedHandler(SocketMessage message)
     {
+        //Check for headers by splitting it into lines and checking if any start with "# ", "## ", or "### "
+        var lines = message.Content.Split("\n");
+        if (lines.Any(l => l.StartsWith("# ")) || lines.Any(l => l.StartsWith("## ")) ||
+            lines.Any(l => l.StartsWith("### "))) await message.DeleteAsync();
         //Check if _guild is null and if so if this message is valid
         var guildChannel = message.Channel as SocketTextChannel;
         if (guildChannel == null || message.Author.IsBot ||
             ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel) ||
             ConfigurationService.Instance.LogBlacklistChannels.Contains(guildChannel)
-           ) return Task.CompletedTask;
+           )
         //Process
         _messagesToModerate.Add(message);
-        return Task.CompletedTask;
     }
 
     private static Task ProcessMessages()
@@ -65,6 +68,7 @@ public static class ContentModeration
             foreach (var message in _messagesToModerate.GetConsumingEnumerable())
                 try
                 {
+                    //Check if the message is a reply
                     IEnumerable<IMessage> messageContext;
                     //Check if there are any images and if they are safe
                     foreach (var attachment in message.Attachments)

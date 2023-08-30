@@ -73,17 +73,6 @@ public static class ContentModeration
                 {
                     //Check if the message is a reply
                     IEnumerable<IMessage> messageContext;
-                    //Check if there are any images and if they are safe
-                    foreach (var attachment in message.Attachments)
-                    {
-                        var (isImageSafe, imageResponse) = await CheckImageContent(attachment.Url);
-                        if (!isImageSafe)
-                        {
-                            messageContext = new List<IMessage> { message };
-                            await SendModerationEmbed(messageContext, imageResponse, true);
-                        }
-                    }
-
                     //Check if the text is safe
                     messageContext = await message.Channel.GetMessagesAsync(20).FlattenAsync();
                     messageContext = messageContext.Where(m => !string.IsNullOrEmpty(m.CleanContent));
@@ -152,48 +141,6 @@ public static class ContentModeration
             ChatMessage.FromUser(string.Join("\n", messageContext.Select(m => $"{m.Author.Mention}:{m.CleanContent}")))
         };
         return await OpenAIGPT.Gpt48k(chatMessages);
-    }
-
-    private static async Task<(bool, string)> CheckImageContent(string imageUrl)
-    {
-        var bodyModel = new BodyModel("URL", imageUrl);
-        await Task.Delay(1000);
-        var evaluationResult =
-            await _moderatorClient.ImageModeration.EvaluateUrlInputAsync("application/json", bodyModel);
-
-        string reason = null;
-        var isImageSafe = true;
-
-        if (evaluationResult.AdultClassificationScore.HasValue && evaluationResult.AdultClassificationScore.Value > 0.5)
-        {
-            isImageSafe = false;
-            reason = "Adult content detected";
-        }
-        else if (evaluationResult.RacyClassificationScore.HasValue &&
-                 evaluationResult.RacyClassificationScore.Value > 0.5)
-        {
-            isImageSafe = false;
-            reason = "Racy content detected";
-        }
-
-        //if (isImageSafe)
-        //{
-        //    // Perform OCR on the image
-        //    await Task.Delay(1000);
-        //    var ocrResult = await _moderatorClient.ImageModeration.OCRUrlInputAsync("eng", "application/json", bodyModel);
-        //    if (ocrResult.Text != null)
-        //    {
-        //        // Check the text found by OCR
-        //        var (isTextSafe, response) = await CheckTextContent(ocrResult.Text);
-        //        if (!isTextSafe)
-        //        {
-        //            isImageSafe = false;
-        //            reason = $"Offensive text detected in image: {response}";
-        //        }
-        //    }
-        //}
-
-        return (isImageSafe, reason);
     }
 
     private static async Task SendModerationEmbed(IEnumerable<IMessage> messageContext, string reason, bool image)
